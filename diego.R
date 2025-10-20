@@ -1,6 +1,8 @@
 #diegonsi
 library(readr)
 library(dplyr)
+library(tidyr)
+
 library(stringr)
 library(ggplot2)
 
@@ -109,11 +111,35 @@ print(round(prop_estado, 2))
 
 
 # Histograma del ingreso
-p_ingreso <- ggplot(lending_base, aes(x = ingreso)) +
-  geom_histogram(bins = 30, fill = "skyblue", color = "black") +
-  labs(title = "Histograma del ingreso", x = "Ingreso", y = "Frecuencia") +
-  theme_minimal()
-print(p_ingreso)
+library(scales)
+# Histograma estético del ingreso (USD) sin valores extremos
+library(scales)
+
+ggplot(lending_base %>% filter(ingreso <= 300000), aes(x = ingreso)) +
+  geom_histogram(
+    bins = 40,
+    fill = "#26A69A",     # verde-azulado
+    color = "white",
+    alpha = 0.9
+  ) +
+  scale_x_continuous(
+    labels = dollar_format(prefix = "$", big.mark = ",", decimals = 0),
+    breaks = seq(0, 300000, 50000)
+  ) +
+  labs(
+    title = "Distribución del ingreso (sin valores extremos)",
+    subtitle = "La mayoría de los clientes tienen ingresos menores a $200,000 USD",
+    x = "Ingreso del solicitante (USD)",
+    y = "Frecuencia"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", color = "#004D40", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray30"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_line(color = "gray90"),
+    panel.grid.major.y = element_line(color = "gray90")
+  )
 
 # Boxplot del puntaje FICO por estado de pago
 p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
