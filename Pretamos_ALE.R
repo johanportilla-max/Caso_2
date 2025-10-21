@@ -1,0 +1,1 @@
+# modelo con distinta particion, aleatoria 

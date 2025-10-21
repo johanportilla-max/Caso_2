@@ -1,10 +1,9 @@
-# MODELO KNN - Predicción de pago de créditos
-
 library(readr)
 library(tidyverse)
 library(class)
 library(caret)
 library(pROC)
+library(ggthemes)
 
 #base de datos
 
@@ -27,8 +26,7 @@ lending_base <- lending_base %>%
     str_detect(emp_length, "2")  ~ 2,
     str_detect(emp_length, "1")  ~ 1,
     str_detect(emp_length, "less") ~ 0,
-    TRUE ~ NA_real_
-  ))
+    TRUE ~ NA_real_))
 
 # Renombramos columnas 
 lending_base <- lending_base %>%
@@ -45,10 +43,25 @@ lending_base <- lending_base %>%
     estado_pago = as.factor(estado_pago),
     estado_pago = fct_recode(estado_pago,
                              "Paga" = "0",
-                             "No_paga" = "1")
-  )
+                             "No_paga" = "1"))
 
 lending_base <- na.omit(lending_base)
+
+#Tema para los graficos 
+
+tema<- theme_minimal() +
+  theme(
+    text = element_text(family = "Segoe UI", color = "#2d3748"),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5, color = "#323130"),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#605e5c", margin = margin(b = 15)),
+    plot.caption = element_text(size = 10, color = "#605e5c", hjust = 0),
+    panel.grid.major = element_line(color = "#f3f2f1"),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    axis.title = element_text(face = "bold", color = "#323130"),
+    axis.text = element_text(color = "#605e5c"),
+    legend.position = "none")
 
 # Crear muestra representativa (10 000 observaciones)
 
@@ -66,6 +79,9 @@ set.seed(28)
 indice <- createDataPartition(y = lending_muestra$estado_pago, p = 0.75, list = FALSE)
 train <- lending_muestra[indice, ]
 test  <- lending_muestra[-indice, ]
+
+# MODELO KNN
+
 
 # Entrenamiento del modelo con caret
 
@@ -115,3 +131,78 @@ plot(roc_knn, col = "blue", lwd = 2,
      main = sprintf("Curva ROC - KNN | AUC = %.3f", auc(roc_knn)))
 abline(a = 0, b = 1, lty = 2, col = "gray")
 
+
+
+ggplot(lending_base %>% filter(ingreso <= 300000), aes(x = ingreso)) +
+  geom_histogram(
+    bins = 40,
+    fill = "#26A69A",     # verde-azulado
+    color = "white",
+    alpha = 0.9
+  ) +
+  scale_x_continuous(
+    labels = dollar_format(prefix = "$", big.mark = ",", decimals = 0),
+    breaks = seq(0, 300000, 50000)
+  ) +
+  labs(
+    title = "Distribución del ingreso (sin valores extremos)",
+    subtitle = "La mayoría de los clientes tienen ingresos menores a $200,000 USD",
+    x = "Ingreso del solicitante (USD)",
+    y = "Frecuencia"
+  ) +tema
+
+
+# MODELO LOGIT 
+
+# Entrenamiento del modelo Logit
+
+fit_logit <- glm(
+  estado_pago ~ ingreso + relacion_deuda_ingreso + monto_prestamo +
+    puntaje_fico + experiencia_lc + años_empleo,
+  data = train,
+  family = binomial()
+)
+
+summary(fit_logit)  # Ver coeficientes, significancia y dirección de los efectos
+
+
+# Predicciones sobre el conjunto de prueba
+
+# Predicciones de probabilidad de "No_paga"
+p_hat <- predict(fit_logit, newdata = test, type = "response")
+
+# Clasificación binaria con umbral 0.5
+pred_clase <- factor(ifelse(p_hat >= 0.5, "No_paga", "Paga"),
+                     levels = c("Paga", "No_paga"))
+
+# Matriz de confusión inicial
+confusionMatrix(pred_clase, test$estado_pago, positive = "No_paga")
+
+
+# Cálculo del umbral óptimo (Índice de Youden)
+# -----------------------------------------------
+
+roc_logit <- roc(response = test$estado_pago,
+                 predictor = p_hat,
+                 levels = c("Paga", "No_paga"))
+
+# Umbral óptimo que maximiza Sens + Esp
+umbral_opt <- coords(roc_logit, x = "best", best.method = "youden", ret = "threshold")
+umbral_opt <- as.numeric(umbral_opt)
+
+# Clasificamos nuevamente con el umbral óptimo
+pred_clase_opt <- factor(ifelse(p_hat >= umbral_opt, "No_paga", "Paga"),
+                         levels = c("Paga", "No_paga"))
+
+# Nueva matriz de confusión con umbral ajustado
+confusionMatrix(pred_clase_opt, test$estado_pago, positive = "No_paga")
+
+
+# Curva ROC y AUC
+
+auc_logit <- auc(roc_logit)
+auc_logit
+
+plot(roc_logit, col = "#FF0000", lwd = 2,
+     main = sprintf("Curva ROC - Logit | AUC = %.3f | Umbral = %.3f", auc_logit, umbral_opt))
+abline(a = 0, b = 1, lty = 2, col = "gray")
