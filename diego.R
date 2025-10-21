@@ -174,3 +174,141 @@ print(head(tabla_fico_estado, 20))
 write_csv(desc_var_round, "desc_var.csv")
 write_csv(desc_por_estado_round, "desc_por_estado.csv")
 
+
+
+#################################################
+# Análisis descriptivo — gráficos usando las variables del modelo y el tema original
+library(readr)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(scales)
+library(forcats)
+
+# --- Tema idéntico al del modelo ---
+tema <- theme_minimal() +
+  theme(
+    text = element_text(family = "Segoe UI", color = "#2d3748"),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5, color = "#323130"),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#605e5c", margin = margin(b = 15)),
+    plot.caption = element_text(size = 10, color = "#605e5c", hjust = 0),
+    panel.grid.major = element_line(color = "#f3f2f1"),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    axis.title = element_text(face = "bold", color = "#323130"),
+    axis.text = element_text(color = "#605e5c"),
+    legend.position = "none"
+  )
+
+# --- Leer y preparar datos (igual que tu script) ---
+lending_base <- read_csv("LC_loans_granting_model_dataset.csv")
+
+# seleccionar y renombrar
+lending_base <- lending_base %>%
+  select(revenue, dti_n, loan_amnt, fico_n, experience_c, emp_length, Default) %>%
+  rename(
+    ingreso = revenue,
+    relacion_deuda_ingreso = dti_n,
+    monto_prestamo = loan_amnt,
+    puntaje_fico = fico_n,
+    experiencia_lc = experience_c,
+    anos_empleo_raw = emp_length,
+    estado_pago_raw = Default
+  )
+
+# convertir emp_length a número (mismo enfoque)
+lending_base <- lending_base %>%
+  mutate(
+    anos_empleo = case_when(
+      str_detect(anos_empleo_raw, "10") ~ 10,
+      str_detect(anos_empleo_raw, "9")  ~ 9,
+      str_detect(anos_empleo_raw, "8")  ~ 8,
+      str_detect(anos_empleo_raw, "7")  ~ 7,
+      str_detect(anos_empleo_raw, "6")  ~ 6,
+      str_detect(anos_empleo_raw, "5")  ~ 5,
+      str_detect(anos_empleo_raw, "4")  ~ 4,
+      str_detect(anos_empleo_raw, "3")  ~ 3,
+      str_detect(anos_empleo_raw, "2")  ~ 2,
+      str_detect(anos_empleo_raw, "1")  ~ 1,
+      str_detect(tolower(as.character(anos_empleo_raw)), "less") ~ 0,
+      TRUE ~ NA_real_
+    )
+  )
+
+# recodificar estado_pago igual que tu modelo
+lending_base <- lending_base %>%
+  mutate(
+    estado_pago = as.factor(estado_pago_raw),
+    estado_pago = forcats::fct_recode(estado_pago,
+                                      "Paga" = "0",
+                                      "No_paga" = "1")
+  )
+
+# eliminar filas con NA en las variables que usamos
+lending_base <- lending_base %>%
+  drop_na(ingreso, relacion_deuda_ingreso, monto_prestamo,
+          puntaje_fico, experiencia_lc, anos_empleo, estado_pago)
+
+cat("Filas después de limpiar NA:", nrow(lending_base), "\n")
+
+# --- Gráficos (con el tema 'tema' y variables del modelo) ---
+
+# 1) Histograma del ingreso (sin valores extremos)
+ggplot(lending_base %>% filter(ingreso <= 300000), aes(x = ingreso)) +
+  geom_histogram(bins = 40, fill = "#26A69A", color = "white", alpha = 0.9) +
+  scale_x_continuous(labels = dollar_format(prefix = "$", big.mark = ",", decimals = 0),
+                     breaks = seq(0, 300000, 50000)) +
+  labs(title = "Distribución del ingreso (sin valores extremos)",
+       subtitle = "Mostrando clientes con ingreso <= $300,000",
+       x = "Ingreso (USD)", y = "Frecuencia") +
+  tema
+
+# 2) Boxplot: Puntaje FICO por estado de pago
+ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
+  geom_boxplot() +
+  labs(title = "Puntaje FICO por estado de pago", x = "Estado de pago", y = "Puntaje FICO") +
+  tema +
+  theme(legend.position = "right")  # mostrar leyenda si la quieres
+
+# 3) Scatter: DTI vs Monto del préstamo (coloreado por estado)
+ggplot(lending_base, aes(x = relacion_deuda_ingreso, y = monto_prestamo, color = estado_pago)) +
+  geom_point(alpha = 0.4) +
+  scale_y_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
+  labs(title = "Relación deuda/ingreso vs Monto del préstamo",
+       x = "Relación deuda/ingreso (DTI)", y = "Monto del préstamo (USD)") +
+  tema +
+  theme(legend.position = "right")
+
+# 4) Boxplot: Monto del préstamo por estado de pago (útil para comparar montos)
+ggplot(lending_base, aes(x = estado_pago, y = monto_prestamo, fill = estado_pago)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
+  labs(title = "Monto del préstamo por estado de pago", x = "Estado de pago", y = "Monto (USD)") +
+  tema +
+  theme(legend.position = "none")
+
+# 5) Violín / densidad de años de empleo por estado de pago (ver distribución)
+ggplot(lending_base, aes(x = estado_pago, y = anos_empleo, fill = estado_pago)) +
+  geom_violin(trim = TRUE, alpha = 0.8) +
+  geom_boxplot(width = 0.12, outlier.shape = NA) +
+  labs(title = "Años de empleo por estado de pago", x = "Estado de pago", y = "Años de empleo") +
+  tema +
+  theme(legend.position = "none")
+
+# 6) Scatter simple: Ingreso vs Monto del préstamo (para ver relación)
+ggplot(lending_base, aes(x = ingreso, y = monto_prestamo, color = estado_pago)) +
+  geom_point(alpha = 0.35) +
+  scale_x_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
+  scale_y_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
+  labs(title = "Ingreso vs Monto del préstamo", x = "Ingreso (USD)", y = "Monto (USD)") +
+  tema +
+  theme(legend.position = "right")
+
+# 7) Matriz de correlación (imprime en consola)
+num_vars <- lending_base %>%
+  select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico, experiencia_lc, anos_empleo)
+cor_mat <- cor(num_vars, use = "complete.obs")
+cat("Matriz de correlación (redondeada):\n")
+print(round(cor_mat, 2))
+
