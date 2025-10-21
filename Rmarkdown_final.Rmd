@@ -1,0 +1,39 @@
+---
+title: "Aprendizaje supervisado (KNN y Logit)"
+author: "Barros Rayo Alejandro (2415837), Muñoz Portela Diego Fernando (2415620), Portilla Aguirre Johan Camilo (2422468), Aguirre Aldana Joan Sebastian (2419550)"
+output: 
+  html_document:
+    theme: lumen
+    highlight: textmate
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    number_sections: true
+    code_folding: show
+---
+# Introducción
+# Metodología
+## Fuente de datos 
+## Definición de variables 
+# Análisis descriptivo
+# Modelos de clasificación
+## División de los datos
+## Modelo KNN
+## Modelo Logit
+# Comparación de modelos
+# Conclusiones 
+# Bibliografia 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r cars}
+```
+
+
+
+```{r pressure, echo=FALSE}
+```
+
