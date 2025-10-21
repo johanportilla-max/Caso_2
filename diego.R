@@ -177,7 +177,7 @@ write_csv(desc_por_estado_round, "desc_por_estado.csv")
 
 
 #################################################
-# Análisis descriptivo — gráficos usando las variables del modelo y el tema original
+# Análisis descriptivo 
 library(readr)
 library(dplyr)
 library(stringr)
@@ -288,7 +288,7 @@ ggplot(lending_base, aes(x = estado_pago, y = monto_prestamo, fill = estado_pago
   tema +
   theme(legend.position = "none")
 
-# 5) Violín / densidad de años de empleo por estado de pago (ver distribución)
+# 5)  densidad de años de empleo por estado de pago (ver distribución)
 ggplot(lending_base, aes(x = estado_pago, y = anos_empleo, fill = estado_pago)) +
   geom_violin(trim = TRUE, alpha = 0.8) +
   geom_boxplot(width = 0.12, outlier.shape = NA) +
