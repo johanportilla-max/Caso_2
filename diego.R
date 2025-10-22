@@ -290,8 +290,8 @@ ggplot(lending_base, aes(x = estado_pago, y = monto_prestamo, fill = estado_pago
 
 # 5)  densidad de años de empleo por estado de pago 
 ggplot(lending_base, aes(x = estado_pago, y = anos_empleo, fill = estado_pago)) +
-  geom_violin(trim = TRUE, alpha = 0.8) +
-  geom_boxplot(width = 0.12, outlier.shape = NA) +
+  geom_violin(trim = TRUE, alpha = 0.2) +
+  geom_boxplot(width = 0.5, outlie) +
   labs(title = "Años de empleo por estado de pago", x = "Estado de pago", y = "Años de empleo") +
   tema +
   theme(legend.position = "none")
