@@ -271,7 +271,7 @@ ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago))
   tema +
   theme(legend.position = "right")  # mostrar leyenda si la quieres
 
-# 3) Scatter: DTI vs Monto del préstamo (coloreado por estado)
+# 3)  DTI vs Monto del préstamo 
 ggplot(lending_base, aes(x = relacion_deuda_ingreso, y = monto_prestamo, color = estado_pago)) +
   geom_point(alpha = 0.4) +
   scale_y_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
@@ -280,7 +280,7 @@ ggplot(lending_base, aes(x = relacion_deuda_ingreso, y = monto_prestamo, color =
   tema +
   theme(legend.position = "right")
 
-# 4) Boxplot: Monto del préstamo por estado de pago (útil para comparar montos)
+# 4)  Monto del préstamo por estado de pago 
 ggplot(lending_base, aes(x = estado_pago, y = monto_prestamo, fill = estado_pago)) +
   geom_boxplot() +
   scale_y_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
@@ -288,7 +288,7 @@ ggplot(lending_base, aes(x = estado_pago, y = monto_prestamo, fill = estado_pago
   tema +
   theme(legend.position = "none")
 
-# 5)  densidad de años de empleo por estado de pago (ver distribución)
+# 5)  densidad de años de empleo por estado de pago 
 ggplot(lending_base, aes(x = estado_pago, y = anos_empleo, fill = estado_pago)) +
   geom_violin(trim = TRUE, alpha = 0.8) +
   geom_boxplot(width = 0.12, outlier.shape = NA) +
@@ -296,7 +296,7 @@ ggplot(lending_base, aes(x = estado_pago, y = anos_empleo, fill = estado_pago)) 
   tema +
   theme(legend.position = "none")
 
-# 6) Scatter simple: Ingreso vs Monto del préstamo (para ver relación)
+# 6)  Ingreso vs Monto del préstamo 
 ggplot(lending_base, aes(x = ingreso, y = monto_prestamo, color = estado_pago)) +
   geom_point(alpha = 0.35) +
   scale_x_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
