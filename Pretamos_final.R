@@ -82,6 +82,46 @@ test  <- lending_muestra[-indice, ]
 
 # MODELO KNN
 
+vars_input <- c("ingreso", "relacion_deuda_ingreso", "monto_prestamo", "puntaje_fico", "años_empleo")
+
+train_input_raw <- train[, vars_input]
+test_input_raw <- test[, vars_input]
+
+train_output <- train$estado_pago
+test_output <- test$estado_pago
+
+k_valores <- 1:50 
+resultado_basico <- data.frame(k = k_valores, precision = 0)
+
+for (n in k_valores) {
+  pred_temp <- knn(
+    train = train_input_raw, 
+    test = test_input_raw,
+    cl = train_output,
+    k = n)  
+  resultado_basico$precision[n] <- mean(pred_temp == test_output)
+  }
+
+k_optimo_basico <- resultado_basico$k[which.max(resultado_basico$precision)]
+
+pred_knn_basico_opt <- knn(
+  train = train_input_raw,
+  test = test_input_raw,
+  cl = train_output,
+  k = k_optimo_basico
+)
+
+confusionMatrix(pred_knn_basico_opt, test_output, positive = "No_paga")
+
+ggplot(resultado_basico, aes(x = k, y = precision)) +
+  geom_line(color = "darkred", linewidth = 1.2) +
+  geom_point() +
+  geom_vline(xintercept = k_optimo_basico, linetype = "dashed", color = "gray50") +
+  labs(
+    title = "Precisión vs. Vecinos (KNN Básico SIN ESCALAR)",
+    x = "Número de vecinos (K)", y = "Precisión"
+  ) +
+  theme_minimal()
 
 # Entrenamiento del modelo con caret
 
@@ -102,7 +142,7 @@ modelo_knn <- train(
   trControl = ctrl,
   preProcess = c("center", "scale"),
   tuneLength = 20
-)
+)## revisar que hace cada codigo
 
 #  Resultados del modelo
 
@@ -133,32 +173,13 @@ abline(a = 0, b = 1, lty = 2, col = "gray")
 
 
 
-ggplot(lending_base %>% filter(ingreso <= 300000), aes(x = ingreso)) +
-  geom_histogram(
-    bins = 40,
-    fill = "#26A69A",     # verde-azulado
-    color = "white",
-    alpha = 0.9
-  ) +
-  scale_x_continuous(
-    labels = dollar_format(prefix = "$", big.mark = ",", decimals = 0),
-    breaks = seq(0, 300000, 50000)
-  ) +
-  labs(
-    title = "Distribución del ingreso (sin valores extremos)",
-    subtitle = "La mayoría de los clientes tienen ingresos menores a $200,000 USD",
-    x = "Ingreso del solicitante (USD)",
-    y = "Frecuencia"
-  ) +tema
-
-
 # MODELO LOGIT 
 
 # Entrenamiento del modelo Logit
 
 fit_logit <- glm(
   estado_pago ~ ingreso + relacion_deuda_ingreso + monto_prestamo +
-    puntaje_fico + experiencia_lc + años_empleo,
+    puntaje_fico + años_empleo,
   data = train,
   family = binomial()
 )
@@ -180,7 +201,6 @@ confusionMatrix(pred_clase, test$estado_pago, positive = "No_paga")
 
 
 # Cálculo del umbral óptimo (Índice de Youden)
-# -----------------------------------------------
 
 roc_logit <- roc(response = test$estado_pago,
                  predictor = p_hat,
