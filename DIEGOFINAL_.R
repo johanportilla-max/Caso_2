@@ -3,11 +3,56 @@
 library(dplyr)
 library(tidyr)
 library(readr)
-
-# cargar una sola vez
+library(readr)
+library(tidyverse)
+library(class)
+library(caret)
+library(pROC)
+library(ggthemes)
+library(lubridate)
 lending_raw <- read_csv("LC_loans_granting_model_dataset.csv", guess_max = 20000)
 
-# (asumo ya creaste lending_base_final)
+lending_baseD<- lending_raw %>%
+  select(
+    revenue, dti_n, loan_amnt, fico_n, emp_length, Default, 
+    purpose   ) %>%
+  rename(
+    ingreso = revenue, relacion_deuda_ingreso = dti_n,
+    monto_prestamo = loan_amnt, puntaje_fico = fico_n,
+    años_empleo = emp_length, estado_pago = Default,
+    proposito = purpose
+  ) %>%
+  mutate(
+    años_empleo = case_when(
+      str_detect(años_empleo, "10") ~ 10, str_detect(años_empleo, "9") ~ 9,
+      str_detect(años_empleo, "8") ~ 8, str_detect(años_empleo, "7") ~ 7,
+      str_detect(años_empleo, "6") ~ 6, str_detect(años_empleo, "5") ~ 5,
+      str_detect(años_empleo, "4") ~ 4, str_detect(años_empleo, "3") ~ 3,
+      str_detect(años_empleo, "2") ~ 2, str_detect(años_empleo, "1") ~ 1,
+      str_detect(años_empleo, "less") ~ 0, TRUE ~ NA_real_),
+    años_empleo = as.numeric(años_empleo)
+  ) %>%  mutate(
+    proposito = as.factor(proposito), 
+    proposito_agrupado = fct_collapse(proposito,
+                                      Consolidacion = c("debt_consolidation", "credit_card"), 
+                                      Casa_Vehiculo = c("home_improvement", "major_purchase", "car", "house"),
+                                      Negocio_Estudio = c("small_business", "educational"))) %>%
+  mutate(proposito_agrupado = fct_other(proposito_agrupado, 
+                                        keep = c("Consolidacion", "Casa_Vehiculo", "Negocio_Estudio"),
+                                        other_level = "Otros")) %>%  mutate(
+                                          estado_pago = fct_recode(as.factor(estado_pago), "Paga" = "0", "No_paga" = "1")
+                                        ) %>%select(-proposito)
+
+
+# Filtro de Outliers (Límites: ingreso <= 250k, DTI <= 50)
+lending_baseD <- lending_baseD  %>%
+  filter(ingreso <= 250000) %>% 
+  filter(relacion_deuda_ingreso <= 50) 
+
+# Eliminar NAs
+lending_base_final <- na.omit(lending_baseD)
+
+##resumen
 resumen_general <- lending_base_final %>%
   select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico, años_empleo) %>%
   summarise_all(list(
@@ -24,7 +69,6 @@ resumen_general <- lending_base_final %>%
     names_pattern = "^(.*)_(n|media|mediana|sd|minimo|maximo)$"
   )
 
-# revisar
 print(resumen_general)
 ###############################################
 ## tabla estado de pago
@@ -43,7 +87,7 @@ tabla_por_estado <- lending_base_final %>%
 print(tabla_por_estado)
 
 # Tablas de frecuencia
-tabla_estado <- table(lending_base$estado_pago)
+tabla_estado <- table(lending_base_final$estado_pago)
 prop_estado  <- prop.table(tabla_estado) * 100
 print("Tabla de frecuencia - estado_pago:")
 print(tabla_estado)
@@ -51,7 +95,7 @@ print("Porcentajes:")
 print(round(prop_estado, 2))
 
 
-# Boxplot del puntaje FICO por estado de pago
+# Boxplot del puntajefico por estado de pago
 p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
   geom_boxplot() +
   labs(title = "Puntaje FICO por estado de pago", x = "Estado de pago", y = "Puntaje FICO") +
@@ -94,7 +138,7 @@ print(p1)
 col_paga <- "#2b8cbe"
 col_nopaga <- "#de2d26"
 
-# 1) Histograma Ingreso (estético)
+# Histograma Ingreso (estético)
 p_ingreso <- ggplot(lending_base_final, aes(x = ingreso)) +
   geom_histogram(binwidth = 5000, fill = "#4c72b0", color = "white") +
   geom_vline(xintercept = median(lending_base_final$ingreso, na.rm = TRUE),
@@ -106,9 +150,8 @@ p_ingreso <- ggplot(lending_base_final, aes(x = ingreso)) +
   labs(title = "Distribución de ingreso", subtitle = "Histograma (binwidth = 5k)", x = "Ingreso", y = "Cuenta") +
   theme_minimal(base_size = 13)
 print(p_ingreso)
-ggsave("ingreso_histograma.png", p_ingreso, width = 10, height = 4.5, dpi = 300)
 
-# 2) Histograma FICO (estético)
+#Histograma FICO (estético)
 p_fico <- ggplot(lending_base_final, aes(x = puntaje_fico)) +
   geom_histogram(binwidth = 5, fill = "#3182bd", color = "white") +
   geom_vline(xintercept = median(lending_base_final$puntaje_fico, na.rm = TRUE),
@@ -121,11 +164,7 @@ p_fico <- ggplot(lending_base_final, aes(x = puntaje_fico)) +
        x = "Puntaje FICO", y = "Cuenta") +
   theme_minimal(base_size = 13)
 print(p_fico)
-ggsave("fico_histograma.png", p_fico, width = 10, height = 4.5, dpi = 300)
 
-# Interactivo FICO
-p_fico_int <- ggplotly(p_fico)
-htmlwidgets::saveWidget(as_widget(p_fico_int), "fico_histograma_interactivo.html")
 
 # Densidad FICO por estado 
 p_fico_dens <- ggplot(lending_base_final, aes(x = puntaje_fico, fill = estado_pago, color = estado_pago)) +
@@ -161,9 +200,74 @@ tabla_bins <- lending_base_final %>%
 
 print(tabla_bins)
 
+#violin
+ggplot(lending_base_final, aes(x = estado_pago, y = ingreso, fill = estado_pago)) +
+  geom_violin(trim = TRUE, alpha = 0.6) +
+  scale_fill_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ",")) +
+  labs(
+    title = "Distribución de ingreso por estado de pago",
+    subtitle = "Gráfico de violín (densidad y dispersión)",
+    x = "Estado de pago",
+    y = "Ingreso (USD)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none")
 
 
+##mapa calor correlacion
+library(ggcorrplot)
 
+num_vars <- lending_base_final %>%
+  select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico)
+
+cor_mat <- cor(num_vars, use = "complete.obs")
+
+ggcorrplot(cor_mat,
+           lab = TRUE, 
+           lab_size = 3,
+           colors = c("#de425b", "white", "#2ca25f"),
+           title = "Matriz de correlaciones entre variables numéricas",
+           outline.col = "white")
+
+##mapa calor densidad de prestamos x ingreso
+ggplot(lending_base_final, aes(x = ingreso, y = monto_prestamo)) +
+  geom_bin2d(bins = 60) +
+  scale_fill_gradient(low = "#fee8c8", high = "#e34a33") +
+  scale_x_continuous(labels = scales::dollar_format(prefix = "$")) +
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$")) +
+  labs(
+    title = "Densidad de préstamos según ingreso y monto",
+    subtitle = "Más oscuro = más concentrado",
+    x = "Ingreso",
+    y = "Monto del préstamo"
+  ) +
+  theme_minimal(base_size = 13)
+
+##para que prestamo fico vs densidad
+ggplot(lending_base_final, aes(x = puntaje_fico, fill = estado_pago)) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(~ proposito_agrupado, ncol = 2) +
+  scale_fill_manual(values = c("Paga" = "#4daf4a", "No_paga" = "#e41a1c")) +
+  labs(
+    title = "Distribución del puntaje FICO por propósito y estado de pago",
+    x = "Puntaje FICO",
+    y = "Densidad"
+  ) +
+  theme_minimal(base_size = 12)
+
+#FICO vs DTI
+ggplot(lending_base_final, aes(x = puntaje_fico, y = relacion_deuda_ingreso, color = estado_pago)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed", color = "black") +
+  scale_color_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
+  labs(
+    title = "Relación entre puntaje FICO y relación deuda/ingreso",
+    subtitle = "Con línea de tendencia lineal",
+    x = "Puntaje FICO",
+    y = "Relación deuda/ingreso (%)"
+  ) +
+  theme_minimal(base_size = 13)
 
 
 
