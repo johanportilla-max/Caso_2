@@ -342,22 +342,48 @@ p_fico_dti
 
 
 ```{r montovsingresos}
+corr_val <- cor(lending_base$ingreso, lending_base$monto_prestamo, use = "complete.obs")
+
 p_monto <- ggplot(lending_base, aes(x = ingreso, y = monto_prestamo)) +
-geom_point(aes(color = estado_pago),
-alpha = 0.5, size = 1.8) +
-geom_smooth(method = "loess", se = TRUE,
-color = "#1b4332", fill = "#95d5b2", size = 1) +
-scale_x_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
-scale_y_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
-scale_color_manual(values = c("Paga" = "#74c69d", "No_paga" = "#e63946")) +
-labs(
-title = "Relación entre ingreso y monto del préstamo",
-x = "Ingreso del solicitante (USD)",
-y = "Monto del préstamo (USD)",
-color = "Estado de pago"
-) +
-tema +
-theme(legend.position = "bottom")
+  geom_point(aes(color = estado_pago),
+             alpha = 0.35, size = 1.4) +
+  geom_smooth(
+    method = "gam",
+    formula = y ~ s(x, bs = "cs"),
+    color = "#264653",
+    fill = "#a8dadc",
+    size = 1,
+    se = TRUE
+  ) +
+  scale_x_continuous(
+    labels = dollar_format(prefix = "$", big.mark = ","),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  scale_y_continuous(
+    labels = dollar_format(prefix = "$", big.mark = ","),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  scale_color_manual(
+    values = c("Paga" = "#2a9d8f", "No_paga" = "#e76f51"),
+    name = "Estado de pago"
+  ) +
+  labs(
+    title = "Relación entre ingreso y monto del préstamo",
+     round(corr_val, 2)),
+    x = "Ingreso del solicitante (USD)",
+    y = "Monto del préstamo (USD)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", color = "#1d3557"),
+    plot.subtitle = element_text(color = "#457b9d"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(color = "gray90"),
+    plot.margin = margin(10, 15, 10, 15)
+  )
+
 p_monto
 ```
 
