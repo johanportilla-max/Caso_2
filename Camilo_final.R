@@ -1,3 +1,5 @@
+library(dplyr)
+library(tidyr)
 library(readr)
 library(tidyverse)
 library(class)
@@ -5,6 +7,13 @@ library(caret)
 library(pROC)
 library(ggthemes)
 library(lubridate)
+library(kableExtra)
+library(knitr)
+library(ggcorrplot)
+library(scales)
+library(gridExtra)
+library(grid)
+library(ggplotify)
 
 # Base de Datos
 
@@ -157,3 +166,165 @@ confusionMatrix(pred_clase_logit, test_logit$estado_pago, positive = "No_paga")
 
 auc_val <- auc(roc_logit)
 plot(roc_logit, main = sprintf("ROC Logit | AUC = %.3f | Umbral = %.3f", auc_val, umbral))
+
+
+########
+clases <- lending_base %>%
+  group_by(estado_pago) %>%
+  summarise(
+    N_observaciones = n(),
+    Porcentaje = round(100 * n() / nrow(lending_base), 2),
+    .groups = 'drop'
+  )
+tabla_clases=clases %>%
+  kbl(
+    caption = "Tabla 1. Distribución de clases antes del balanceo",
+    align = c("l", "r", "r"),
+    col.names = c("Estado de pago", "N observaciones", "Porcentaje (%)")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3.5cm") %>%
+  column_spec(2:3, width = "3cm") %>%
+  footnote(
+    general = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+tabla_clases
+
+
+tema <- theme_minimal() +
+  theme(
+    text = element_text(family = "Segoe UI", color = "#2d3748"),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5, color = "#323130"),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#605e5c", margin = margin(b = 15)),
+    plot.caption = element_text(size = 10, color = "#605e5c", hjust = 0),
+    panel.grid.major = element_line(color = "#f3f2f1"),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    axis.title = element_text(face = "bold", color = "#323130"),
+    axis.text = element_text(color = "#605e5c"),
+    legend.position = "none"
+  )
+### class
+
+Grafico_precision <- ggplot(resultado, aes(x = k, y = precision)) +
+  geom_line(color = "#1a5276", linewidth = 1.1) +
+  geom_point(aes(color = precision), size = 2.5, alpha = 0.8) +
+  scale_color_gradient(
+    low = "#aed6f1",
+    high = "#1a5276",
+    name = "Precisión",
+    labels = percent_format(accuracy = 1)
+  ) +
+  geom_vline(xintercept = k_optimo, color = "#c0392b", linetype = "dashed", linewidth = 1) +
+  annotate("text", x = k_optimo, y = max(resultado$precision),
+           label = paste("k óptimo =", k_optimo),
+           color = "#c0392b", hjust = -0.1, vjust = -1, size = 3.8, fontface = "bold") +
+  labs(
+    title = "Figura 2. Precisión del modelo KNN según número de vecinos (k)",
+    subtitle = "El valor óptimo de k maximiza la precisión de clasificación en el conjunto de prueba",
+    x = "Número de vecinos (k)",
+    y = "Precisión",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)"
+  ) +
+  tema +
+  theme(
+    text = element_text(family = "sans"),
+    plot.title = element_text(face = "bold", size = 15, hjust = 0.5, color = "#2c3e50"),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "#34495e"),
+    plot.caption = element_text(size = 9, color = "#7f8c8d", hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 11, color = "#2c3e50"),
+    legend.position = "bottom"
+  )
+
+
+print(Grafico_precision)
+
+
+### confu
+
+
+
+cm <- confusionMatrix(pred_knn, test_output, positive = "No_paga")
+
+matriz <- as.data.frame(cm$table)
+colnames(matriz) <- c("Predicción", "Real", "Frecuencia")
+
+tabla_conf <- matriz %>%
+  kbl(
+    caption = "Matriz de Confusión del Modelo KNN (class)",
+    col.names = c("Predicción", "Real", "Frecuencia"),
+    align = "c"
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#1a5276", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2:3, width = "3cm")
+
+metricas_knn <- data.frame(
+  Métrica = c(
+    "Precisión (Accuracy)",
+    "Kappa",
+    "Sensibilidad (Recall)",
+    "Especificidad", 
+    "Precisión (Precision)",
+    "Valor Predictivo Negativo",
+    "Precisión Balanceada"
+  ),
+  Valor = c(
+    round(cm$overall["Accuracy"], 4),
+    round(cm$overall["Kappa"], 4),
+    round(cm$byClass["Sensitivity"], 4),
+    round(cm$byClass["Specificity"], 4),
+    round(cm$byClass["Pos Pred Value"], 4),
+    round(cm$byClass["Neg Pred Value"], 4),
+    round(cm$byClass["Balanced Accuracy"], 4)
+  ),
+  Descripción = c(
+    "Proporción total de predicciones correctas",
+    "Acuerdo entre real y predicho, ajustado por azar",
+    "Capacidad de identificar correctamente 'No_paga'",
+    "Capacidad de identificar correctamente 'Paga'",
+    "Probabilidad de que 'No_paga' predicho sea correcto",
+    "Probabilidad de que 'Paga' predicho sea correcto",
+    "Promedio entre sensibilidad y especificidad"
+  )
+)
+
+tabla_metricas <- metricas_knn %>%
+  kbl(
+    caption = "Métricas de Desempeño del Modelo KNN",
+    align = "c",
+    col.names = c("Métrica", "Valor", "Descripción")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#1a5276", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2, width = "2cm") %>%
+  column_spec(3, width = "6cm") %>%
+  footnote(
+    general = "Clase positiva: 'No_paga'",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+tabla_conf
+tabla_metricas
