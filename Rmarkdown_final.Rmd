@@ -59,6 +59,7 @@ tema <- theme_minimal() +
     legend.position = "none"
   )
 ```
+
 ```{r carga_datos, include=FALSE}
 # Chunk 3: Carga y preprocesamiento de datos
 lending_raw <- read_csv("LC_loans_granting_model_dataset.csv", guess_max = 20000)
