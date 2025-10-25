@@ -256,7 +256,7 @@ ggplot(lending_base_final, aes(x = puntaje_fico, fill = estado_pago)) +
   ) +
   theme_minimal(base_size = 12)
 
-#FICO vs DTI
+#FICO vs DTIs
 ggplot(lending_base_final, aes(x = puntaje_fico, y = relacion_deuda_ingreso, color = estado_pago)) +
   geom_point(alpha = 0.3) +
   geom_smooth(method = "lm", se = FALSE, linetype = "dashed", color = "black") +
