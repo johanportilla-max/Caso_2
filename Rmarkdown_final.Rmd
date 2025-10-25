@@ -25,6 +25,9 @@ output:
 ## Preparación y limpieza de datos 
 # Análisis descriptivo
 
+```{r tabla_resumen, include=FALSE}
+
+```
 
 
 ## Distribución de las variables principales
