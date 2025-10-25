@@ -24,7 +24,7 @@ output:
 
 ## Preparación y limpieza de datos 
 # Análisis descriptivo
-```{r sep, include=FALSE}
+```{r sep, echo = FALSE, warning = FALSE, message = FALSE}
 
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(dplyr)
@@ -43,7 +43,7 @@ library(scales)
 ```
 
 
-```{r tema2, include=FALSE}
+```{r tema2, echo = FALSE, warning = FALSE, message = FALSE}
 tema <- theme_minimal() +
   theme(
     text = element_text(family = "Segoe UI", color = "#2d3748"),
@@ -60,8 +60,7 @@ tema <- theme_minimal() +
   )
 ```
 
-```{r carga_datos, include=FALSE}
-# Chunk 3: Carga y preprocesamiento de datos
+```{r carga_datos, echo = FALSE, warning = FALSE, message = FALSE}
 lending_raw <- read_csv("LC_loans_granting_model_dataset.csv", guess_max = 20000)
 
 lending_base <- lending_raw %>%
@@ -93,13 +92,12 @@ lending_base <- lending_raw %>%
   ) %>%
   select(-proposito)
 
-# Filtro de outliers y eliminación de NAs
 lending_base <- lending_base %>%
   filter(ingreso <= 250000, relacion_deuda_ingreso <= 50) %>%
   drop_na()
 ```
 
-```{r resumen_general, include=FALSE}
+```{r resumen_general, echo = FALSE, warning = FALSE, message = FALSE}
 
 resumen_general <- lending_base %>%
   select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico) %>%
@@ -117,26 +115,251 @@ resumen_general <- lending_base %>%
     names_pattern = "^(.*)_(n|media|mediana|sd|minimo|maximo)$"
   )
 ```
-
-```{r tabla_resumen, include=FALSE}
+titulo1
+Introducción general del dataset
+```{r tabla_resumen }
 
 tabla_resumen = resumen_general %>%
-  kable("html", caption = "Resumen de variables principales",
-        col.names = c("Variable", "N", "Media", "Mediana", "Desviación estándar", "Mínimo", "Máximo"),
-        align = "c") %>%
-  kable_styling(bootstrap_options = c("striped","hover","condensed","responsive"),
-                full_width = FALSE, position = "center") %>%
-  column_spec(1, bold = TRUE, background = "skyblue", color = "black") %>%
-  row_spec(0, background = "skyblue", color = "black") %>%
-  footnote(general = "Datos de préstamos Lending Club",
-           number = c("Montos en dólares", "Variables numéricas seleccionadas"),
-           alphabet = c("Valores procesados y filtrados."),
-           symbol = c("Tabla resumen de variables."))
+  select(-n) %>%  
+  kable(
+    format = "html",
+    col.names = c("Variable", "Media", "Mediana", "Desv. Estándar", "Mínimo", "Máximo"),
+    align = c('l', 'r', 'r', 'r', 'r', 'r'),
+    caption = "Tabla 1: Estadísticas Descriptivas de las Variables Principales del Dataset de Préstamos"
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2, width = "2cm") %>%
+  column_spec(3, width = "2cm") %>%
+  column_spec(4, width = "2.5cm") %>%
+  column_spec(5, width = "2cm") %>%
+  column_spec(6, width = "2cm") %>%
+  footnote(
+    general = "Fuente: Elaboración propia con base en datos de Lending Club",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
 
 tabla_resumen
 ```
+palabras sobre la tabla 
 
 
+```{r tabla_frecuencias}
+
+tabla_estado <- as.data.frame(table(lending_base$estado_pago))
+colnames(tabla_estado) <- c("estado_pago", "n")
+tabla_estado$porcentaje <- round(prop.table(tabla_estado$n) * 100, 2)
+
+tabla_estado %>%
+  kbl(
+    caption = "Tabla 2: Distribución de Frecuencias por Estado de Pago",
+    align = c("l", "r", "r"),
+    col.names = c("Estado Pago", "Frecuencia", "Porcentaje (%)")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2:3, width = "2.5cm") %>%
+  footnote(
+    general = "Fuente: Elaboración propia con base en datos de Lending Club",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+```
+hablar sobre tabla 2
+
+titulo2
+Distribución individual de variables numéricas
+
+
+
+```{r p1}
+library(plotly)
+
+p1 <- ggplot(lending_base, aes(x = ingreso)) +
+  geom_histogram(binwidth = 5000,
+                 fill = "#2b6cb0",
+                 color = "white",
+                 alpha = 0.8) +
+  geom_vline(xintercept = median(lending_base$ingreso, na.rm = TRUE),
+             color = "red", linetype = "dashed", size = 0.9) +
+  scale_x_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ",")) +
+  scale_y_continuous(labels = scales::comma_format()) +
+  labs(
+    title = "Histograma de ingreso (mediana en rojo)",
+    x = "Ingreso",
+    y = "Frecuencia"
+  ) +
+  tema
+p1
+
+```
+
+
+
+comentario histograma
+
+
+```{r pdti}
+p_dti <- ggplot(lending_base, aes(x = relacion_deuda_ingreso)) +
+  geom_density(fill = "#2a9d8f",       
+               color = "#1b4d47",      
+               alpha = 0.4,
+               size = 1.1) +
+  geom_vline(aes(xintercept = median(relacion_deuda_ingreso, na.rm = TRUE)),
+             color = "red", linetype = "dashed", size = 0.9) +
+  scale_x_continuous(labels = scales::percent_format(scale = 1)) +
+  scale_y_continuous(labels = scales::comma_format()) +
+  labs(
+    title = "Distribución de la relación deuda/ingreso",
+    x = "Relación deuda/ingreso (%)",
+    y = "Densidad"
+  ) +
+  tema
+
+p_dti
+
+
+```
+
+
+comentario distribucion
+
+```{r fico}
+p_fico <- ggplot(lending_base, aes(x = puntaje_fico)) +
+  geom_density(
+    bw = 15,                # suaviza la curva (ajusta entre 10–25 según tus datos)
+    fill = "#52b788",       # verde más elegante
+    color = "#1b4332",      # borde oscuro
+    alpha = 0.8,
+    size = 1.1
+  ) +
+  geom_vline(
+    xintercept = median(lending_base$puntaje_fico, na.rm = TRUE),
+    color = "#e63946", linetype = "dashed", size = 1
+  ) +
+  scale_x_continuous(
+    breaks = seq(600, 850, 25),
+    limits = c(600, 850)
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.05)),
+    labels = scales::comma_format()
+  ) +
+  labs(
+    title = "Distribución del puntaje FICO",
+    x = "Puntaje FICO",
+    y = "Densidad"
+  ) +
+  tema +
+  theme(
+    plot.title = element_text(face = "bold", size = 14, color = "#1b4332"),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    panel.grid.minor = element_blank()
+  )
+
+p_fico
+
+
+```
+
+
+comentario fico
+
+
+
+```{r p_monto}
+p_monto_hist <- ggplot(lending_base, aes(x = monto_prestamo)) +
+  geom_histogram(binwidth = 1000,
+                 fill = "#2a9d8f",  
+                 color = "white",
+                 alpha = 0.9) +
+  geom_vline(aes(xintercept = median(monto_prestamo, na.rm = TRUE)),
+             color = "red", linetype = "dashed", size = 0.9) +
+  scale_x_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
+  scale_y_continuous(labels = comma_format()) +
+  labs(
+    title = "Distribución del monto del préstamo (mediana en rojo)",
+    x = "Monto del préstamo (USD)",
+    y = "Frecuencia"
+  ) +
+  tema
+p_monto_hist
+
+```
+
+comentario monto
+
+titulo3
+Comparación entre clases (Paga vs No_paga)
+
+```{r fico_dti_simplificado}
+
+set.seed(123)
+
+sample_plot <- lending_base %>% sample_n(min(8000, nrow(.)))
+
+p_fico_dti <- ggplot(sample_plot, aes(x = puntaje_fico, y = relacion_deuda_ingreso)) +
+  geom_smooth(
+    method = "loess",
+    se = TRUE,
+    color = "#1b4332",
+    fill = "#95d5b2",
+    linewidth = 1.2,
+    alpha = 0.3
+  ) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  scale_x_continuous(breaks = seq(600, 850, 25)) +
+  labs(
+    title = "Relación entre puntaje FICO y relación deuda/ingreso",
+    
+    x = "Puntaje FICO",
+    y = "Relación deuda/ingreso (%)"
+  ) +
+  tema +
+  theme(
+    legend.position = "none",
+    plot.subtitle = element_text(size = 11, color = "#555"),
+    panel.grid.minor = element_blank()
+  )
+
+p_fico_dti
+
+```
+
+
+```{r montovsingresos}
+p_monto <- ggplot(lending_base, aes(x = ingreso, y = monto_prestamo)) +
+geom_point(aes(color = estado_pago),
+alpha = 0.5, size = 1.8) +
+geom_smooth(method = "loess", se = TRUE,
+color = "#1b4332", fill = "#95d5b2", size = 1) +
+scale_x_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
+scale_y_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
+scale_color_manual(values = c("Paga" = "#74c69d", "No_paga" = "#e63946")) +
+labs(
+title = "Relación entre ingreso y monto del préstamo",
+x = "Ingreso del solicitante (USD)",
+y = "Monto del préstamo (USD)",
+color = "Estado de pago"
+) +
+tema +
+theme(legend.position = "bottom")
+p_monto
+```
 
 ## Distribución de las variables principales
 ## Caracterización de las clases
