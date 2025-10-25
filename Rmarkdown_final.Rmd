@@ -99,7 +99,7 @@ lending_base <- lending_base %>%
 ```
 
 ```{r resumen_general, include=FALSE}
-# Chunk 4: Resumen general de variables
+
 resumen_general <- lending_base %>%
   select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico) %>%
   summarise_all(list(
@@ -118,7 +118,7 @@ resumen_general <- lending_base %>%
 ```
 
 ```{r tabla_resumen, include=FALSE}
-# Chunk 5: Tabla resumen con estilo
+
 tabla_resumen = resumen_general %>%
   kable("html", caption = "Resumen de variables principales",
         col.names = c("Variable", "N", "Media", "Mediana", "Desviación estándar", "Mínimo", "Máximo"),
