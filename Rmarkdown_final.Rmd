@@ -24,10 +24,117 @@ output:
 
 ## Preparación y limpieza de datos 
 # Análisis descriptivo
+```{r sep, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(tidyverse)
+library(class)
+library(caret)
+library(pROC)
+library(ggthemes)
+library(lubridate)
+library(kableExtra)
+library(knitr)
+library(ggcorrplot)
+library(scales)
+```
+
+
+```{r tema2, include=FALSE}
+tema <- theme_minimal() +
+  theme(
+    text = element_text(family = "Segoe UI", color = "#2d3748"),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5, color = "#323130"),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "#605e5c", margin = margin(b = 15)),
+    plot.caption = element_text(size = 10, color = "#605e5c", hjust = 0),
+    panel.grid.major = element_line(color = "#f3f2f1"),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    axis.title = element_text(face = "bold", color = "#323130"),
+    axis.text = element_text(color = "#605e5c"),
+    legend.position = "none"
+  )
+```
+```{r carga_datos, include=FALSE}
+# Chunk 3: Carga y preprocesamiento de datos
+lending_raw <- read_csv("LC_loans_granting_model_dataset.csv", guess_max = 20000)
+
+lending_base <- lending_raw %>%
+  select(revenue, dti_n, loan_amnt, fico_n, Default, purpose, issue_d) %>%
+  rename(
+    ingreso = revenue,
+    relacion_deuda_ingreso = dti_n,
+    monto_prestamo = loan_amnt,
+    puntaje_fico = fico_n,
+    estado_pago = Default,
+    proposito = purpose
+  ) %>%
+  mutate(
+    fecha_emision = parse_date_time(issue_d, orders = "b-Y", locale = "en_US"),
+    Año = year(fecha_emision),
+    proposito = as.factor(proposito),
+    proposito_agrupado = fct_collapse(
+      proposito,
+      Consolidacion = c("debt_consolidation", "credit_card"),
+      Casa_Vehiculo = c("home_improvement", "major_purchase", "car", "house"),
+      Negocio_Estudio = c("small_business", "educational")
+    ),
+    proposito_agrupado = fct_other(
+      proposito_agrupado,
+      keep = c("Consolidacion", "Casa_Vehiculo", "Negocio_Estudio"),
+      other_level = "Otros"
+    ),
+    estado_pago = fct_recode(as.factor(estado_pago), "Paga" = "0", "No_paga" = "1")
+  ) %>%
+  select(-proposito)
+
+# Filtro de outliers y eliminación de NAs
+lending_base <- lending_base %>%
+  filter(ingreso <= 250000, relacion_deuda_ingreso <= 50) %>%
+  drop_na()
+```
+
+```{r resumen_general, include=FALSE}
+# Chunk 4: Resumen general de variables
+resumen_general <- lending_base %>%
+  select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico) %>%
+  summarise_all(list(
+    n = ~sum(!is.na(.)),
+    media = ~mean(., na.rm = TRUE),
+    mediana = ~median(., na.rm = TRUE),
+    sd = ~sd(., na.rm = TRUE),
+    minimo = ~min(., na.rm = TRUE),
+    maximo = ~max(., na.rm = TRUE)
+  )) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c("variable", ".value"),
+    names_pattern = "^(.*)_(n|media|mediana|sd|minimo|maximo)$"
+  )
+```
 
 ```{r tabla_resumen, include=FALSE}
+# Chunk 5: Tabla resumen con estilo
+tabla_resumen = resumen_general %>%
+  kable("html", caption = "Resumen de variables principales",
+        col.names = c("Variable", "N", "Media", "Mediana", "Desviación estándar", "Mínimo", "Máximo"),
+        align = "c") %>%
+  kable_styling(bootstrap_options = c("striped","hover","condensed","responsive"),
+                full_width = FALSE, position = "center") %>%
+  column_spec(1, bold = TRUE, background = "skyblue", color = "black") %>%
+  row_spec(0, background = "skyblue", color = "black") %>%
+  footnote(general = "Datos de préstamos Lending Club",
+           number = c("Montos en dólares", "Variables numéricas seleccionadas"),
+           alphabet = c("Valores procesados y filtrados."),
+           symbol = c("Tabla resumen de variables."))
 
+tabla_resumen
 ```
+
 
 
 ## Distribución de las variables principales
