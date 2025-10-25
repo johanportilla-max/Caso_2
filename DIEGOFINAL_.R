@@ -10,6 +10,8 @@ library(caret)
 library(pROC)
 library(ggthemes)
 library(lubridate)
+library(kableExtra)
+library(knitr)
 lending_raw <- read_csv("LC_loans_granting_model_dataset.csv", guess_max = 20000)
 
 lending_baseD<- lending_raw %>%
@@ -68,6 +70,24 @@ resumen_general <- lending_base_final %>%
     names_to = c("variable", ".value"),
     names_pattern = "^(.*)_(n|media|mediana|sd|minimo|maximo)$"
   )
+
+
+
+tabla_resumen=resumen_general %>%  kable("html",caption = "Resumen de salarios por rango académico",
+                                         col.names = c("Rango","Promedio","Mediana","Máximo","N"),
+                                         align = "c") %>%
+  kable_styling(bootstrap_options = c("striped","hover","condensed","responsive"),
+                full_width = FALSE, position = "center") %>%
+  column_spec(1,bold = TRUE, background = "skyblue", color = "black") %>%           # varias columnas
+  column_spec(1:2, border_left = TRUE, border_right = TRUE) %>% 
+  row_spec(0:3, extra_css = "border-bottom: 1px solid black;") %>%  #editar filas
+  row_spec(0, background = "skyblue",color = "black") %>% 
+  footnote(general = "Datos de Salaris",
+           number = c("Salario en dolares", "Tiempo en años"),
+           alphabet = c("Valores originales de R."),
+           symbol = c("Tabla recortada a 4 filas."))
+
+tabla_resumen
 
 print(resumen_general)
 ###############################################

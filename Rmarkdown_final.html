@@ -12,7 +12,7 @@
 <meta name="author" content="Barros Rayo Alejandro (2415837), Muñoz Portela Diego Fernando (2415620), Portilla Aguirre Johan Camilo (2422468), Aguirre Aldana Joan Sebastian (2419550)" />
 
 
-<title>Aprendizaje supervisado (KNN y Logit)</title>
+<title>Modelos de Clasificación para Riesgo Crediticio</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1594,7 +1594,8 @@ font-size: 0.95em;
 
 
 
-<h1 class="title toc-ignore">Aprendizaje supervisado (KNN y Logit)</h1>
+<h1 class="title toc-ignore">Modelos de Clasificación para Riesgo
+Crediticio</h1>
 <h4 class="author">Barros Rayo Alejandro (2415837), Muñoz Portela Diego
 Fernando (2415620), Portilla Aguirre Johan Camilo (2422468), Aguirre
 Aldana Joan Sebastian (2419550)</h4>
@@ -1614,10 +1615,26 @@ Aldana Joan Sebastian (2419550)</h4>
 <h2><span class="header-section-number">2.2</span> Definición de
 variables</h2>
 </div>
+<div id="preparación-y-limpieza-de-datos" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> Preparación y
+limpieza de datos</h2>
+</div>
 </div>
 <div id="análisis-descriptivo" class="section level1" number="3">
 <h1><span class="header-section-number">3</span> Análisis
 descriptivo</h1>
+<div id="distribución-de-las-variables-principales" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Distribución de las
+variables principales</h2>
+</div>
+<div id="caracterización-de-las-clases" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Caracterización de
+las clases</h2>
+</div>
+<div id="comportamiento-según-propósito-del-préstamo" class="section level2" number="3.3">
+<h2><span class="header-section-number">3.3</span> Comportamiento según
+propósito del préstamo</h2>
+</div>
 </div>
 <div id="modelos-de-clasificación" class="section level1" number="4">
 <h1><span class="header-section-number">4</span> Modelos de
@@ -1625,12 +1642,74 @@ clasificación</h1>
 <div id="división-de-los-datos" class="section level2" number="4.1">
 <h2><span class="header-section-number">4.1</span> División de los
 datos</h2>
+<p>Para el desarrollo de los modelos de clasificación, se realizó un
+muestreo estratificado balanceado seguido de una partición aleatoria,
+con el objetivo de mitigar el desbalance inherente en el dataset
+original de Lending Club, donde aproximadamente el 82% de las
+observaciones corresponden a préstamos pagados y solo el 18% a
+incumplimientos, lo que podría sesgar los algoritmos hacia la clase
+mayoritaria. Inicialmente, de la base filtrada y limpia
+(“lending_base”), se extrajo una muestra aleatoria de 10,000
+observaciones utilizando sample_n() en R con semilla fija (set.seed(28))
+para reproducibilidad: 5,000 de la clase “Paga” y 5,000 de “No_paga”,
+aplicando undersampling a la clase dominante para igualar las
+proporciones y mejorar la sensibilidad de los modelos en la detección de
+riesgos crediticios. Esta técnica de balanceo es estándar en problemas
+de clasificación binaria desbalanceada, como los de préstamos P2P, ya
+que permite evaluaciones más robustas de métricas como precisión, recall
+y AUC sin requerir oversampling sintético.</p>
+<p>Posteriormente, la muestra balanceada (“lending_muestra”) se dividió
+en subconjuntos de entrenamiento (75% de las observaciones, equivalente
+a 7,500 registros) y prueba (25%, o 2,500 registros), utilizando
+sample() con la misma semilla para mantener la aleatoriedad controlada y
+preservar el equilibrio equitativo entre clases en ambos conjuntos
+(aproximadamente 50% “Paga” y 50% “No_paga”). La proporción 75/25 es una
+convención común en machine learning para clasificación, ya que
+proporciona suficientes datos para el entrenamiento mientras reserva un
+conjunto de prueba independiente para validar el rendimiento
+generalizado, evitando sobreajuste en datasets de riesgo crediticio como
+el de Lending Club. Esta división se implementó mediante índices
+aleatorios (index_entrena e index_test), asegurando que las variables
+predictoras (numéricas y categóricas) se mantuvieran representativas en
+ambos subconjuntos para una evaluación imparcial de los modelos KNN y
+logit.</p>
 </div>
 <div id="modelo-knn" class="section level2" number="4.2">
 <h2><span class="header-section-number">4.2</span> Modelo KNN</h2>
+<p>El modelo K-Nearest Neighbors (KNN) es un algoritmo de aprendizaje
+supervisado no paramétrico, ampliamente utilizado para problemas de
+clasificación, donde predice la clase de un nuevo punto de datos
+basándose en la mayoría de clases de sus k vecinos más cercanos en el
+espacio de características. Este método opera de manera “perezosa”, ya
+que no construye un modelo explícito durante el entrenamiento, sino que
+almacena el conjunto de datos y realiza cálculos de distancia (como la
+euclidiana) solo en el momento de la predicción, lo que lo hace simple e
+intuitivo para capturar patrones locales en los datos.</p>
+<div id="modelo-knn-class" class="section level3" number="4.2.1">
+<h3><span class="header-section-number">4.2.1</span> Modelo KNN
+(class)</h3>
+<p>El modelo KNN fue entrenado utilizando únicamente variables numéricas
+estandarizadas (<code>ingreso</code>,
+<code>relación deuda/ingreso</code>, <code>monto del préstamo</code>, y
+<code>puntaje FICO</code>).<br />
+Se evaluaron diferentes valores de <em>k</em> (número de vecinos)</p>
+</div>
+<div id="modelo-knn-caret" class="section level3" number="4.2.2">
+<h3><span class="header-section-number">4.2.2</span> Modelo KNN
+(caret)</h3>
+</div>
 </div>
 <div id="modelo-logit" class="section level2" number="4.3">
 <h2><span class="header-section-number">4.3</span> Modelo Logit</h2>
+<p>El modelo de regresión logística (logit) es un algoritmo de
+aprendizaje supervisado paramétrico diseñado principalmente para
+clasificación binaria, que estima la probabilidad de que una observación
+pertenezca a una clase específica (por ejemplo, pago o no pago) mediante
+la aplicación de la función sigmoide a una combinación lineal de las
+variables predictoras. A diferencia de la regresión lineal, transforma
+las salidas en valores entre 0 y 1, permitiendo interpretaciones
+probabilísticas y umbrales para decisiones de clasificación, lo que lo
+hace ideal para modelar relaciones no lineales en datos categóricos.</p>
 </div>
 </div>
 <div id="comparación-de-modelos" class="section level1" number="5">
@@ -1642,6 +1721,7 @@ modelos</h1>
 </div>
 <div id="bibliografia" class="section level1" number="7">
 <h1><span class="header-section-number">7</span> Bibliografia</h1>
+<p>rfirawvjbkwbj</p>
 </div>
 
 
