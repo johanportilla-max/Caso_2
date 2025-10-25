@@ -14,9 +14,7 @@ library(knitr)
 library(ggcorrplot)
 library(scales)
 
-# ==========================================
-# Tema personalizado
-# ==========================================
+
 tema <- theme_minimal() +
   theme(
     text = element_text(family = "Segoe UI", color = "#2d3748"),
@@ -72,9 +70,8 @@ lending_base <- lending_base %>%
   filter(ingreso <= 250000, relacion_deuda_ingreso <= 50) %>%
   drop_na()
 
-# ==========================================
 # RESUMEN GENERAL
-# ==========================================
+
 
 resumen_general <- lending_base %>%
   select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico) %>%
@@ -109,9 +106,9 @@ tabla_resumen = resumen_general %>%
 
 tabla_resumen
 
-# ==========================================
+
 # TABLA ESTADO DE PAGO
-# ==========================================
+
 
 tabla_por_estado <- lending_base %>%
   group_by(estado_pago) %>%
@@ -153,9 +150,7 @@ tabla_estado_kable <- tabla_estado %>%
 
 print(tabla_estado_kable)
 
-# ==========================================
-# GRÁFICOS (aplicando tema personalizado)
-# ==========================================
+
 
 # Boxplot FICO por estado
 p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
@@ -166,8 +161,6 @@ print(p_fico_box)
 
 # Ingreso vs Monto préstamo
 
-# 1) Resumen por deciles de ingreso
-# Resumen por deciles de ingreso
 summ_dec <- lending_base %>%
   filter(!is.na(ingreso), !is.na(monto_prestamo), !is.na(estado_pago)) %>%
   mutate(decil = ntile(ingreso, 10)) %>%
@@ -181,7 +174,7 @@ summ_dec <- lending_base %>%
   ) %>%
   arrange(decil)
 
-# Tabla resumida con estilo kable
+# Tabla kable
 tabla_summ_dec <- summ_dec %>%
   mutate(
     ingreso_med = scales::dollar(ingreso_med),
@@ -206,7 +199,7 @@ tabla_summ_dec %>%
   footnote(general = "Resumen agregado por decil",
            number = c("Ingreso y monto en USD", "Tasa No_paga en %"))
 
-# Gráfico 1: Monto mediano por decil (línea + puntos) con tema
+# Monto mediano por decil
 p_monto <- ggplot(summ_dec, aes(x = ingreso_med, y = monto_med)) +
   geom_line(size = 1) +
   geom_point(size = 3) +
@@ -224,7 +217,7 @@ p_monto <- ggplot(summ_dec, aes(x = ingreso_med, y = monto_med)) +
 
 print(p_monto)
 
-# Gráfico 2: Tasa de default por decil (barras) con tema
+#Tasa de default por decil 
 summ_dec <- summ_dec %>% mutate(label_ing = scales::dollar(ingreso_med))
 
 p_tasa <- ggplot(summ_dec, aes(x = factor(decil), y = tasa_no_paga)) +
@@ -256,7 +249,7 @@ cor_mat_round <- round(cor_mat, 2)
 print("Matriz de correlación (redondeada):")
 print(cor_mat_round)
 
-# 2) Tabla estilo kable (HTML) similar a tus tablas anteriores
+# tabla
 library(tibble)
 cor_df <- as.data.frame(cor_mat_round) %>%
   rownames_to_column(var = "Variable")
