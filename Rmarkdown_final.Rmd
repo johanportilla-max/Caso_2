@@ -13,7 +13,6 @@ output:
     number_sections: true
     code_folding: show
 ---
-
 # Introducción
 
 # Metodología
@@ -125,7 +124,11 @@ resumen_general <- lending_base %>%
   )
 ```
 
+<<<<<<< HEAD
 ##Estadísticas descriptivas de las variables principales
+=======
+titulo1 Introducción general del dataset
+>>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r tabla_resumen }
 
@@ -202,6 +205,7 @@ tabla_estado %>%
 
 La Tabla 2 presenta la distribución de los préstamos según el estado de pago, variable cualitativa que clasifica a los deudores en dos grupos: aquellos que cumplen con sus obligaciones (“Paga”) y los que incurren en incumplimiento (“No paga”).
 
+<<<<<<< HEAD
 Los resultados muestran que el 79.89% de los préstamos se encuentran en estado de pago activo o finalizado correctamente, mientras que el 20.11% corresponde a créditos en incumplimiento. Esta proporción indica que la gran mayoría de los prestatarios mantienen un comportamiento de pago responsable, aunque la presencia de una quinta parte de préstamos en mora representa un segmento de riesgo relevante para las entidades crediticias.
 
 El equilibrio entre ambos grupos servirá como base para los análisis posteriores, donde se buscará identificar los factores que explican el incumplimiento y las variables que mejor predicen el riesgo crediticio.
@@ -209,6 +213,9 @@ El equilibrio entre ambos grupos servirá como base para los análisis posterior
 # Distribución individual de variables numéricas
 
 ## Histograma del ingreso
+=======
+titulo2 Distribución individual de variables numéricas
+>>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r p1}
 library(plotly)
@@ -338,6 +345,7 @@ p_monto_hist
 El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000. Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
 Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
 
+<<<<<<< HEAD
 ## puntaje FICO por estado de pago
 
 ```{r ficopagaono}
@@ -401,6 +409,9 @@ Conjuntamente, los boxplots sugieren un patrón coherente: mayor ingreso y mayor
 
 
 ## Relación entre puntaje FICO y relación deuda/ingreso
+=======
+titulo3 Comparación entre clases (Paga vs No_paga)
+>>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r fico_dti_simplificado}
 
@@ -486,6 +497,8 @@ p_monto
 
 El gráfico confirma que el ingreso es un predictor relevante del monto del préstamo —a mayor ingreso, mayor tendencia a recibir montos mayores— pero la relación es moderada y sujeta a límites operativos y a la influencia de otras variables crediticias. Por tanto, las decisiones de crédito deben combinar información de ingreso con medidas de riesgo (DTI, FICO) y restricciones de producto para optimizar la asignación y minimizar el riesgo de default.
 
+<<<<<<< HEAD
+=======
 
 ## 
 
@@ -604,6 +617,7 @@ title = "Matriz de correlaciones entre variables numéricas",
 outline.col = "white"
 ) + tema
 ```
+>>>>>>> 1e9fc8959be2e2a58e046fff433bee4ebe68fbee
 ## Distribución de las variables principales
 
 ## Caracterización de las clases
@@ -869,11 +883,11 @@ En concreto, aunque el modelo muestra una ligera capacidad para mejorar la predi
 
 ### Modelo KNN (caret)
 
-El ajuste y evaluación del modelo KNN usando el paquete caret se realizó con el objetivo de aprovechar un proceso estandarizado y más flexible. A diferencia de la función clásica de class, caret permite incluir tanto variables numéricas como categóricas (conversión automática a variables dummy) y automatiza la validación cruzada, la selección de hiperparámetros y la obtención de métricas clave a través de un solo flujo de trabajo.
+El ajuste y evaluación del modelo KNN usando el paquete caret se realizó con el objetivo de aprovechar un proceso estandarizado y más flexible. A diferencia de la función pasada de class, caret permite incluir tanto variables numéricas como categóricas (conversión automática a variables dummy) y automatiza la validación cruzada, la selección de hiperparámetros y la obtención de métricas clave a través de un solo flujo de trabajo.
 
 Se configuró el control de entrenamiento para usar validación cruzada de 5 pliegues, estimación de probabilidades y optimización según el área bajo la curva ROC. El modelo fue entrenado sobre el conjunto de entrenamiento considerando las variables ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico y proposito_agrupado, permitiendo así una mayor riqueza informativa respecto al modelo anterior.
 
-La función `caret::train()` exploró simultáneamente múltiples valores de k, normalizó las variables e identificó el valor óptimo en función del desempeño en predicción.
+La función `caret::train()` exploró simultáneamente múltiples valores de k (k = 1 a 150), normalizó las variables e identificó el valor óptimo en función del desempeño en predicción.
 
 Una vez seleccionado el modelo KNN óptimo, se obtuvieron predicciones para el conjunto de prueba, junto con las probabilidades estimadas para cada clase.
 
@@ -896,12 +910,15 @@ modelo_knn <- train(
   tuneLength = 150,
   metric = "ROC"
 )
+
+pred_clase_knn <- predict(modelo_knn, newdata = test)
+pred_prob_knn  <- predict(modelo_knn, newdata = test, type = "prob")
+
+roc_knn <- roc(response = test$estado_pago, predictor = pred_prob_knn$No_paga, levels = c("Paga", "No_paga"))
+auc_knn <- round(auc(roc_knn), 4)
 ```
 
-
-El modelo evaluó diferentes configuraciones de vecinos (k = 1 a 150) mediante validación cruzada.
-
-El valor óptimo de k seleccionado por el algoritmo fue `r modelo_knn$bestTune$k`, que alcanzó un AUC promedio de `r round(max(modelo_knn$results$ROC), 3)` durante la validación.
+A continuación, se presenta el gráfico del desempeño (AUC) del modelo para diferentes valores de k, donde se destaca el valor óptimo que maximiza la capacidad discriminativa en validación cruzada.
 
 ```{r AUC_caret}
 ggplot(modelo_knn$results, aes(x = k, y = ROC)) +
@@ -932,6 +949,11 @@ ggplot(modelo_knn$results, aes(x = k, y = ROC)) +
   )
 ```
 
+El valor óptimo encontrado fue 
+k= `r modelo_knn$bestTune$k`, con un AUC promedio en validación cruzada de `r round(max(modelo_knn$results$ROC),3)`, indicando cierta mejora respecto al modelo con class.
+
+Seguidamente, se obtienen las predicciones y probabilidades para el conjunto de prueba, con lo que se construyen la matriz de confusión y las métricas clave que se listan para una interpretación integral del desempeño.
+
 ```{r Con_caret}
 
 cm_caret <- confusionMatrix(pred_knn, test$estado_pago, positive = "No_paga")
@@ -942,13 +964,11 @@ matriz_conf <- matrix(
   nrow = 2, byrow = TRUE,
   dimnames = list(
     "Predicción" = c("Paga", "No_paga"),
-    "Referencia" = c("Paga", "No_paga")
-  )
-)
+    "Referencia" = c("Paga", "No_paga")))
 
 matriz_conf %>%
   kbl(
-    caption = "Tabla 1. Matriz de Confusión del Modelo KNN (caret)",
+    caption = "Matriz de Confusión del Modelo KNN (caret)",
     align = c("c", "c", "c"),
     col.names = c("Paga", "No_paga")
   ) %>%
@@ -965,14 +985,157 @@ matriz_conf %>%
   footnote(
     general = "La matriz muestra las predicciones frente a los valores reales para la clase positiva 'No_paga'.",
     general_title = "Nota:",
+    footnote_as_chunk = TRUE)
+
+cm_caret <- confusionMatrix(pred_clase_knn, test$estado_pago, positive = "No_paga")
+
+acc <- round(cm_caret$overall["Accuracy"], 4)
+acc_ci <- paste0("(", round(cm_caret$overall[["AccuracyLower"]], 4), ", ",
+                 round(cm_caret$overall[["AccuracyUpper"]], 4), ")")
+
+no_info_rate <- round(as.numeric(cm_caret$overall[[3]]), 4)  # Tercera posición de la lista "overall"
+
+p_value_acc <- "<2.2e-16"
+kappa <- round(cm_caret$overall["Kappa"], 4)
+mcnemar <- formatC(as.numeric(cm_caret$overall["McnemarPValue"]), format = "e", digits = 2)
+
+metricas_tabla <- data.frame(
+  Métrica = c(
+    "Accuracy (Exactitud)",
+    "95% CI (Intervalo de Confianza)",
+    "No Information Rate",
+    "P-Value [Acc > NIR]",
+    "Kappa",
+    "Mcnemar's Test P-Value",
+    "Sensitivity",
+    "Specificity",
+    "Pos Pred Value",
+    "Neg Pred Value",
+    "Prevalence",
+    "Detection Rate",
+    "Detection Prevalence",
+    "Balanced Accuracy"
+  ),
+  Valor = c(
+    acc,
+    acc_ci,
+    no_info_rate,  # <-- ya no será NA
+    p_value_acc,
+    kappa,
+    mcnemar,
+    round(cm_caret$byClass["Sensitivity"], 4),
+    round(cm_caret$byClass["Specificity"], 4),
+    round(cm_caret$byClass["Pos Pred Value"], 4),
+    round(cm_caret$byClass["Neg Pred Value"], 4),
+    round(cm_caret$byClass["Prevalence"], 4),
+    round(cm_caret$byClass["Detection Rate"], 4),
+    round(cm_caret$byClass["Detection Prevalence"], 4),
+    round(cm_caret$byClass["Balanced Accuracy"], 4)
+  ),
+  Interpretación = c(
+    "El modelo clasifica correctamente el 59.7% de los préstamos, mostrando una mejora moderada frente al azar.",
+    "El verdadero desempeño del modelo se ubica entre 57.7% y 61.6%, con un nivel de confianza del 95%.",
+    "Un modelo trivial (que siempre predice la clase más frecuente) tendría un acierto del 51%.",
+    "El valor p < 0.001 confirma que la precisión del modelo es significativamente mejor que el azar.",
+    "El valor de Kappa (0.19) indica un acuerdo leve entre predicciones y observaciones reales.",
+    "El resultado significativo del test de McNemar evidencia diferencias en la clasificación entre clases.",
+    "El modelo identifica correctamente el 65.9% de los casos de incumplimiento ('No_paga').",
+    "Detecta correctamente el 53.7% de los casos de pago ('Paga').",
+    "Cuando predice 'No_paga', acierta en el 57.7% de los casos.",
+    "Cuando predice 'Paga', acierta en el 62.2% de los casos.",
+    "El 48.9% de los datos corresponde a la clase 'No_paga'.",
+    "El modelo detecta correctamente el 32.3% de los casos reales de incumplimiento.",
+    "Predice la clase 'No_paga' en el 55.9% de los casos totales.",
+    "Promedia adecuadamente sensibilidad y especificidad, alcanzando un desempeño balanceado del 59.8%."
+  )
+)
+
+metricas_tabla %>%
+  kbl(
+    caption = "Métricas de Evaluación - Modelo KNN (caret)",
+    align = c("l", "c", "l"),
+    col.names = c("Métrica", "Valor", "Interpretación")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3.5cm") %>%
+  column_spec(2, width = "2.5cm") %>%
+  column_spec(3, width = "10cm") %>%
+  footnote(
+    general = "Elaboración propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
     footnote_as_chunk = TRUE
   )
 
 ```
 
+Finalmente, se presenta la curva ROC generada sobre el conjunto de prueba, cuya área bajo la curva (AUC) evalúa la habilidad del modelo para discriminar correctamente entre pagos e incumplimientos, independiente del umbral de decisión empleado.
+
+```{r roc_caret}
+roc_data <- data.frame(
+  specificity = roc_knn$specificities,
+  sensitivity = roc_knn$sensitivities
+) %>%
+  arrange(specificity)
+
+curva_roc_identica <- ggplot(roc_data, aes(x = specificity, y = sensitivity)) +
+  geom_ribbon(aes(ymin = 0, ymax = sensitivity), 
+              fill = "#d1e0f0", alpha = 0.8) +
+  geom_segment(aes(x = 1, y = 0, xend = 0, yend = 1), 
+               color = "grey60", linetype = "dashed", size = 0.7) +
+  geom_line(color = "#1a5276", size = 1.3) +
+  scale_x_reverse(
+    name = "Especificidad",
+    limits = c(1, 0),
+    breaks = seq(1, 0, by = -0.2),
+    expand = c(0.02, 0.02)
+  ) +
+  scale_y_continuous(
+    name = "Sensibilidad",
+    limits = c(0, 1),
+    breaks = seq(0, 1, 0.2),
+    expand = c(0.02, 0.02)
+  ) +
+  labs(
+    title = "Curva ROC del Modelo KNN (caret)",
+    caption = "Fuente: Elaboracion propia con base en resultados del modelo."
+  ) +
+  theme_minimal() + tema +
+  annotate("text", x = 0.3, y = 0.25, 
+           label = paste("AUC =", auc_knn),
+           color = "#1a5276", fontface = "bold", size = 4.5)
+
+print(curva_roc_identica)
+
+```
+
+El modelo KNN implementado con el paquete caret mostró un desempeño moderado, evidenciando una mejora apreciable frente al modelo básico con class. La inclusión de variables categóricas como proposito_agrupado﻿, junto con la optimización automática de hiperparámetros mediante validación cruzada de 5 pliegues, permitió alcanzar una exactitud cercana al 60%, superando al modelo previo en varios puntos porcentuales.
+
+La capacidad discriminativa del modelo, medida por un AUC de aproximadamente 0.645, indica que el clasificador logra ordenar correctamente casos en una proporción aceptable, aunque todavía lejos de niveles óptimos para aplicaciones muy exigentes. Se observa una mejoría relevante en la sensibilidad, con un 66.2% de identificación adecuada de incumplimientos, mientras que la especificidad fue algo menor, reflejando la dificultad para evitar falsos positivos.
+
 ## Modelo Logit
 
-El modelo de regresión logística (logit) es un algoritmo de aprendizaje supervisado paramétrico diseñado principalmente para clasificación binaria, que estima la probabilidad de que una observación pertenezca a una clase específica (por ejemplo, pago o no pago) mediante la aplicación de la función sigmoide a una combinación lineal de las variables predictoras. A diferencia de la regresión lineal, transforma las salidas en valores entre 0 y 1, permitiendo interpretaciones probabilísticas y umbrales para decisiones de clasificación, lo que lo hace ideal para modelar relaciones no lineales en datos categóricos.
+La regresión logística (modelo Logit) es un método de clasificación paramétrico que estima la probabilidad de que una observación pertenezca a una de dos categorías, en función de variables explicativas. A diferencia del KNN, el Logit construye un modelo matemático explícito: el logaritmo del odds (razón de probabilidades) se modela linealmente respecto a los predictores.
+
+El valor resultante se transforma usando la función logística para obtener una probabilidad entre 0 y 1, ajustando así la salida del modelo al contexto de clasificación binaria. Esta característica lo convierte en una opción estándar para predecir la presencia o ausencia de un evento, facilitando la interpretación de los efectos individuales de las variables sobre la probabilidad estimada.
+
+Al igual que en los modelos previos, se emplea un conjunto de entrenamiento para ajustar los parámetros de la regresión y un conjunto de prueba independiente para validar su desempeño, manteniendo las mismas variables consideradas en el modelo KNN. Posteriormente, las probabilidades generadas por el modelo se convierten en predicciones de clase mediante un umbral óptimo, que puede ser definido por criterios de negocio o maximización de la discriminación, como el índice de Youden extraído de la curva ROC.
+
+```{r Logit}
+
+train_logit <- train %>% mutate(default_num = ifelse(estado_pago == "No_paga", 1, 0))
+test_logit <- test %>% mutate(default_num = ifelse(estado_pago == "No_paga", 1, 0))
+
+fit_logit <- glm(default_num ~ ingreso + relacion_deuda_ingreso + monto_prestamo +
+puntaje_fico + proposito_agrupado,
+data = train_logit, family = binomial())
+
+```
 
 # Comparación de modelos
 
@@ -990,6 +1153,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r cars}
+
+
 ```
 
 ```{r pressure, echo=FALSE}
