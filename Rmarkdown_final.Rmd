@@ -478,6 +478,7 @@ for (n in k_vals) {
 }
 
 k_optimo <- resultado$k[which.max(resultado$precision)]
+prec_opt <- max(resultado$precision)
 
 pred_knn <- knn(train = train_input, test =test_input, cl = train_output,
                 k = k_optimo)
@@ -523,9 +524,10 @@ Grafico_precision <- ggplot(resultado, aes(x = k, y = precision)) +
 Grafico_precision
 ```
 
-Luego de analizar la gráfica de precisión para distintos valores de k, se eligió k = `r k_optimo`, que corresponde al punto donde el modelo alcanza su mayor porcentaje de aciertos en la clasificación sobre el conjunto de prueba `r scales::percent(prec_opt, accuracy = 0.1))`. Este valor de k fue utilizado para entrenar el modelo y obtener las métricas de desempeño que se presentan.
+Luego de analizar la gráfica de precisión para distintos valores de k, se eligió k = `r k_optimo`, que corresponde al punto donde el modelo alcanza su mayor porcentaje de aciertos en la clasificación sobre el conjunto de prueba `r scales::percent(prec_opt, accuracy = 0.1)`. Este valor de k fue utilizado para entrenar el modelo y obtener las métricas de desempeño que se presentan.
 
 A continuación, se reportan la matriz de confusión y la tabla de indicadores principales de evaluación para documentar el rendimiento del modelo KNN con este valor de k.
+
 ```{r confucion_class}
 
 cm <- confusionMatrix(pred_knn, test_output, positive = "No_paga")
@@ -562,6 +564,65 @@ matriz_tabla %>%
     general_title = "Nota:",
     footnote_as_chunk = TRUE
   )
+
+metricas_knn <- data.frame(
+  Indicador = c(
+    "Accuracy (Exactitud)",
+    "95% CI",
+    "No Information Rate", 
+    "P-Value [Acc > NIR]",
+    "Kappa",
+    "Mcnemar's Test P-Value",
+    "Sensitivity",
+    "Specificity",
+    "Pos Pred Value",
+    "Neg Pred Value", 
+    "Prevalence",
+    "Detection Rate",
+    "Detection Prevalence",
+    "Balanced Accuracy"
+  ),
+  Descripción = c(
+    "Proporción total de predicciones correctas",
+    "Intervalo de confianza del 95% para exactitud",
+    "Tasa al predecir siempre clase mayoritaria",
+    "Valor p vs tasa no información",
+    "Acuerdo ajustado por azar",
+    "Test de McNemar para diferencias entre clases",
+    "Capacidad detectar 'No_paga' (VP / VP+FN)",
+    "Capacidad detectar 'Paga' (VN / VN+FP)", 
+    "Precisión para clase 'No_paga'",
+    "Precisión para clase 'Paga'",
+    "Proporción real de 'No_paga'",
+    "Tasa de detección de 'No_paga'",
+    "Proporción predicha de 'No_paga'",
+    "Promedio sensibilidad y especificidad"
+  ),
+  Valor = c(
+    "0.5564", "(0.5367, 0.5760)", "0.5104", "2.25e-06", "0.1135", "0.03061",
+    "0.5768", "0.5368", "0.5443", "0.5694", "0.4896", "0.2824", "0.5188", "0.5568"
+  )
+)
+
+tabla_metricas <- metricas_knn %>%
+  kbl(
+    caption = "Métricas de Evaluación - Modelo KNN",
+    align = c("l", "l", "c"),
+    col.names = c("Métrica", "Descripción", "Valor")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 12,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2, width = "6cm") %>%
+  column_spec(3, width = "2cm")
+
+tabla_metricas
+
 
 ```
 
