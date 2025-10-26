@@ -14,63 +14,23 @@ output:
     code_folding: show
 ---
 # Introducción
+
 Una correcta evaluación del riesgo crediticio termina siendo un pilar fundamental en la gestión financiera moderna. Es por esto que en contextos de otorgamiento masivo de préstamos la capacidad para diferenciar con precisión entre solicitantes de bajo y alto riesgo de incumplimiento determina, en gran medida, la sostenibilidad de la cartera y la rentabilidad de la entidad. Los procesos de crédito han evolucionado hacia procedimientos fundamentados en modelos estadísticos y algoritmos de aprendizaje automático, permitiendo decisiones más objetivas, replicables y escalables.
-
 Lending Club es una plataforma de crédito en línea que funciona como un mercado (peer-to-peer) para el otorgamiento de préstamos personales, conectando directamente a solicitantes con inversionistas. Mediante procesos digitales estándar, la plataforma recopila información proporcionada por el solicitante (como lo pueden ser ingresos, propósito del préstamo, puntajes crediticios, entre otros) y emplea reglas y modelos de evaluación de riesgo para decidir la aprobación y las condiciones del préstamo. La disponibilidad pública de historiales de préstamos originados en esta plataforma ha convertido a sus bases de datos en una fuente de referencia para la investigación en scoring crediticio y modelado del incumplimiento, permitiendo analizar patrones de morosidad y evaluar algoritmos de clasificación aplicables a procesos operativos de riesgo.
-
 En este trabajo se emplea esta base de datos pública (Lending Club) como insumo para un ejercicio de clasificación supervisada, cuyo propósito es estimar la probabilidad de incumplimiento de préstamos personales. El análisis toma como referencia solicitudes reales registradas en la plataforma y se centra en información disponible al momento de la decisión crediticia, con el fin de reproducir condiciones operativas reales de otorgamiento. Este enfoque permite estudiar la capacidad predictiva de modelos estadísticos clásicos (regresión logística) frente a algoritmos basados en instancias (KNN), así como evaluar su aplicabilidad práctica en escenarios de scoring crediticio. 
-
 La importancia de clasificar de manera adecuada el riesgo de incumplimiento es múltiple. En primer lugar, reduce la exposición a pérdidas por préstamos morosos y optimiza el balance entre aceptación y rechazo de solicitudes, mejorando la rentabilidad ajustada por riesgo. En segundo lugar, una clasificación robusta contribuye a la inclusión financiera responsable; ya que, al identificar correctamente perfiles de riesgo, las entidades pueden diseñar productos y precios diferenciados que incentiven el acceso al crédito sin comprometer la sostenibilidad. Por último, la transparencia e interpretabilidad de los modelos (especialmente relevante en entornos regulatorios) facilita la auditoría de decisiones y la incorporación de salvaguardas frente a sesgos sistémicos. 
+El presente estudio tuvo como propósito desarrollar y comparar modelos de clasificación supervisada que permitieran predecir el riesgo de incumplimiento en préstamos personales, con el fin de aportar evidencia técnica para la toma de decisiones de crédito basadas en datos.  Desde un punto de vista metodológico general, el estudio adopta el paradigma del aprendizaje supervisado: se ajustan modelos sobre un subconjunto de observaciones con estado conocido (pagado / incumplido) y se evalúa su desempeño en datos independientes. La comparación entre regresión logística y KNN se orienta a contrastar dos aproximaciones distintas: una paramétrica y fácilmente interpretable (logit) frente a una no paramétrica basada en proximidad en el espacio de características (KNN). La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos. Los resultados serán interpretados tanto en términos estadísticos como en implicaciones operativas para la gestión de cartera.
 
-El presente estudio tuvo como propósito desarrollar y comparar modelos de clasificación supervisada que permitieran predecir el riesgo de incumplimiento en préstamos personales, con el fin de aportar evidencia técnica para la toma de decisiones de crédito basadas en datos.  Desde un punto de vista metodológico general, el estudio adopta el paradigma del aprendizaje supervisado: se ajustan modelos sobre un subconjunto de observaciones con estado conocido (pagado / incumplido) y se evalúa su desempeño en datos independientes. La comparación entre regresión logística y KNN se orienta a contrastar dos aproximaciones distintas, una paramétrica y fácilmente interpretable (logit) frente a una no paramétrica basada en proximidad en el espacio de características (KNN). La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos. Los resultados serán interpretados tanto en términos estadísticos como en implicaciones operativas para la gestión de cartera.
 
 # Metodología
 
+## Fuente de datos
 
-## Variables
+## Definición de variables
 
-## Fuente de
-
-```{r resultados_tbl, echo=FALSE, message=FALSE, warning=FALSE} 
-library(knitr) 
-library(kableExtra) 
-# Definimos la tabla con las variables y descripciones 
-variables <- data.frame(
-  Variable = c("estado_pago", "ingreso", "relacion_deuda_ingreso", "monto_prestamo", "puntaje_fico", "proposito_agrupado", "default_num"),
-  Descripción = c(
-    "Variable dependiente que representa el resultado final del crédito.",
-    "Ingreso anual declarado por el solicitante, indicador de capacidad de pago.",
-    "Ratio financiero que mide la carga de endeudamiento frente al ingreso.",
-    "Valor del préstamo solicitado por el cliente.",
-    "Puntaje crediticio que resume el historial de crédito del solicitante.",
-    "Motivo declarado del préstamo, agrupado en categorías mayores.",
-    "Versión numérica de la variable dependiente usada en el modelo Logit." ),
-  Tipo de Variable = c(
-    "Categoría (binaria)",
-    "Numérica continua",
-    "Numérica continua",
-    "Numérica continua",
-    "Numérica continua",
-    "Categoría (agrupada)",
-    "Numérica binaria" 
-    ),
-    
-  Ejemplos / Notas = c( 
-    "Ej: 'pagado', 'impago'",
-    "En dólares anuales", 
-    "Proporción, por ejemplo 0.3", 
-    "En dólares", 
-    "Rango típico 300-850",
-    "Ej: 'vivienda', 'deuda educación', 'personal'",
-    "0 = pagado, 1 = impago" ), check.names = FALSE, stringsAsFactors = FALSE ) 
-# Crear la tabla con kableExtra replicando estilo del informe 
-variables %>% kable("html", escape = FALSE, align = c("l","l","c","l"), col.names = c("Variable", "Descripción", "Tipo de Variable", "Ejemplos / Notas")) %>% kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 14) %>% row_spec(0, background = "#4682B4", color = "white", bold = TRUE) %>% column_spec(1, bold = TRUE) %>% scroll_box(height = "350px") $$ P(\text{default\_num} = 1 \mid \text{ingreso}, \text{relacion\_deuda\_ingreso}, \text{monto\_prestamo}, \text{puntaje\_fico}, \text{proposito\_agrupado}) = \frac{1}{1 + e^{- \left( \beta_0 + \beta_1 \cdot \text{Ingreso} + \beta_2 \cdot \text{Relación Deuda-Ingreso} + \beta_3 \cdot \text{Monto Préstamo} + \beta_4 \cdot \text{Puntaje FICO} + \beta_5 \cdot \text{Propósito Agrupado} \right)}} $$
-```
 ## Preparación y limpieza de datos
 
 # Análisis descriptivo
-## introducción
-El conjunto de datos analizado corresponde a registros de préstamos otorgados por la plataforma Lending Club, e incluye información relevante sobre las características financieras de los solicitantes y el comportamiento de pago asociado a cada crédito. Con el fin de comprender de manera preliminar la composición y variabilidad de las observaciones, se presenta a continuación un resumen de las principales estadísticas descriptivas y la distribución de frecuencias por estado de pago.
 
 ```{r sep, echo = FALSE, warning = FALSE, message = FALSE}
 
@@ -148,8 +108,6 @@ lending_base <- lending_base %>%
   drop_na()
 ```
 
-
-
 ```{r resumen_general, echo = FALSE, warning = FALSE, message = FALSE}
 
 resumen_general <- lending_base %>%
@@ -169,11 +127,7 @@ resumen_general <- lending_base %>%
   )
 ```
 
-<<<<<<< HEAD
-##Estadísticas descriptivas de las variables principales
-=======
 titulo1 Introducción general del dataset
->>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r tabla_resumen }
 
@@ -207,18 +161,7 @@ tabla_resumen = resumen_general %>%
 tabla_resumen
 ```
 
-La Tabla 1 resume las medidas de tendencia central y dispersión de las variables cuantitativas incluidas en el estudio. En promedio, los solicitantes reportan un ingreso anual de USD 73,988, con una mediana de USD 65,000, lo que sugiere una ligera asimetría positiva en la distribución, reflejando la presencia de algunos ingresos excepcionalmente altos que elevan el promedio.
-
-La relación deuda/ingreso presenta una media de 18.4%, indicando que, en promedio, los deudores destinan cerca de una quinta parte de sus ingresos al pago de obligaciones financieras. No obstante, el rango entre 0% y 50% evidencia una amplia heterogeneidad en los niveles de endeudamiento entre los solicitantes.
-
-El monto promedio de los préstamos asciende a USD 14,360, con una desviación estándar de aproximadamente USD 8,645, lo que denota variabilidad significativa en los montos solicitados, posiblemente asociada a diferencias en capacidad de pago o propósito del crédito.
-
-Por su parte, el puntaje FICO, que refleja el historial crediticio de los solicitantes, presenta una media de 697 puntos, situándose dentro de la categoría de “buen crédito”. Su baja desviación estándar (31.7) indica una distribución relativamente concentrada, lo que sugiere que la mayoría de los clientes poseen un perfil crediticio estable.
-
-En conjunto, estas estadísticas evidencian una población de solicitantes con ingresos moderados a altos, niveles de endeudamiento diversos y un comportamiento crediticio predominantemente positivo.
-
-
-## Distribución de frecuencias por estado de pago
+palabras sobre la tabla
 
 ```{r tabla_frecuencias}
 
@@ -248,19 +191,9 @@ tabla_estado %>%
   )
 ```
 
-La Tabla 2 presenta la distribución de los préstamos según el estado de pago, variable cualitativa que clasifica a los deudores en dos grupos: aquellos que cumplen con sus obligaciones (“Paga”) y los que incurren en incumplimiento (“No paga”).
+hablar sobre tabla 2
 
-<<<<<<< HEAD
-Los resultados muestran que el 79.89% de los préstamos se encuentran en estado de pago activo o finalizado correctamente, mientras que el 20.11% corresponde a créditos en incumplimiento. Esta proporción indica que la gran mayoría de los prestatarios mantienen un comportamiento de pago responsable, aunque la presencia de una quinta parte de préstamos en mora representa un segmento de riesgo relevante para las entidades crediticias.
-
-El equilibrio entre ambos grupos servirá como base para los análisis posteriores, donde se buscará identificar los factores que explican el incumplimiento y las variables que mejor predicen el riesgo crediticio.
-
-# Distribución individual de variables numéricas
-
-## Histograma del ingreso
-=======
 titulo2 Distribución individual de variables numéricas
->>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r p1}
 library(plotly)
@@ -284,13 +217,7 @@ p1
 
 ```
 
-La Figura 1 presenta la distribución de la variable ingreso anual de los solicitantes de préstamo. El histograma evidencia una asimetría positiva, donde la mayoría de los individuos reportan ingresos entre USD 40,000 y USD 80,000, mientras que un grupo reducido alcanza valores considerablemente más altos, superiores a los USD 150,000.
-
-La línea roja punteada indica la mediana, ubicada alrededor de USD 65,000, lo cual coincide con la tendencia central observada en la tabla descriptiva. Esta concentración en niveles intermedios de ingreso sugiere que la base de datos está compuesta principalmente por personas con capacidad de pago media, probablemente pertenecientes a segmentos laborales formales o con ingresos estables.
-
-Los valores más altos de ingreso, aunque minoritarios, representan a solicitantes con mayor capacidad financiera, lo que puede influir positivamente en su probabilidad de aprobación y cumplimiento del crédito. En conjunto, la distribución muestra una población heterogénea, pero con predominio de ingresos medios dentro del conjunto analizado.
-
-## Distribución de la relación deuda/ingreso
+comentario histograma
 
 ```{r pdti}
 p_dti <- ggplot(lending_base, aes(x = relacion_deuda_ingreso)) +
@@ -314,14 +241,7 @@ p_dti
 
 ```
 
-La Figura 2 ilustra la densidad de la variable relación deuda/ingreso (%), la cual mide el nivel de endeudamiento de los solicitantes respecto a su capacidad económica. La distribución presenta una forma ligeramente asimétrica hacia la derecha, con un claro punto de concentración entre los 10% y 25%, y una mediana cercana al 18% (línea roja punteada).
-
-Esto indica que, en promedio, los solicitantes destinan menos de una quinta parte de sus ingresos al pago de deudas, lo que refleja niveles de endeudamiento controlados en la mayoría de los casos. Sin embargo, se observan algunos valores altos por encima del 40% que corresponden a individuos con una carga financiera elevada, lo que puede representar un mayor riesgo de incumplimiento.
-
-La forma suavizada del gráfico evidencia una distribución continua y bien concentrada, lo que sugiere que el comportamiento de esta variable sigue una tendencia general homogénea dentro de la población crediticia.
-
-
-## Distribución del puntaje FICO
+comentario distribucion
 
 ```{r fico}
 p_fico <- ggplot(lending_base, aes(x = puntaje_fico)) +
@@ -362,10 +282,7 @@ p_fico
 
 ```
 
-La distribución del puntaje FICO evidencia una clara concentración de valores entre 660 y 720 puntos, con una mediana cercana a 690 (línea roja). Esto indica que la mayoría de los solicitantes poseen un historial crediticio considerado “bueno”, aunque no necesariamente “excelente”.
-La distribución es ligeramente asimétrica hacia la derecha, lo cual refleja que existen prestatarios con puntajes altos (mayores a 750), pero en menor proporción. Este comportamiento es esperable, dado que los puntajes más altos suelen corresponder a individuos con un historial crediticio más largo y estable.
-
-## Distribución del monto del préstamo
+comentario fico
 
 ```{r p_monto}
 p_monto_hist <- ggplot(lending_base, aes(x = monto_prestamo)) +
@@ -387,76 +304,9 @@ p_monto_hist
 
 ```
 
-El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000. Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
-Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
+comentario monto
 
-<<<<<<< HEAD
-## puntaje FICO por estado de pago
-
-```{r ficopagaono}
-p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
-geom_boxplot() +
-labs(
-title = "Puntaje FICO por estado de pago",
-x = "Estado de pago",
-y = "Puntaje FICO"
-) +
-tema
-print(p_fico_box)
-
-
-```
-El boxplot evidencia una diferencia notable en el puntaje FICO según el estado de pago. Los prestatarios que pagan tienden a tener un FICO ligeramente superior, con una mediana cercana a los 700 puntos, mientras que quienes no pagan se concentran alrededor de 680–690 puntos. Esta diferencia confirma que un mejor historial crediticio se asocia con un mayor cumplimiento en los pagos.
-
-## ingreso por estado de pago
-
-```{r ingresopaga on o paga}
-
-p_box_ingreso <- ggplot(lending_base, aes(x = estado_pago, y = ingreso, fill = estado_pago)) +
-geom_boxplot(alpha = 0.7, outlier.color = "gray40", outlier.alpha = 0.4) +
-scale_fill_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
-scale_y_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ",")) +
-labs(
-title = "Distribución del ingreso por estado de pago",
-subtitle = "Comparación mediante boxplots (mediana y dispersión)",
-x = "Estado de pago",
-y = "Ingreso (USD)"
-) +
-tema
-p_box_ingreso
-```
-
-La comparación del ingreso por estado de pago revela que los prestatarios que cumplen con sus obligaciones presentan una mediana de ingreso ligeramente más alta que los morosos. Aunque la dispersión en ambos grupos es amplia, se observa una mayor presencia de valores atípicos elevados en el grupo “Paga”, lo cual sugiere que los ingresos más altos se asocian con una mayor probabilidad de cumplimiento.
-
-## Comparación de variables numéricas según estado de pago
-
-```{r todasvariable}
-
-p_comparativo <- lending_base %>%
-pivot_longer(cols = c(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico),
-names_to = "variable", values_to = "valor") %>%
-ggplot(aes(x = estado_pago, y = valor, fill = estado_pago)) +
-geom_boxplot(alpha = 0.6, outlier.alpha = 0.3) +
-facet_wrap(~ variable, scales = "free", ncol = 2) +
-scale_y_continuous(labels = comma) +
-scale_fill_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
-labs(
-title = "Comparación de variables numéricas según estado de pago",
-subtitle = "Boxplots por clase (Paga vs No_paga)",
-x = "Estado de pago",
-y = "Valor"
-) +
-tema
-print(p_comparativo)
-```
-Conjuntamente, los boxplots sugieren un patrón coherente: mayor ingreso y mayor puntaje FICO actúan como factores protectores frente al incumplimiento, mientras que una mayor relación deuda/ingreso incrementa el riesgo. El monto del préstamo por sí solo no explica totalmente el comportamiento (medianas similares), pero su mayor dispersión entre los morosos indica que créditos elevados en prestatarios vulnerables pueden agravar la probabilidad de default. Para la gestión del riesgo crediticio estas observaciones implican: priorizar la evaluación de DTI y FICO en la toma de decisiones, contemplar límites o condiciones más estrictas para solicitudes con alta DTI, y considerar estrategias de segmentación donde el tamaño del préstamo se ajuste a la capacidad de pago observada.
-
-
-
-## Relación entre puntaje FICO y relación deuda/ingreso
-=======
 titulo3 Comparación entre clases (Paga vs No_paga)
->>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r fico_dti_simplificado}
 
@@ -491,9 +341,7 @@ p_fico_dti <- ggplot(sample_plot, aes(x = puntaje_fico, y = relacion_deuda_ingre
 p_fico_dti
 
 ```
-La curva  muestra una relación inversa clara: a medida que el puntaje FICO aumenta, la proporción deuda/ingreso (DTI) tiende a disminuir . Esto indica que los prestatarios con mejor historial crediticio manejan proporcionalmente menos deuda respecto a su ingreso, mientras que los puntajes medios-bajos concentran mayor carga financiera. La mayor incertidumbre en los extremos del rango (colas más amplias) sugiere escasez de datos y mayor variabilidad en esos tramos. En términos prácticos, el gráfico respalda usar FICO y DTI de forma conjunta para discriminar riesgo: perfiles con FICO bajo y DTI alto son candidatos de mayor riesgo, perfiles inversos, de menor riesgo.
 
-## Relación entre ingreso y monto del préstamo
 
 ```{r montovsingresos}
 corr_val <- cor(lending_base$ingreso, lending_base$monto_prestamo, use = "complete.obs")
@@ -523,6 +371,7 @@ p_monto <- ggplot(lending_base, aes(x = ingreso, y = monto_prestamo)) +
   ) +
   labs(
     title = "Relación entre ingreso y monto del préstamo",
+    subtitle = paste("Correlación:", round(corr_val, 2)),
     x = "Ingreso del solicitante (USD)",
     y = "Monto del préstamo (USD)"
   ) +
@@ -540,12 +389,10 @@ p_monto <- ggplot(lending_base, aes(x = ingreso, y = monto_prestamo)) +
 p_monto
 ```
 
-El gráfico confirma que el ingreso es un predictor relevante del monto del préstamo —a mayor ingreso, mayor tendencia a recibir montos mayores— pero la relación es moderada y sujeta a límites operativos y a la influencia de otras variables crediticias. Por tanto, las decisiones de crédito deben combinar información de ingreso con medidas de riesgo (DTI, FICO) y restricciones de producto para optimizar la asignación y minimizar el riesgo de default.
 
 <<<<<<< HEAD
 =======
 
-## 
 
 ```{r decil}
 
@@ -1159,7 +1006,7 @@ print(curva_roc_identica)
 
 ```
 
-El modelo KNN implementado con el paquete caret mostró un desempeño moderado, evidenciando una mejora apreciable frente al modelo básico con class. La inclusión de variables categóricas como proposito_agrupado﻿, junto con la optimización automática de hiperparámetros mediante validación cruzada de 5 pliegues, permitió alcanzar una exactitud cercana al 60%, superando al modelo previo en varios puntos porcentuales.
+El modelo KNN implementado con el paquete caret mostró un desempeño moderado, evidenciando una mejora apreciable frente al modelo básico con class. La inclusión de variables categóricas como proposito_agrupado, junto con la optimización automática de hiperparámetros mediante validación cruzada de 5 pliegues, permitió alcanzar una exactitud cercana al 60%, superando al modelo previo en varios puntos porcentuales.
 
 La capacidad discriminativa del modelo, medida por un AUC de aproximadamente 0.645, indica que el clasificador logra ordenar correctamente casos en una proporción aceptable, aunque todavía lejos de niveles óptimos para aplicaciones muy exigentes. Se observa una mejoría relevante en la sensibilidad, con un 66.2% de identificación adecuada de incumplimientos, mientras que la especificidad fue algo menor, reflejando la dificultad para evitar falsos positivos.
 
