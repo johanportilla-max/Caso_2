@@ -383,6 +383,126 @@ p_monto
 ```
 
 
+<<<<<<< HEAD
+=======
+
+
+```{r decil}
+
+lending_tasa <- lending_base %>%
+mutate(decil_ingreso = ntile(ingreso, 10)) %>%
+group_by(decil_ingreso) %>%
+summarise(
+tasa_default = mean(estado_pago == "No_paga", na.rm = TRUE),
+ingreso_prom = mean(ingreso, na.rm = TRUE),
+.groups = "drop"
+)
+
+p_tasa <- ggplot(lending_tasa, aes(x = reorder(factor(decil_ingreso), ingreso_prom),
+y = tasa_default, group = 1)) +
+geom_line(color = "#2b6cb0", size = 1.2) +
+geom_point(size = 3, color = "#2b6cb0", fill = "white", shape = 21) +
+geom_text(aes(label = scales::percent(tasa_default, accuracy = 0.1)),
+vjust = -0.8, size = 3.2) +
+scale_y_continuous(labels = percent_format(accuracy = 1)) +
+scale_x_discrete(labels = paste0("D", 1:10)) +
+labs(
+title = "Tasa de default por decil de ingreso",
+subtitle = "Relación negativa clara entre ingreso y probabilidad de no pago",
+x = "Decil de ingreso",
+y = "Tasa de default (No_paga)"
+) +
+tema +
+theme(legend.position = "none")
+```
+
+```{r ficovsdti}
+
+
+set.seed(123)
+sample_plot <- lending_base %>% sample_n(min(10000, nrow(.)))
+
+p_fico_dti_smooth <- ggplot(sample_plot, aes(x = puntaje_fico, y = relacion_deuda_ingreso)) +
+geom_point(alpha = 0.05, size = 0.6, color = "#6baed6") +
+geom_smooth(method = "loess", se = TRUE, color = "black", size = 1) +
+scale_y_continuous(labels = percent_format(scale = 1)) +
+labs(
+title = "Relación entre puntaje FICO y relación deuda/ingreso",
+subtitle = "Tendencia general estimada con suavizado LOESS",
+x = "Puntaje FICO",
+y = "Relación deuda/ingreso (%)"
+) +
+tema
+print(p_fico_dti_smooth)
+```
+
+
+```{r tasadeafuprposiotltingreso}
+
+
+tasa_por_proposito <- lending_base %>%
+group_by(proposito_agrupado) %>%
+summarise(
+tasa_no_paga = mean(estado_pago == "No_paga"),
+ingreso_mediano = median(ingreso),
+fico_mediano = median(puntaje_fico),
+.groups = "drop"
+) %>%
+mutate(
+tasa_no_paga = round(tasa_no_paga, 3),
+ingreso_mediano = round(ingreso_mediano, 1),
+fico_mediano = round(fico_mediano, 1)
+)
+
+tasa_por_proposito %>%
+kbl(
+caption = "Tabla: Tasa de Default e Indicadores por Propósito del Préstamo",
+align = c("l", "r", "r", "r"),
+col.names = c("Propósito", "Tasa No Paga", "Ingreso Mediano", "FICO Mediano")
+) %>%
+kable_styling(
+bootstrap_options = c("striped", "hover", "condensed"),
+full_width = FALSE,
+font_size = 14,
+position = "center"
+) %>%
+row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE)
+```
+
+
+```{r fico proposito}
+
+
+p_fico_proposito <- ggplot(lending_base, aes(x = puntaje_fico, fill = estado_pago)) +
+geom_density(alpha = 0.5) +
+facet_wrap(~ proposito_agrupado, ncol = 2) +
+scale_fill_manual(values = c("Paga" = "#4daf4a", "No_paga" = "#e41a1c")) +
+labs(
+title = "Distribución del puntaje FICO por propósito y estado de pago",
+x = "Puntaje FICO",
+y = "Densidad"
+) +
+tema
+print(p_fico_proposito)
+```
+
+```{r correlacion}
+
+numeric_vars <- lending_base %>%
+  select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico)
+
+cor_mat <- cor(numeric_vars, use = "complete.obs")
+
+ggcorrplot(
+cor_mat,
+lab = TRUE,
+lab_size = 3,
+colors = c("#de425b", "white", "#2ca25f"),
+title = "Matriz de correlaciones entre variables numéricas",
+outline.col = "white"
+) + tema
+```
+>>>>>>> 1e9fc8959be2e2a58e046fff433bee4ebe68fbee
 ## Distribución de las variables principales
 
 ## Caracterización de las clases
@@ -721,7 +841,7 @@ Seguidamente, se obtienen las predicciones y probabilidades para el conjunto de 
 
 ```{r Con_caret}
 
-cm_caret <- confusionMatrix(pred_clase_knn, test$estado_pago, positive = "No_paga")
+cm_caret <- confusionMatrix(pred_knn, test$estado_pago, positive = "No_paga")
 
 matriz_conf <- matrix(
   c(cm_caret$table[1], cm_caret$table[2],
