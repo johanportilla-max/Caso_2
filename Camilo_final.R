@@ -227,7 +227,7 @@ Grafico_precision <- ggplot(resultado, aes(x = k, y = precision)) +
   geom_vline(xintercept = k_optimo, color = "#c0392b", linetype = "dashed", linewidth = 1) +
   annotate("text", x = k_optimo, y = max(resultado$precision),
            label = paste("k óptimo =", k_optimo),
-           color = "#c0392b", hjust = -0.1, vjust = -1, size = 3.8, fontface = "bold") +
+           color = "#c0392b", hjust = -0.1, vjust = -1, size = 3, fontface = "bold") +
   labs(
     title = "Figura 2. Precisión del modelo KNN según número de vecinos (k)",
     subtitle = "El valor óptimo de k maximiza la precisión de clasificación en el conjunto de prueba",
@@ -251,18 +251,25 @@ print(Grafico_precision)
 
 ### confu
 
-
-
 cm <- confusionMatrix(pred_knn, test_output, positive = "No_paga")
 
-matriz <- as.data.frame(cm$table)
-colnames(matriz) <- c("Predicción", "Real", "Frecuencia")
+matriz_conf <- as.data.frame(cm$table)
 
-tabla_conf <- matriz %>%
+matriz_tabla <- matrix(
+  c(matriz_conf$Freq[1], matriz_conf$Freq[2],
+    matriz_conf$Freq[3], matriz_conf$Freq[4]),
+  nrow = 2, byrow = TRUE,
+  dimnames = list(
+    "Predicción" = c("Paga", "No_paga"),
+    "Referencia" = c("Paga", "No_paga")
+  )
+)
+
+matriz_tabla %>%
   kbl(
-    caption = "Matriz de Confusión del Modelo KNN (class)",
-    col.names = c("Predicción", "Real", "Frecuencia"),
-    align = "c"
+    caption = "Tabla 3. Matriz de Confusión del Modelo KNN (class)",
+    align = c("c", "c", "c"),
+    col.names = c("Paga", "No_paga")
   ) %>%
   kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
@@ -270,61 +277,74 @@ tabla_conf <- matriz %>%
     font_size = 14,
     position = "center"
   ) %>%
-  row_spec(0, background = "#1a5276", color = "white", bold = TRUE) %>%
-  column_spec(1, bold = TRUE, width = "3cm") %>%
-  column_spec(2:3, width = "3cm")
-
-metricas_knn <- data.frame(
-  Métrica = c(
-    "Precisión (Accuracy)",
-    "Kappa",
-    "Sensibilidad (Recall)",
-    "Especificidad", 
-    "Precisión (Precision)",
-    "Valor Predictivo Negativo",
-    "Precisión Balanceada"
-  ),
-  Valor = c(
-    round(cm$overall["Accuracy"], 4),
-    round(cm$overall["Kappa"], 4),
-    round(cm$byClass["Sensitivity"], 4),
-    round(cm$byClass["Specificity"], 4),
-    round(cm$byClass["Pos Pred Value"], 4),
-    round(cm$byClass["Neg Pred Value"], 4),
-    round(cm$byClass["Balanced Accuracy"], 4)
-  ),
-  Descripción = c(
-    "Proporción total de predicciones correctas",
-    "Acuerdo entre real y predicho, ajustado por azar",
-    "Capacidad de identificar correctamente 'No_paga'",
-    "Capacidad de identificar correctamente 'Paga'",
-    "Probabilidad de que 'No_paga' predicho sea correcto",
-    "Probabilidad de que 'Paga' predicho sea correcto",
-    "Promedio entre sensibilidad y especificidad"
-  )
-)
-
-tabla_metricas <- metricas_knn %>%
-  kbl(
-    caption = "Métricas de Desempeño del Modelo KNN",
-    align = "c",
-    col.names = c("Métrica", "Valor", "Descripción")
-  ) %>%
-  kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed"),
-    full_width = FALSE,
-    font_size = 13,
-    position = "center"
-  ) %>%
-  row_spec(0, background = "#1a5276", color = "white", bold = TRUE) %>%
-  column_spec(1, bold = TRUE, width = "3cm") %>%
-  column_spec(2, width = "2cm") %>%
-  column_spec(3, width = "6cm") %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, width = "3cm", bold = TRUE) %>%
+  add_header_above(c(" " = 1, "Referencia" = 2), bold = TRUE, background = "#2b6cb0", color = "white") %>%
   footnote(
-    general = "Clase positiva: 'No_paga'",
+    general = "La matriz muestra las predicciones frente a los valores reales para la clase positiva 'No_paga'.",
     general_title = "Nota:",
     footnote_as_chunk = TRUE
   )
 
-tabla_conf
+## Metricas y descripcion
+
+metricas_knn <- data.frame(
+  Indicador = c(
+    "Accuracy (Exactitud)",
+    "95% CI",
+    "No Information Rate", 
+    "P-Value [Acc > NIR]",
+    "Kappa",
+    "Mcnemar's Test P-Value",
+    "Sensitivity",
+    "Specificity",
+    "Pos Pred Value",
+    "Neg Pred Value", 
+    "Prevalence",
+    "Detection Rate",
+    "Detection Prevalence",
+    "Balanced Accuracy"
+  ),
+  Descripción = c(
+    "Proporción total de predicciones correctas",
+    "Intervalo de confianza del 95% para exactitud",
+    "Tasa al predecir siempre clase mayoritaria",
+    "Valor p vs tasa no información",
+    "Acuerdo ajustado por azar",
+    "Test de McNemar para diferencias entre clases",
+    "Capacidad detectar 'No_paga' (VP / VP+FN)",
+    "Capacidad detectar 'Paga' (VN / VN+FP)", 
+    "Precisión para clase 'No_paga'",
+    "Precisión para clase 'Paga'",
+    "Proporción real de 'No_paga'",
+    "Tasa de detección de 'No_paga'",
+    "Proporción predicha de 'No_paga'",
+    "Promedio sensibilidad y especificidad"
+  ),
+  Valor = c(
+    "0.5564", "(0.5367, 0.5760)", "0.5104", "2.25e-06", "0.1135", "0.03061",
+    "0.5768", "0.5368", "0.5443", "0.5694", "0.4896", "0.2824", "0.5188", "0.5568"
+  )
+)
+
+# Crear tabla formateada
+tabla_metricas <- metricas_knn %>%
+  kbl(
+    caption = "Métricas de Evaluación - Modelo KNN",
+    align = c("l", "l", "c"),
+    col.names = c("Métrica", "Descripción", "Valor")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 12,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2, width = "6cm") %>%
+  column_spec(3, width = "2cm")
+
+# Mostrar tabla
 tabla_metricas
+
