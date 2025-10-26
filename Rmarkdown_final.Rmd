@@ -495,7 +495,6 @@ print(p_fico_dti_smooth)
 
 ```{r tasadeafuprposiotltingreso}
 
-# Tasa de default e ingreso mediano por propósito
 
 tasa_por_proposito <- lending_base %>%
 group_by(proposito_agrupado) %>%
@@ -529,7 +528,6 @@ row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE)
 
 ```{r fico proposito}
 
-# Distribución FICO por propósito y estado de pago
 
 p_fico_proposito <- ggplot(lending_base, aes(x = puntaje_fico, fill = estado_pago)) +
 geom_density(alpha = 0.5) +
@@ -544,8 +542,12 @@ tema
 print(p_fico_proposito)
 ```
 
-```{r fico proposito}
+```{r correlacion}
 
+numeric_vars <- lending_base %>%
+  select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico)
+
+cor_mat <- cor(numeric_vars, use = "complete.obs")
 
 ggcorrplot(
 cor_mat,
@@ -886,7 +888,7 @@ ggplot(modelo_knn$results, aes(x = k, y = ROC)) +
 
 ```{r Con_caret}
 
-cm_caret <- confusionMatrix(pred_clase_knn, test$estado_pago, positive = "No_paga")
+cm_caret <- confusionMatrix(pred_knn, test$estado_pago, positive = "No_paga")
 
 matriz_conf <- matrix(
   c(cm_caret$table[1], cm_caret$table[2],
