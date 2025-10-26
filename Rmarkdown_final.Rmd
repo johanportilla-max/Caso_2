@@ -200,7 +200,7 @@ tabla_estado %>%
   )
 ```
 
-La Tabla 2 presenta la distribución de los préstamos según el estado de pago, variable cualitativa que clasifica a los deudores en dos grupos: aquellos que cumplen con sus obligaciones (“Paga”) y los que incurren en mora o incumplimiento (“No paga”).
+La Tabla 2 presenta la distribución de los préstamos según el estado de pago, variable cualitativa que clasifica a los deudores en dos grupos: aquellos que cumplen con sus obligaciones (“Paga”) y los que incurren en incumplimiento (“No paga”).
 
 Los resultados muestran que el 79.89% de los préstamos se encuentran en estado de pago activo o finalizado correctamente, mientras que el 20.11% corresponde a créditos en incumplimiento. Esta proporción indica que la gran mayoría de los prestatarios mantienen un comportamiento de pago responsable, aunque la presencia de una quinta parte de préstamos en mora representa un segmento de riesgo relevante para las entidades crediticias.
 
