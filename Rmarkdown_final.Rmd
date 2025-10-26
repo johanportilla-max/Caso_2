@@ -14,7 +14,6 @@ output:
     code_folding: show
 ---
 # Introducción
-
 Una correcta evaluación del riesgo crediticio termina siendo un pilar fundamental en la gestión financiera moderna. Es por esto que en contextos de otorgamiento masivo de préstamos la capacidad para diferenciar con precisión entre solicitantes de bajo y alto riesgo de incumplimiento determina, en gran medida, la sostenibilidad de la cartera y la rentabilidad de la entidad. Los procesos de crédito han evolucionado hacia procedimientos fundamentados en modelos estadísticos y algoritmos de aprendizaje automático, permitiendo decisiones más objetivas, replicables y escalables.
 
 Lending Club es una plataforma de crédito en línea que funciona como un mercado (peer-to-peer) para el otorgamiento de préstamos personales, conectando directamente a solicitantes con inversionistas. Mediante procesos digitales estándar, la plataforma recopila información proporcionada por el solicitante (como lo pueden ser ingresos, propósito del préstamo, puntajes crediticios, entre otros) y emplea reglas y modelos de evaluación de riesgo para decidir la aprobación y las condiciones del préstamo. La disponibilidad pública de historiales de préstamos originados en esta plataforma ha convertido a sus bases de datos en una fuente de referencia para la investigación en scoring crediticio y modelado del incumplimiento, permitiendo analizar patrones de morosidad y evaluar algoritmos de clasificación aplicables a procesos operativos de riesgo.
