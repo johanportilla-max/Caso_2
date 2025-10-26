@@ -1,5 +1,5 @@
 ---
-title: "Modelos de Clasificación para Riesgo Crediticio"
+title: "Modelo de regresión logística para el análisis del riesgo de incumplimiento en préstamos personales (Lending Club 2007–2018)."
 author: "Barros Rayo Alejandro (2415837), Muñoz Portela Diego Fernando (2415620), Portilla Aguirre Johan Camilo (2422468), Aguirre Aldana Joan Sebastian (2419550)"
 output: 
   html_document:
@@ -1035,7 +1035,11 @@ data = train_logit, family = binomial())
 
 # Bibliografia
 
-rfirawvjbkwbj
+- Paredes, D. (2024). Aprendizaje supervisado. https://bookdown.org/dparedesi/data-science-con-r/aprendizaje-supervisado.html  
+- Ariza-Garzón, M. J., Sanz-Guerrero, M., Javier, A. G., & Club, L. (2024). Lending Club loan dataset for granting models. Zenodo. https://doi.org/10.5281/zenodo.11295916
+- James, G., Witten, D., Hastie, T. & Tibshirani, R. (2021). An Introduction to Statistical Learning with Applications in R (2nd ed.). Springer.  
+- Aguirre, J., et al. (2024). Modelo de regresión lineal para el análisis del ingreso de los hogares en la región Pacífica (ECV 2024). Publicado en RPubs: https://rpubs.com/joanaguirre04/1353677  
+
 
 ```{r setup, include=FALSE}
 
