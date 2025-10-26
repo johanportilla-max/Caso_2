@@ -455,7 +455,7 @@ El modelo K-Nearest Neighbors (KNN) es un algoritmo de aprendizaje supervisado n
 
 El proceso para entrenar y evaluar el modelo K-Nearest Neighbors (KNN) con el paquete class en R se llevó a cabo en varias etapas. Primero, se dividió el conjunto de datos en variables predictoras y variable respuesta explícitamente, seleccionando únicamente variables numéricas estandarizadas para calcular las distancias, dado que la función knn() no admite variables cualitativas directamente o factores como entradas.
 
-Por simplicidad y dadas las características del paquete class, en esta fase no se utilizó la variable cualitativa `proposito_agrupado`. La inclusión de variables categóricas habría requerido transformarlas a variables numéricas y estandarizarlas, lo cual añade complejidad. Esta decisión permitió enfocar el análisis en las variables. El manejo de variables cualitativas se dejará para fases posteriores o para el uso de paquetes más flexibles.
+Por simplicidad y dadas las características del paquete class, en esta fase no se utilizó la variable cualitativa `proposito_agrupado`. La inclusión de variables categóricas habría requerido transformarlas a variables numéricas y estandarizarlas, lo cual añade complejidad. Esta decisión permitió enfocar el análisis en las variables cuantitativas. El manejo de variables cualitativas se dejará para fases posteriores o para el uso de paquetes más flexibles.
 
 ```{r particion_class}
 vars_input <- c("ingreso", "relacion_deuda_ingreso", "monto_prestamo", "puntaje_fico")
@@ -482,9 +482,6 @@ prec_opt <- max(resultado$precision)
 
 pred_knn <- knn(train = train_input, test =test_input, cl = train_output,
                 k = k_optimo)
-
-confusionMatrix(pred_knn, test_output, positive = "No_paga")
-
 ```
 
 Para determinar el valor óptimo de k, se implementó un ciclo for que evaluó la precisión del modelo para diferentes valores de k entre 1 y 100, calculando la proporción de predicciones correctas en el conjunto de prueba. Esta metodología manual permitió identificar el valor de k que maximiza la precisión en el rango.
@@ -501,12 +498,26 @@ Grafico_precision <- ggplot(resultado, aes(x = k, y = precision)) +
     name = "Precisión",
     labels = percent_format(accuracy = 1)
   ) +
-  geom_vline(xintercept = k_optimo, color = "#c0392b", linetype = "dashed", linewidth = 1) +
-  annotate("text", x = k_optimo, y = max(resultado$precision),
-           label = paste("k óptimo =", k_optimo),
-           color = "#c0392b", hjust = -0.1, vjust = -1, size = 3, fontface = "bold") +
+  geom_vline(
+    xintercept = k_optimo,
+    color = "#c0392b",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  annotate(
+    "label",
+    x = k_optimo,
+    y = max(resultado$precision) - 0.015,
+    label = paste("k óptimo =", k_optimo),
+    color = "white",
+    fill = "#c0392b",
+    size = 3.5,
+    fontface = "bold",
+    label.size = 0.3,
+    label.padding = unit(0.15, "lines")
+  ) +
   labs(
-    title = "Figura 2. Precisión del modelo KNN según número de vecinos (k)",
+    title = "Precisión del modelo KNN según número de vecinos (k)",
     subtitle = "El valor óptimo de k maximiza la precisión de clasificación en el conjunto de prueba",
     x = "Número de vecinos (k)",
     y = "Precisión",
@@ -514,13 +525,16 @@ Grafico_precision <- ggplot(resultado, aes(x = k, y = precision)) +
   ) +
   tema +
   theme(
-    text = element_text(family = "sans"),
+    text = element_text(family = "Segoe UI"),
     plot.title = element_text(face = "bold", size = 15, hjust = 0.5, color = "#2c3e50"),
-    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "#34495e"),
-    plot.caption = element_text(size = 9, color = "#7f8c8d", hjust = 0.5),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "#34495e", margin = margin(b = 10)),
+    plot.caption = element_text(size = 9, color = "#7f8c8d", hjust = 0.5, margin = margin(t = 15)),
     axis.title = element_text(face = "bold", size = 11, color = "#2c3e50"),
-    legend.position = "bottom"
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold", color = "#2c3e50"),
+    legend.text = element_text(color = "#34495e")
   )
+
 Grafico_precision
 ```
 
@@ -546,7 +560,7 @@ matriz_tabla <- matrix(
 
 matriz_tabla %>%
   kbl(
-    caption = "Tabla 3. Matriz de Confusión del Modelo KNN (class)",
+    caption = "    Matriz de Confusión del Modelo KNN (class)",
     align = c("c", "c", "c"),
     col.names = c("Paga", "No_paga")
   ) %>%
@@ -623,10 +637,118 @@ tabla_metricas <- metricas_knn %>%
 
 tabla_metricas
 
-
 ```
 
+Los resultados alcanzados por el modelo KNN utilizando el paquete class reflejan un desempeño bastante modesto en la tarea de clasificación entre préstamos pagados y no pagados. La exactitud obtenida, de solo 55.6%, es apenas superior a la que se lograría clasificando siempre la clase más frecuente en la muestra (No Information Rate: 51%), lo que muestra la dificultad inherente al problema y a la información contenida en las variables numéricas utilizadas.
+
+El estadístico Kappa (0.11) es bajo, señalando que el acuerdo entre las predicciones del modelo y el resultado real es solo marginalmente mejor que el azar. Asimismo, tanto la sensibilidad (57.7%) como la especificidad (53.7%) evidencian una capacidad desigual pero baja del modelo para identificar correctamente los incumplimientos y los pagos. Ninguna de las dos clases es clasificada con gran efectividad, lo que refleja limitaciones importantes cuando se busca un sistema confiable para apoyar decisiones en la concesión de pretamos.
+
+Al observar los valores predictivos (positivo: 54.4% para "No_paga", negativo: 56.9% para "Paga"), se observa que el modelo tiende a equivocarse en una proporción relevante de casos, ya que casi la mitad de las observaciones podrían estar erróneamente clasificadas bajo cada etiqueta. Además, el valor de la exactitud balanceada (55.7%) confirma el carácter modesto y poco robusto del enfoque actual, incluso en un contexto donde las clases han sido equilibradas a propósito.
+
+En concreto, aunque el modelo muestra una ligera capacidad para mejorar la predicción respecto al azar, su potencial real es muy limitado bajo las condiciones y supuestos aplicados. 
+
 ### Modelo KNN (caret)
+
+El ajuste y evaluación del modelo KNN usando el paquete caret se realizó con el objetivo de aprovechar un proceso estandarizado y más flexible. A diferencia de la función clásica de class, caret permite incluir tanto variables numéricas como categóricas (conversión automática a variables dummy) y automatiza la validación cruzada, la selección de hiperparámetros y la obtención de métricas clave a través de un solo flujo de trabajo.
+
+Se configuró el control de entrenamiento para usar validación cruzada de 5 pliegues, estimación de probabilidades y optimización según el área bajo la curva ROC. El modelo fue entrenado sobre el conjunto de entrenamiento considerando las variables ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico y proposito_agrupado, permitiendo así una mayor riqueza informativa respecto al modelo anterior.
+
+La función `caret::train()` exploró simultáneamente múltiples valores de k, normalizó las variables e identificó el valor óptimo en función del desempeño en predicción.
+
+Una vez seleccionado el modelo KNN óptimo, se obtuvieron predicciones para el conjunto de prueba, junto con las probabilidades estimadas para cada clase.
+
+```{r Entre_caret}
+set.seed(28)
+
+ctrl_knn <- trainControl(
+  method = "cv",
+  number = 5,
+  classProbs = TRUE,
+  summaryFunction = twoClassSummary
+)
+
+modelo_knn <- train(
+  estado_pago ~ ingreso + relacion_deuda_ingreso + monto_prestamo + puntaje_fico + proposito_agrupado,
+  data = train,
+  method = "knn",
+  trControl = ctrl_knn,
+  preProcess = c("center", "scale"),
+  tuneLength = 150,
+  metric = "ROC"
+)
+```
+
+
+El modelo evaluó diferentes configuraciones de vecinos (k = 1 a 150) mediante validación cruzada.
+
+El valor óptimo de k seleccionado por el algoritmo fue `r modelo_knn$bestTune$k`, que alcanzó un AUC promedio de `r round(max(modelo_knn$results$ROC), 3)` durante la validación.
+
+```{r AUC_caret}
+ggplot(modelo_knn$results, aes(x = k, y = ROC)) +
+  geom_line(color = "#1a5276", linewidth = 1.1) +
+  geom_point(aes(color = ROC), size = 2.5, alpha = 0.8) +
+  scale_color_gradient(
+    low = "#aed6f1",
+    high = "#1a5276",
+    name = "AUC (ROC)"
+  ) +
+  geom_vline(xintercept = modelo_knn$bestTune$k, color = "#c0392b", linetype = "dashed") +
+  annotate("label", x = modelo_knn$bestTune$k, y = max(modelo_knn$results$ROC)-0.01,
+           label = paste("k óptimo =", modelo_knn$bestTune$k),
+           color = "white", fill = "#c0392b", fontface = "bold") +
+  labs(
+    title = "AUC del modelo KNN según número de vecinos (k)",
+    subtitle = "El valor óptimo de k maximiza el área bajo la curva ROC en validación cruzada (5-fold)",
+    x = "Número de vecinos (k)",
+    y = "Área bajo la curva (ROC)",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)"
+  ) +
+  theme_minimal(base_family = "Segoe UI") +
+  theme(
+    plot.title = element_text(face = "bold", size = 15, hjust = 0.5, color = "#2c3e50"),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "#34495e"),
+    plot.caption = element_text(size = 9, color = "#7f8c8d", hjust = 0.5),
+    legend.position = "bottom"
+  )
+```
+
+```{r Con_caret}
+
+cm_caret <- confusionMatrix(pred_clase_knn, test$estado_pago, positive = "No_paga")
+
+matriz_conf <- matrix(
+  c(cm_caret$table[1], cm_caret$table[2],
+    cm_caret$table[3], cm_caret$table[4]),
+  nrow = 2, byrow = TRUE,
+  dimnames = list(
+    "Predicción" = c("Paga", "No_paga"),
+    "Referencia" = c("Paga", "No_paga")
+  )
+)
+
+matriz_conf %>%
+  kbl(
+    caption = "Tabla 1. Matriz de Confusión del Modelo KNN (caret)",
+    align = c("c", "c", "c"),
+    col.names = c("Paga", "No_paga")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  add_header_above(c(" " = 1, "Referencia" = 2),
+                   bold = TRUE, background = "#2b6cb0", color = "white") %>%
+  footnote(
+    general = "La matriz muestra las predicciones frente a los valores reales para la clase positiva 'No_paga'.",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+```
 
 ## Modelo Logit
 
