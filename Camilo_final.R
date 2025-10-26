@@ -141,7 +141,9 @@ confusionMatrix(pred_clase_knn, test$estado_pago, positive = "No_paga")
 
 roc_knn <- roc(response = test$estado_pago, predictor = pred_prob_knn$No_paga, levels = c("Paga", "No_paga"))
 auc(roc_knn)
-
+plot(roc_knn)
+auc_knn <- round(auc(roc_knn), 4)
+auc_knn
 # LOGIT 
 
 train_logit <- train %>% mutate(default_num = ifelse(estado_pago == "No_paga", 1, 0))
@@ -344,7 +346,266 @@ tabla_metricas <- metricas_knn %>%
   column_spec(1, bold = TRUE, width = "3cm") %>%
   column_spec(2, width = "6cm") %>%
   column_spec(3, width = "2cm")
-
-# Mostrar tabla
 tabla_metricas
 
+## caret 
+
+ggplot(modelo_knn$results, aes(x = k, y = ROC)) +
+  geom_line(color = "#1a5276", linewidth = 1.1) +
+  geom_point(aes(color = ROC), size = 2.5, alpha = 0.8) +
+  scale_color_gradient(
+    low = "#aed6f1",
+    high = "#1a5276",
+    name = "AUC (ROC)"
+  ) +
+  geom_vline(xintercept = modelo_knn$bestTune$k, color = "#c0392b", linetype = "dashed") +
+  annotate("label", x = modelo_knn$bestTune$k, y = max(modelo_knn$results$ROC)-0.01,
+           label = paste("k óptimo =", modelo_knn$bestTune$k),
+           color = "white", fill = "#c0392b", fontface = "bold") +
+  labs(
+    title = "AUC del modelo KNN según número de vecinos (k)",
+    subtitle = "El valor óptimo de k maximiza el área bajo la curva ROC en validación cruzada (5-fold)",
+    x = "Número de vecinos (k)",
+    y = "Área bajo la curva (ROC)",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)"
+  ) +
+  theme_minimal(base_family = "Segoe UI") +
+  theme(
+    plot.title = element_text(face = "bold", size = 15, hjust = 0.5, color = "#2c3e50"),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "#34495e"),
+    plot.caption = element_text(size = 9, color = "#7f8c8d", hjust = 0.5),
+    legend.position = "bottom"
+  )
+
+
+cm_caret <- confusionMatrix(pred_clase_knn, test$estado_pago, positive = "No_paga")
+
+matriz_conf <- matrix(
+  c(cm_caret$table[1], cm_caret$table[2],
+    cm_caret$table[3], cm_caret$table[4]),
+  nrow = 2, byrow = TRUE,
+  dimnames = list(
+    "Predicción" = c("Paga", "No_paga"),
+    "Referencia" = c("Paga", "No_paga")
+  )
+)
+
+matriz_conf %>%
+  kbl(
+    caption = "Tabla 1. Matriz de Confusión del Modelo KNN (caret)",
+    align = c("c", "c", "c"),
+    col.names = c("Paga", "No_paga")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  add_header_above(c(" " = 1, "Referencia" = 2),
+                   bold = TRUE, background = "#2b6cb0", color = "white") %>%
+  footnote(
+    general = "La matriz muestra las predicciones frente a los valores reales para la clase positiva 'No_paga'.",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+
+metricas_tabla %>%
+  kbl(
+    caption = "Tabla 2. Indicadores de Desempeño del Modelo KNN (caret)",
+    align = c("l", "l", "c"),
+    col.names = c("Métrica", "Descripción", "Valor")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, width = "3cm", bold = TRUE) %>%
+  column_spec(2, width = "7cm") %>%
+  column_spec(3, width = "2cm") %>%
+  footnote(
+    general = "Los indicadores se calcularon considerando la clase positiva 'No_paga'.",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+## 
+
+
+cm_caret <- confusionMatrix(pred_clase_knn, test$estado_pago, positive = "No_paga")
+
+acc <- round(cm_caret$overall["Accuracy"], 4)
+acc_ci <- paste0("(", round(cm_caret$overall[["AccuracyLower"]], 4), ", ",
+                 round(cm_caret$overall[["AccuracyUpper"]], 4), ")")
+
+no_info_rate <- round(as.numeric(cm_caret$overall[[3]]), 4)  # Tercera posición de la lista "overall"
+
+p_value_acc <- "<2.2e-16"
+kappa <- round(cm_caret$overall["Kappa"], 4)
+mcnemar <- formatC(as.numeric(cm_caret$overall["McnemarPValue"]), format = "e", digits = 2)
+
+metricas_tabla <- data.frame(
+  Métrica = c(
+    "Accuracy (Exactitud)",
+    "95% CI (Intervalo de Confianza)",
+    "No Information Rate",
+    "P-Value [Acc > NIR]",
+    "Kappa",
+    "Mcnemar's Test P-Value",
+    "Sensitivity",
+    "Specificity",
+    "Pos Pred Value",
+    "Neg Pred Value",
+    "Prevalence",
+    "Detection Rate",
+    "Detection Prevalence",
+    "Balanced Accuracy"
+  ),
+  Valor = c(
+    acc,
+    acc_ci,
+    no_info_rate,  # <-- ya no será NA
+    p_value_acc,
+    kappa,
+    mcnemar,
+    round(cm_caret$byClass["Sensitivity"], 4),
+    round(cm_caret$byClass["Specificity"], 4),
+    round(cm_caret$byClass["Pos Pred Value"], 4),
+    round(cm_caret$byClass["Neg Pred Value"], 4),
+    round(cm_caret$byClass["Prevalence"], 4),
+    round(cm_caret$byClass["Detection Rate"], 4),
+    round(cm_caret$byClass["Detection Prevalence"], 4),
+    round(cm_caret$byClass["Balanced Accuracy"], 4)
+  ),
+  Interpretación = c(
+    "El modelo clasifica correctamente el 59.7% de los préstamos, mostrando una mejora moderada frente al azar.",
+    "El verdadero desempeño del modelo se ubica entre 57.7% y 61.6%, con un nivel de confianza del 95%.",
+    "Un modelo trivial (que siempre predice la clase más frecuente) tendría un acierto del 51%.",
+    "El valor p < 0.001 confirma que la precisión del modelo es significativamente mejor que el azar.",
+    "El valor de Kappa (0.19) indica un acuerdo leve entre predicciones y observaciones reales.",
+    "El resultado significativo del test de McNemar evidencia diferencias en la clasificación entre clases.",
+    "El modelo identifica correctamente el 65.9% de los casos de incumplimiento ('No_paga').",
+    "Detecta correctamente el 53.7% de los casos de pago ('Paga').",
+    "Cuando predice 'No_paga', acierta en el 57.7% de los casos.",
+    "Cuando predice 'Paga', acierta en el 62.2% de los casos.",
+    "El 48.9% de los datos corresponde a la clase 'No_paga'.",
+    "El modelo detecta correctamente el 32.3% de los casos reales de incumplimiento.",
+    "Predice la clase 'No_paga' en el 55.9% de los casos totales.",
+    "Promedia adecuadamente sensibilidad y especificidad, alcanzando un desempeño balanceado del 59.8%."
+  )
+)
+
+metricas_tabla %>%
+  kbl(
+    caption = "Métricas de Evaluación - Modelo KNN (caret)",
+    align = c("l", "c", "l"),
+    col.names = c("Métrica", "Valor", "Interpretación")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3.5cm") %>%
+  column_spec(2, width = "2.5cm") %>%
+  column_spec(3, width = "10cm") %>%
+  footnote(
+    general = "Elaboración propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+
+##
+
+
+roc_data <- data.frame(
+  specificity = roc_knn$specificities,
+  sensitivity = roc_knn$sensitivities
+) %>%
+  arrange(specificity)  # Ordenar por especificidad
+
+curva_roc_identica <- ggplot(roc_data, aes(x = specificity, y = sensitivity)) +
+  # Área bajo la curva (sombreado azul claro)
+  geom_ribbon(aes(ymin = 0, ymax = sensitivity), 
+              fill = "#d1e0f0", alpha = 0.8) +
+  # Línea de referencia (diagonal)
+  geom_segment(aes(x = 1, y = 0, xend = 0, yend = 1), 
+               color = "grey60", linetype = "dashed", size = 0.7) +
+  # Línea de la curva ROC
+  geom_line(color = "#1a5276", size = 1.3) +
+  # Invertir el eje X
+  scale_x_reverse(
+    name = "Especificidad",
+    limits = c(1, 0),
+    breaks = seq(1, 0, by = -0.2),
+    expand = c(0.02, 0.02)
+  ) +
+  scale_y_continuous(
+    name = "Sensibilidad",
+    limits = c(0, 1),
+    breaks = seq(0, 1, 0.2),
+    expand = c(0.02, 0.02)
+  ) +
+  labs(
+    title = "Curva ROC del Modelo KNN (caret)",
+    caption = "Fuente: Elaboración propia con base en resultados del modelo."
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+    plot.caption = element_text(size = 9, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 11),
+    panel.grid.minor = element_blank()
+  ) +
+  annotate("text", x = 0.3, y = 0.25, 
+           label = paste("AUC =", auc_knn),
+           color = "#1a5276", fontface = "bold", size = 4.5)
+
+print(curva_roc_identica)
+
+
+coefs_logit <- summary(fit_logit)$coefficients %>%
+as.data.frame() %>%
+rownames_to_column("Variable") %>%
+mutate(
+OR = round(exp(Estimate), 3),
+Significancia = ifelse(Pr(>|z|) < 0.05, "Significativo", "No significativo")
+) %>%
+rename(
+Estimación = Estimate,
+Error estándar = Std. Error,
+Valor z = z value,
+p-valor = Pr(>|z|)
+)
+
+
+
+
+coefs_logit %>%
+kbl(
+caption = "Coeficientes y Odds Ratios del Modelo Logit",
+align = c("l", "c", "c", "c", "c", "c"),
+col.names = c("Variable", "Estimación", "Error estándar", "Valor z", "p-valor", "OR")
+) %>%
+kable_styling(
+bootstrap_options = c("striped", "hover", "condensed"),
+full_width = FALSE,
+font_size = 12,
+position = "center"
+) %>%
+row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+column_spec(1, bold = TRUE, width = "4cm") %>%
+column_spec(6, bold = TRUE, width = "2cm") %>%
+footnote(
+general = "El OR > 1 indica un incremento en la probabilidad de 'No_paga'.",
+general_title = "Nota:",
+footnote_as_chunk = TRUE
+)
