@@ -25,7 +25,7 @@ output:
 ## Preparación y limpieza de datos
 
 # Análisis descriptivo
-
+## introducción
 El conjunto de datos analizado corresponde a registros de préstamos otorgados por la plataforma Lending Club, e incluye información relevante sobre las características financieras de los solicitantes y el comportamiento de pago asociado a cada crédito. Con el fin de comprender de manera preliminar la composición y variabilidad de las observaciones, se presenta a continuación un resumen de las principales estadísticas descriptivas y la distribución de frecuencias por estado de pago.
 
 ```{r sep, echo = FALSE, warning = FALSE, message = FALSE}
@@ -231,6 +231,7 @@ p1 <- ggplot(lending_base, aes(x = ingreso)) +
 p1
 
 ```
+
 La Figura 1 presenta la distribución de la variable ingreso anual de los solicitantes de préstamo. El histograma evidencia una asimetría positiva, donde la mayoría de los individuos reportan ingresos entre USD 40,000 y USD 80,000, mientras que un grupo reducido alcanza valores considerablemente más altos, superiores a los USD 150,000.
 
 La línea roja punteada indica la mediana, ubicada alrededor de USD 65,000, lo cual coincide con la tendencia central observada en la tabla descriptiva. Esta concentración en niveles intermedios de ingreso sugiere que la base de datos está compuesta principalmente por personas con capacidad de pago media, probablemente pertenecientes a segmentos laborales formales o con ingresos estables.
