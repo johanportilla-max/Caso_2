@@ -15,12 +15,58 @@ output:
 ---
 # Introducción
 
+Una correcta evaluación del riesgo crediticio termina siendo un pilar fundamental en la gestión financiera moderna. Es por esto que en contextos de otorgamiento masivo de préstamos la capacidad para diferenciar con precisión entre solicitantes de bajo y alto riesgo de incumplimiento determina, en gran medida, la sostenibilidad de la cartera y la rentabilidad de la entidad. Los procesos de crédito han evolucionado hacia procedimientos fundamentados en modelos estadísticos y algoritmos de aprendizaje automático, permitiendo decisiones más objetivas, replicables y escalables.
+
+Lending Club es una plataforma de crédito en línea que funciona como un mercado (peer-to-peer) para el otorgamiento de préstamos personales, conectando directamente a solicitantes con inversionistas. Mediante procesos digitales estándar, la plataforma recopila información proporcionada por el solicitante (como lo pueden ser ingresos, propósito del préstamo, puntajes crediticios, entre otros) y emplea reglas y modelos de evaluación de riesgo para decidir la aprobación y las condiciones del préstamo. La disponibilidad pública de historiales de préstamos originados en esta plataforma ha convertido a sus bases de datos en una fuente de referencia para la investigación en scoring crediticio y modelado del incumplimiento, permitiendo analizar patrones de morosidad y evaluar algoritmos de clasificación aplicables a procesos operativos de riesgo.
+
+En este trabajo se emplea esta base de datos pública (Lending Club) como insumo para un ejercicio de clasificación supervisada, cuyo propósito es estimar la probabilidad de incumplimiento de préstamos personales. El análisis toma como referencia solicitudes reales registradas en la plataforma y se centra en información disponible al momento de la decisión crediticia, con el fin de reproducir condiciones operativas reales de otorgamiento. Este enfoque permite estudiar la capacidad predictiva de modelos estadísticos clásicos (regresión logística) frente a algoritmos basados en instancias (KNN), así como evaluar su aplicabilidad práctica en escenarios de scoring crediticio. 
+
+La importancia de clasificar de manera adecuada el riesgo de incumplimiento es múltiple. En primer lugar, reduce la exposición a pérdidas por préstamos morosos y optimiza el balance entre aceptación y rechazo de solicitudes, mejorando la rentabilidad ajustada por riesgo. En segundo lugar, una clasificación robusta contribuye a la inclusión financiera responsable; ya que, al identificar correctamente perfiles de riesgo, las entidades pueden diseñar productos y precios diferenciados que incentiven el acceso al crédito sin comprometer la sostenibilidad. Por último, la transparencia e interpretabilidad de los modelos (especialmente relevante en entornos regulatorios) facilita la auditoría de decisiones y la incorporación de salvaguardas frente a sesgos sistémicos. 
+
+El presente estudio tuvo como propósito desarrollar y comparar modelos de clasificación supervisada que permitieran predecir el riesgo de incumplimiento en préstamos personales, con el fin de aportar evidencia técnica para la toma de decisiones de crédito basadas en datos.  Desde un punto de vista metodológico general, el estudio adopta el paradigma del aprendizaje supervisado: se ajustan modelos sobre un subconjunto de observaciones con estado conocido (pagado / incumplido) y se evalúa su desempeño en datos independientes. La comparación entre regresión logística y KNN se orienta a contrastar dos aproximaciones distintas, una paramétrica y fácilmente interpretable (logit) frente a una no paramétrica basada en proximidad en el espacio de características (KNN). La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos. Los resultados serán interpretados tanto en términos estadísticos como en implicaciones operativas para la gestión de cartera.
+
 # Metodología
 
-## Fuente de datos
 
-## Definición de variables
+## Variables
 
+## Fuente de
+
+```{r resultados_tbl, echo=FALSE, message=FALSE, warning=FALSE} 
+library(knitr) 
+library(kableExtra) 
+# Definimos la tabla con las variables y descripciones 
+variables <- data.frame(
+  Variable = c("estado_pago", "ingreso", "relacion_deuda_ingreso", "monto_prestamo", "puntaje_fico", "proposito_agrupado", "default_num"),
+  Descripción = c(
+    "Variable dependiente que representa el resultado final del crédito.",
+    "Ingreso anual declarado por el solicitante, indicador de capacidad de pago.",
+    "Ratio financiero que mide la carga de endeudamiento frente al ingreso.",
+    "Valor del préstamo solicitado por el cliente.",
+    "Puntaje crediticio que resume el historial de crédito del solicitante.",
+    "Motivo declarado del préstamo, agrupado en categorías mayores.",
+    "Versión numérica de la variable dependiente usada en el modelo Logit." ),
+  Tipo de Variable = c(
+    "Categoría (binaria)",
+    "Numérica continua",
+    "Numérica continua",
+    "Numérica continua",
+    "Numérica continua",
+    "Categoría (agrupada)",
+    "Numérica binaria" 
+    ),
+    
+  Ejemplos / Notas = c( 
+    "Ej: 'pagado', 'impago'",
+    "En dólares anuales", 
+    "Proporción, por ejemplo 0.3", 
+    "En dólares", 
+    "Rango típico 300-850",
+    "Ej: 'vivienda', 'deuda educación', 'personal'",
+    "0 = pagado, 1 = impago" ), check.names = FALSE, stringsAsFactors = FALSE ) 
+# Crear la tabla con kableExtra replicando estilo del informe 
+variables %>% kable("html", escape = FALSE, align = c("l","l","c","l"), col.names = c("Variable", "Descripción", "Tipo de Variable", "Ejemplos / Notas")) %>% kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 14) %>% row_spec(0, background = "#4682B4", color = "white", bold = TRUE) %>% column_spec(1, bold = TRUE) %>% scroll_box(height = "350px") $$ P(\text{default\_num} = 1 \mid \text{ingreso}, \text{relacion\_deuda\_ingreso}, \text{monto\_prestamo}, \text{puntaje\_fico}, \text{proposito\_agrupado}) = \frac{1}{1 + e^{- \left( \beta_0 + \beta_1 \cdot \text{Ingreso} + \beta_2 \cdot \text{Relación Deuda-Ingreso} + \beta_3 \cdot \text{Monto Préstamo} + \beta_4 \cdot \text{Puntaje FICO} + \beta_5 \cdot \text{Propósito Agrupado} \right)}} $$
+```
 ## Preparación y limpieza de datos
 
 # Análisis descriptivo
