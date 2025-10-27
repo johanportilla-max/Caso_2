@@ -711,6 +711,48 @@ tabla_variables <- kable(
 tabla_variables
 ```
 
+## Base de datos
+
+## Base de datos
+
+```{r Base de datos, echo = FALSE, warning = FALSE, message = FALSE}
+lending_raw <- read_csv("LC_loans_granting_model_dataset.csv", guess_max = 20000)
+
+lending_base <- lending_raw %>%
+  select(revenue, dti_n, loan_amnt, fico_n, Default, purpose, issue_d) %>%
+  rename(
+    ingreso = revenue,
+    relacion_deuda_ingreso = dti_n,
+    monto_prestamo = loan_amnt,
+    puntaje_fico = fico_n,
+    estado_pago = Default,
+    proposito = purpose
+  ) %>%
+  mutate(
+    fecha_emision = parse_date_time(issue_d, orders = "b-Y", locale = "en_US"),
+    Año = year(fecha_emision),
+    proposito = as.factor(proposito),
+    proposito_agrupado = fct_collapse(
+      proposito,
+      Consolidacion = c("debt_consolidation", "credit_card"),
+      Casa_Vehiculo = c("home_improvement", "major_purchase", "car", "house"),
+      Negocio_Estudio = c("small_business", "educational")
+    ),
+    proposito_agrupado = fct_other(
+      proposito_agrupado,
+      keep = c("Consolidacion", "Casa_Vehiculo", "Negocio_Estudio"),
+      other_level = "Otros"
+    ),
+    estado_pago = fct_recode(as.factor(estado_pago), "Paga" = "0", "No_paga" = "1")
+  ) %>%
+  select(-proposito)
+
+lending_base <- lending_base %>%
+  filter(ingreso <= 250000, relacion_deuda_ingreso <= 50) %>%
+  drop_na()
+
+```
+
 
 
 # Analisis descriptivo
