@@ -110,6 +110,8 @@ lending_base <- lending_base %>%
   drop_na()
 ```
 
+
+
 ```{r resumen_general, echo = FALSE, warning = FALSE, message = FALSE}
 
 resumen_general <- lending_base %>%
@@ -129,7 +131,11 @@ resumen_general <- lending_base %>%
   )
 ```
 
-
+<<<<<<< HEAD
+##Estadísticas descriptivas de las variables principales
+=======
+titulo1 Introducción general del dataset
+>>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r tabla_resumen }
 
@@ -173,6 +179,9 @@ Por su parte, el puntaje FICO, que refleja el historial crediticio de los solici
 
 En conjunto, estas estadísticas evidencian una población de solicitantes con ingresos moderados a altos, niveles de endeudamiento diversos y un comportamiento crediticio predominantemente positivo.
 
+
+## Distribución de frecuencias por estado de pago
+
 ```{r tabla_frecuencias}
 
 tabla_estado <- as.data.frame(table(lending_base$estado_pago))
@@ -203,12 +212,17 @@ tabla_estado %>%
 
 La Tabla 2 presenta la distribución de los préstamos según el estado de pago, variable cualitativa que clasifica a los deudores en dos grupos: aquellos que cumplen con sus obligaciones (“Paga”) y los que incurren en incumplimiento (“No paga”).
 
+<<<<<<< HEAD
 Los resultados muestran que el 79.89% de los préstamos se encuentran en estado de pago activo o finalizado correctamente, mientras que el 20.11% corresponde a créditos en incumplimiento. Esta proporción indica que la gran mayoría de los prestatarios mantienen un comportamiento de pago responsable, aunque la presencia de una quinta parte de préstamos en mora representa un segmento de riesgo relevante para las entidades crediticias.
 
 El equilibrio entre ambos grupos servirá como base para los análisis posteriores, donde se buscará identificar los factores que explican el incumplimiento y las variables que mejor predicen el riesgo crediticio.
 
-
 # Distribución individual de variables numéricas
+
+## Histograma del ingreso
+=======
+titulo2 Distribución individual de variables numéricas
+>>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r p1}
 library(plotly)
@@ -238,6 +252,8 @@ La línea roja punteada indica la mediana, ubicada alrededor de USD 65,000, lo c
 
 Los valores más altos de ingreso, aunque minoritarios, representan a solicitantes con mayor capacidad financiera, lo que puede influir positivamente en su probabilidad de aprobación y cumplimiento del crédito. En conjunto, la distribución muestra una población heterogénea, pero con predominio de ingresos medios dentro del conjunto analizado.
 
+## Distribución de la relación deuda/ingreso
+
 ```{r pdti}
 p_dti <- ggplot(lending_base, aes(x = relacion_deuda_ingreso)) +
   geom_density(fill = "#2a9d8f",       
@@ -266,6 +282,8 @@ Esto indica que, en promedio, los solicitantes destinan menos de una quinta part
 
 La forma suavizada del gráfico evidencia una distribución continua y bien concentrada, lo que sugiere que el comportamiento de esta variable sigue una tendencia general homogénea dentro de la población crediticia.
 
+
+## Distribución del puntaje FICO
 
 ```{r fico}
 p_fico <- ggplot(lending_base, aes(x = puntaje_fico)) +
@@ -307,9 +325,9 @@ p_fico
 ```
 
 La distribución del puntaje FICO evidencia una clara concentración de valores entre 660 y 720 puntos, con una mediana cercana a 690 (línea roja). Esto indica que la mayoría de los solicitantes poseen un historial crediticio considerado “bueno”, aunque no necesariamente “excelente”.
-
 La distribución es ligeramente asimétrica hacia la derecha, lo cual refleja que existen prestatarios con puntajes altos (mayores a 750), pero en menor proporción. Este comportamiento es esperable, dado que los puntajes más altos suelen corresponder a individuos con un historial crediticio más largo y estable.
 
+## Distribución del monto del préstamo
 
 ```{r p_monto}
 p_monto_hist <- ggplot(lending_base, aes(x = monto_prestamo)) +
@@ -332,11 +350,75 @@ p_monto_hist
 ```
 
 El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000. Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
-
 Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
 
+<<<<<<< HEAD
+## puntaje FICO por estado de pago
 
+```{r ficopagaono}
+p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
+geom_boxplot() +
+labs(
+title = "Puntaje FICO por estado de pago",
+x = "Estado de pago",
+y = "Puntaje FICO"
+) +
+tema
+print(p_fico_box)
+
+
+```
+El boxplot evidencia una diferencia notable en el puntaje FICO según el estado de pago. Los prestatarios que pagan tienden a tener un FICO ligeramente superior, con una mediana cercana a los 700 puntos, mientras que quienes no pagan se concentran alrededor de 680–690 puntos. Esta diferencia confirma que un mejor historial crediticio se asocia con un mayor cumplimiento en los pagos.
+
+## ingreso por estado de pago
+
+```{r ingresopaga on o paga}
+
+p_box_ingreso <- ggplot(lending_base, aes(x = estado_pago, y = ingreso, fill = estado_pago)) +
+geom_boxplot(alpha = 0.7, outlier.color = "gray40", outlier.alpha = 0.4) +
+scale_fill_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
+scale_y_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ",")) +
+labs(
+title = "Distribución del ingreso por estado de pago",
+subtitle = "Comparación mediante boxplots (mediana y dispersión)",
+x = "Estado de pago",
+y = "Ingreso (USD)"
+) +
+tema
+p_box_ingreso
+```
+
+La comparación del ingreso por estado de pago revela que los prestatarios que cumplen con sus obligaciones presentan una mediana de ingreso ligeramente más alta que los morosos. Aunque la dispersión en ambos grupos es amplia, se observa una mayor presencia de valores atípicos elevados en el grupo “Paga”, lo cual sugiere que los ingresos más altos se asocian con una mayor probabilidad de cumplimiento.
+
+## Comparación de variables numéricas según estado de pago
+
+```{r todasvariable}
+
+p_comparativo <- lending_base %>%
+pivot_longer(cols = c(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico),
+names_to = "variable", values_to = "valor") %>%
+ggplot(aes(x = estado_pago, y = valor, fill = estado_pago)) +
+geom_boxplot(alpha = 0.6, outlier.alpha = 0.3) +
+facet_wrap(~ variable, scales = "free", ncol = 2) +
+scale_y_continuous(labels = comma) +
+scale_fill_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
+labs(
+title = "Comparación de variables numéricas según estado de pago",
+subtitle = "Boxplots por clase (Paga vs No_paga)",
+x = "Estado de pago",
+y = "Valor"
+) +
+tema
+print(p_comparativo)
+```
+Conjuntamente, los boxplots sugieren un patrón coherente: mayor ingreso y mayor puntaje FICO actúan como factores protectores frente al incumplimiento, mientras que una mayor relación deuda/ingreso incrementa el riesgo. El monto del préstamo por sí solo no explica totalmente el comportamiento (medianas similares), pero su mayor dispersión entre los morosos indica que créditos elevados en prestatarios vulnerables pueden agravar la probabilidad de default. Para la gestión del riesgo crediticio estas observaciones implican: priorizar la evaluación de DTI y FICO en la toma de decisiones, contemplar límites o condiciones más estrictas para solicitudes con alta DTI, y considerar estrategias de segmentación donde el tamaño del préstamo se ajuste a la capacidad de pago observada.
+
+
+
+## Relación entre puntaje FICO y relación deuda/ingreso
+=======
 titulo3 Comparación entre clases (Paga vs No_paga)
+>>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r fico_dti_simplificado}
 
@@ -371,8 +453,9 @@ p_fico_dti <- ggplot(sample_plot, aes(x = puntaje_fico, y = relacion_deuda_ingre
 p_fico_dti
 
 ```
+La curva  muestra una relación inversa clara: a medida que el puntaje FICO aumenta, la proporción deuda/ingreso (DTI) tiende a disminuir . Esto indica que los prestatarios con mejor historial crediticio manejan proporcionalmente menos deuda respecto a su ingreso, mientras que los puntajes medios-bajos concentran mayor carga financiera. La mayor incertidumbre en los extremos del rango (colas más amplias) sugiere escasez de datos y mayor variabilidad en esos tramos. En términos prácticos, el gráfico respalda usar FICO y DTI de forma conjunta para discriminar riesgo: perfiles con FICO bajo y DTI alto son candidatos de mayor riesgo, perfiles inversos, de menor riesgo.
 
-El boxplot evidencia una diferencia notable en el puntaje FICO según el estado de pago. Los prestatarios que pagan tienden a tener un FICO ligeramente superior, con una mediana cercana a los 700 puntos, mientras que quienes no pagan se concentran alrededor de 680–690 puntos. Esta diferencia confirma que un mejor historial crediticio se asocia con un mayor cumplimiento en los pagos.
+## Relación entre ingreso y monto del préstamo
 
 ```{r montovsingresos}
 corr_val <- cor(lending_base$ingreso, lending_base$monto_prestamo, use = "complete.obs")
@@ -402,7 +485,6 @@ p_monto <- ggplot(lending_base, aes(x = ingreso, y = monto_prestamo)) +
   ) +
   labs(
     title = "Relación entre ingreso y monto del préstamo",
-    subtitle = paste("Correlación:", round(corr_val, 2)),
     x = "Ingreso del solicitante (USD)",
     y = "Monto del préstamo (USD)"
   ) +
@@ -420,8 +502,12 @@ p_monto <- ggplot(lending_base, aes(x = ingreso, y = monto_prestamo)) +
 p_monto
 ```
 
-	
+El gráfico confirma que el ingreso es un predictor relevante del monto del préstamo —a mayor ingreso, mayor tendencia a recibir montos mayores— pero la relación es moderada y sujeta a límites operativos y a la influencia de otras variables crediticias. Por tanto, las decisiones de crédito deben combinar información de ingreso con medidas de riesgo (DTI, FICO) y restricciones de producto para optimizar la asignación y minimizar el riesgo de default.
 
+<<<<<<< HEAD
+=======
+
+## 
 
 ```{r decil}
 
@@ -538,8 +624,6 @@ title = "Matriz de correlaciones entre variables numéricas",
 outline.col = "white"
 ) + tema
 ```
->>>>>>> 1e9fc8959be2e2a58e046fff433bee4ebe68fbee
-## Distribución de las variables principales
 
 ## Caracterización de las clases
 
