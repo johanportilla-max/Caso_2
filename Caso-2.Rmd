@@ -731,83 +731,85 @@ lending_base <- lending_raw %>%
     proposito_agrupado = fct_collapse(
       proposito,
       Consolidacion = c("debt_consolidation", "credit_card"),
-      Casa_Vehiculo = c("home_improvement", "major_purchase", "car", "house"),
-      Negocio_Estudio = c("small_business", "educational")
+      "Casa/Vehiculo" = c("home_improvement", "major_purchase", "car", "house"),
+      "Negocio/Estudio" = c("small_business", "educational")
     ),
     proposito_agrupado = fct_other(
       proposito_agrupado,
-      keep = c("Consolidacion", "Casa_Vehiculo", "Negocio_Estudio"),
+      keep = c("Consolidacion", "Casa/Vehiculo", "Negocio/Estudio"),
       other_level = "Otros"
     ),
-    estado_pago = fct_recode(as.factor(estado_pago), "Paga" = "0", "No_paga" = "1")
+    estado_pago = fct_recode(as.factor(estado_pago), "Pagado" = "0", "Incumplido" = "1")
   ) %>%
-  select(-proposito)
-
-set.seed(0408)
-
-paga <- lending_base %>% filter(estado_pago == "Paga") %>% sample_n(5000)
-nopaga <- lending_base %>% filter(estado_pago == "No_paga") %>% sample_n(5000)
-lending_base <- lending_base %>%
+  select(-proposito) %>% 
   filter(ingreso <= 250000, relacion_deuda_ingreso <= 50) %>%
   drop_na()
 
+set.seed(0408)
 
-Base_datos= bind_rows(paga, nopaga)
+paga <- lending_base %>% filter(estado_pago == "Pagado") %>% sample_n(5000)
+nopaga <- lending_base %>% filter(estado_pago == "Incumplido") %>% sample_n(5000)
+
+Base_datos= bind_rows(paga, nopaga) %>% 
+  select(Año,ingreso,relacion_deuda_ingreso,monto_prestamo,puntaje_fico,proposito_agrupado,estado_pago) %>% 
+  rename(Ingreso=2,"Relacion_deuda_ingreso"=3,"Monto_prestado"=4,
+         FICO=5,Proposito=6,Estado=7)
+
+Base_datos <- Base_datos[sample(nrow(Base_datos)), ]
 
 
-tabla_interactiva <- Base_datos%>%
-  select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico, 
-         estado_pago, proposito_agrupado, Año) %>%
+Base_datos_formateada <- Base_datos %>%
+  mutate(
+    Ingreso = scales::dollar(Ingreso, accuracy = 1),
+    Monto_prestado = scales::dollar(Monto_prestado, accuracy = 1),
+    Relacion_deuda_ingreso = scales::percent(Relacion_deuda_ingreso/100, accuracy = 0.1),
+    FICO = as.integer(FICO)
+  )
+
+
+tabla_interactiva <- Base_datos %>%
   datatable(
+    colnames = c(
+      "Año",
+      "Ingreso Anual (USD)", 
+      "Relación Deuda/Ingreso", 
+      "Monto del Préstamo (USD)",
+      "Puntaje FICO", 
+      "Propósito del Préstamo", 
+      "Estado de Pago"
+    ),
     filter = 'top',
     extensions = c('Buttons', 'Scroller'),
     options = list(
-      # Configuración básica
       pageLength = 10,
       dom = 'Bfrtip',
       scrollX = TRUE,
       scrollY = "400px",
       scroller = TRUE,
-      
-      # Botones de exportación
-      buttons = list(
-        list(extend = 'copy', className = 'btn-academico'),
-        list(extend = 'csv', className = 'btn-academico'),
-        list(extend = 'excel', className = 'btn-academico'),
-        list(extend = 'pdf', className = 'btn-academico'),
-        list(extend = 'print', className = 'btn-academico')
-      ),
-      
-      # Idioma español
+      buttons = list('copy', 'csv', 'excel', 'pdf', 'print'),
       language = list(
         url = '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
       )
     ),
     caption = htmltools::tags$caption(
-      style = 'caption-side: top; text-align: center;',
-      htmltools::h3('Tabla 2. Base de Datos de Préstamos - Dataset Lending Club',
-                    style = 'color: #FF0000; font-family: "Playfair Display";')
+      style = 'caption-side: top; text-align: center; color: #FF0000; font-family: "Playfair Display"; font-size: 1.3rem; font-weight: bold;',
+      'Tabla 2. Base de Datos de Préstamos - Dataset Lending Club'
     ),
-    class = 'cell-border stripe hover academic-datatable',
-    rownames = FALSE
+    class = 'row-border stripe hover order-column',
+    rownames = FALSE,
+    width = '100%'
   ) %>%
-  # FORMATOS CORREGIDOS - usando formatCurrency y formatString
   formatCurrency(
-    columns = c('ingreso', 'monto_prestamo'),
+    columns = c('Ingreso', 'Monto prestado'),
     currency = '$', digits = 0, before = TRUE
   ) %>%
   formatPercentage(
-    columns = 'relacion_deuda_ingreso',
+    columns = 'Relacion deuda/ingreso',  # Usar nombre SIN espacios
     digits = 1
   ) %>%
-  # Alternativa para formatear números sin decimales
-  formatStyle(
-    'puntaje_fico',
-    render = JS(
-      "function(data, type, row, meta) {",
-      "  return type === 'display' ? Math.round(parseFloat(data)) : data;",
-      "}"
-    )
+  formatRound(
+    columns = 'FICO',
+    digits = 0
   )
 
 tabla_interactiva
