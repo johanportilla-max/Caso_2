@@ -296,11 +296,7 @@ resumen_general <- lending_base %>%
   )
 ```
 
-<<<<<<< HEAD
-##Estadísticas descriptivas de las variables principales
-=======
-titulo1 Introducción general del dataset
->>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
+## Estadísticas descriptivas de las variables principales
 
 ```{r tabla_resumen }
 
@@ -377,17 +373,13 @@ tabla_estado %>%
 
 La Tabla 2 presenta la distribución de los préstamos según el estado de pago, variable cualitativa que clasifica a los deudores en dos grupos: aquellos que cumplen con sus obligaciones (“Paga”) y los que incurren en incumplimiento (“No paga”).
 
-<<<<<<< HEAD
 Los resultados muestran que el 79.89% de los préstamos se encuentran en estado de pago activo o finalizado correctamente, mientras que el 20.11% corresponde a créditos en incumplimiento. Esta proporción indica que la gran mayoría de los prestatarios mantienen un comportamiento de pago responsable, aunque la presencia de una quinta parte de préstamos en mora representa un segmento de riesgo relevante para las entidades crediticias.
 
 El equilibrio entre ambos grupos servirá como base para los análisis posteriores, donde se buscará identificar los factores que explican el incumplimiento y las variables que mejor predicen el riesgo crediticio.
 
-# Distribución individual de variables numéricas
+## Distribución individual de variables numéricas
 
 ## Histograma del ingreso
-=======
-titulo2 Distribución individual de variables numéricas
->>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r p1}
 library(plotly)
@@ -517,8 +509,7 @@ p_monto_hist
 El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000. Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
 Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
 
-<<<<<<< HEAD
-## puntaje FICO por estado de pago
+## Puntaje FICO por estado de pago
 
 ```{r ficopagaono}
 p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
@@ -576,14 +567,10 @@ y = "Valor"
 tema
 print(p_comparativo)
 ```
+
 Conjuntamente, los boxplots sugieren un patrón coherente: mayor ingreso y mayor puntaje FICO actúan como factores protectores frente al incumplimiento, mientras que una mayor relación deuda/ingreso incrementa el riesgo. El monto del préstamo por sí solo no explica totalmente el comportamiento (medianas similares), pero su mayor dispersión entre los morosos indica que créditos elevados en prestatarios vulnerables pueden agravar la probabilidad de default. Para la gestión del riesgo crediticio estas observaciones implican: priorizar la evaluación de DTI y FICO en la toma de decisiones, contemplar límites o condiciones más estrictas para solicitudes con alta DTI, y considerar estrategias de segmentación donde el tamaño del préstamo se ajuste a la capacidad de pago observada.
 
-
-
 ## Relación entre puntaje FICO y relación deuda/ingreso
-=======
-titulo3 Comparación entre clases (Paga vs No_paga)
->>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r fico_dti_simplificado}
 
@@ -618,6 +605,7 @@ p_fico_dti <- ggplot(sample_plot, aes(x = puntaje_fico, y = relacion_deuda_ingre
 p_fico_dti
 
 ```
+
 La curva  muestra una relación inversa clara: a medida que el puntaje FICO aumenta, la proporción deuda/ingreso (DTI) tiende a disminuir . Esto indica que los prestatarios con mejor historial crediticio manejan proporcionalmente menos deuda respecto a su ingreso, mientras que los puntajes medios-bajos concentran mayor carga financiera. La mayor incertidumbre en los extremos del rango (colas más amplias) sugiere escasez de datos y mayor variabilidad en esos tramos. En términos prácticos, el gráfico respalda usar FICO y DTI de forma conjunta para discriminar riesgo: perfiles con FICO bajo y DTI alto son candidatos de mayor riesgo, perfiles inversos, de menor riesgo.
 
 ## Relación entre ingreso y monto del préstamo
@@ -668,11 +656,6 @@ p_monto
 ```
 
 El gráfico confirma que el ingreso es un predictor relevante del monto del préstamo —a mayor ingreso, mayor tendencia a recibir montos mayores— pero la relación es moderada y sujeta a límites operativos y a la influencia de otras variables crediticias. Por tanto, las decisiones de crédito deben combinar información de ingreso con medidas de riesgo (DTI, FICO) y restricciones de producto para optimizar la asignación y minimizar el riesgo de default.
-
-<<<<<<< HEAD
-=======
-
-## 
 
 ```{r decil}
 
@@ -1810,17 +1793,3 @@ Estas métricas reflejan que ninguno de los dos modelos predomina claramente sob
 - James, G., Witten, D., Hastie, T. & Tibshirani, R. (2021). An Introduction to Statistical Learning with Applications in R (2nd ed.). Springer.  
 - Aguirre, J., et al. (2024). Modelo de regresión lineal para el análisis del ingreso de los hogares en la región Pacífica (ECV 2024). Publicado en RPubs: https://rpubs.com/joanaguirre04/1353677  
 
-
-```{r setup, include=FALSE}
-
-
-
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r cars}
-
-```
-
-```{r pressure, echo=FALSE}
-```
