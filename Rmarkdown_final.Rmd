@@ -901,7 +901,7 @@ p_monto_hist
 El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000. Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
 Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
 
-#Varia por estado de pago
+# Variable por estado de pago
 ## Puntaje FICO por estado de pago
 
 ```{r ficopagaono}
