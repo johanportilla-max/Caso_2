@@ -1,0 +1,1007 @@
+---
+title: "Aplicación de Algoritmos de Machine Learning para la Evaluación del Riesgo Crediticio en Leading Club"
+subtitle: "Aguirre Aldana Joan Sebastian, Barros Rayo Alejandro, Muñoz Portela Diego, Portilla Aguirre Johan Camilo"
+author: ""
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: tango
+    toc: true
+    toc_depth: 4
+    number_sections: true
+    fig_width: 8
+    fig_height: 5
+    fig_caption: true
+    dev: "png"
+    keep_md: false
+    self_contained: true
+    css: Sebastian-styles.css
+    code_folding: none
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,          
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  out.width = "85%",
+  comment = ""          
+)
+#Librerias
+
+library(dplyr)
+library(tidyr)
+library(readr)
+library(tidyverse)
+library(class)
+library(caret)
+library(pROC)
+library(ggthemes)
+library(lubridate)
+library(kableExtra)
+library(knitr)
+library(ggcorrplot)
+library(scales)
+library(gridExtra)
+library(grid)
+library(ggplotify)
+library(broom)
+
+```
+
+
+```{r Tema, include=FALSE}
+Sebastian_css <- "
+
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+Pro:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+Pro:wght@300;400;600&display=swap');
+
+:root {
+  --primary-red: #FF0000;       /* Rojo puro y vibrante */
+  --secondary-red: #CC0000;     /* Rojo más oscuro para contraste */
+  --accent-red: #FF3333;        /* Rojo más suave para detalles */
+  --light-red: #FFE5E5;         /* Fondo suave rojo clarísimo */
+  --dark-red: #990000;          /* Rojo oscuro para texto o bordes */
+  --gold: #FFD100;              /* Dorado Univalle para acentos */
+  --parchment: #FFFDF5;         /* Base crema suave */
+  --W: #FFFFFF;
+  --gris-texto: #333333;
+}
+
+body {
+  font-family: 'Source Serif Pro', 'Times New Roman', serif;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #2c2c2c;
+  background-color: var(--parchment);
+  font-size: 16px;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: white;
+  box-shadow: 0 0 30px rgba(122, 28, 28, 0.08);
+  border-left: 1px solid var(--light-red);
+  border-right: 1px solid var(--light-red);
+}
+
+
+/* ENCABEZADOS ACADÉMICOS - CORREGIDOS A ROJOS */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', 'Times New Roman', serif;
+  color: var(--primary-red) !important;
+  border-bottom: none;
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 3px double var(--gold);
+  letter-spacing: -0.5px;
+  color: var(--primary-red) !important;
+}
+
+h2 {
+  font-size: 2.1rem;
+  border-left: 5px solid var(--accent-red);
+  padding-left: 1.2rem;
+  margin-top: 3.5rem;
+  background: linear-gradient(90deg, var(--light-red) 0%, transparent 100%);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  color: var(--secondary-red) !important;
+}
+
+h3 {
+  font-size: 1.6rem;
+  color: var(--accent-red) !important;
+  border-bottom: 2px solid var(--light-red);
+  padding-bottom: 0.7rem;
+  margin-top: 2.5rem;
+}
+
+h4 {
+  font-size: 1.4rem;
+  color: var(--secondary-red) !important;
+  margin-top: 2rem;
+  font-weight: 600;
+}
+
+h5 {
+  font-size: 1.2rem;
+  color: var(--accent-red) !important;
+  margin-top: 1.5rem;
+}
+
+h6 {
+  font-size: 1.1rem;
+  color: var(--dark-red) !important;
+  margin-top: 1.5rem;
+  font-style: italic;
+}
+
+/* SUBTÍTULOS Y ELEMENTOS DE TEXTO */
+.subtitle {
+  color: var(--W) !important;
+  font-family: 'Source Serif Pro', serif;
+  font-size: 1.3rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: 400;
+}
+
+.caption {
+  color: var(--accent-red) !important;
+  font-family: 'Source Serif Pro', serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+
+
+
+/* HEADER ACADÉMICO */
+.page-header {
+  background: linear-gradient(135deg, var(--dark-red) 0%, var(--primary-red) 100%) !important;
+  color: white;
+  padding: 5rem 2rem !important;
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  border-bottom: 5px solid var(--gold);
+  margin-bottom: 3rem !important;
+}
+
+.page-header h1 {
+  color: white !important;
+  font-size: 3.3rem;
+  font-weight: 700;
+  border-bottom: none;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+  letter-spacing: -0.5px;
+}
+
+.page-header h2 {
+  color: rgba(255,255,255,0.95) !important;
+  font-size: 1.9rem;
+  font-weight: 300;
+  border-left: none;
+  padding-left: 0;
+  font-family: 'Source Serif Pro', serif;
+  background: none;
+  padding: 0;
+}
+
+/* FOOTER ACADÉMICO */
+.academic-footer {
+  text-align: center;
+  color: var(--secondary-red);
+  margin-top: 5rem;
+  padding: 3rem 2rem;
+  border-top: 3px double var(--light-red);
+  font-family: 'Playfair Display', serif;
+  background: linear-gradient(135deg, var(--parchment) 0%, white 100%);
+  border-radius: 8px 8px 0 0;
+}
+
+/* MEJORAS PARA GRÁFICOS */
+.plotly.html-widget {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 1rem;
+  background: white;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+  
+  h1 {
+    font-size: 2.2rem;
+  }
+  
+  h2 {
+    font-size: 1.8rem;
+  }
+  
+  .page-header {
+    padding: 3rem 1rem !important;
+  }
+  
+  .tocify {
+    width: 280px !important;
+  }
+  
+  .chunk-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+
+/* Agrega esto al final de tu Sebastian-styles.css */
+
+/* SISTEMA DE TOGGLE PARA CÓDIGO */
+.code-toggle-container {
+  text-align: center;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--light-red);
+  border-radius: 10px;
+  border-left: 4px solid var(--accent-red);
+  box-shadow: 0 4px 12px rgba(179, 8, 56, 0.1);
+}
+
+.code-toggle-btn {
+  background: linear-gradient(135deg, var(--primary-red), var(--secondary-red));
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(122, 28, 28, 0.3);
+  margin: 0 0.5rem;
+}
+
+.code-toggle-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(122, 28, 28, 0.4);
+  background: linear-gradient(135deg, var(--secondary-red), var(--primary-red));
+}
+
+/* CONTENEDORES DE CÓDIGO CON TOGGLE */
+.code-chunk {
+  margin: 2rem 0;
+  border: 2px solid var(--light-red);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.code-header {
+  background: linear-gradient(135deg, var(--primary-red), var(--secondary-red));
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.code-header:hover {
+  background: linear-gradient(135deg, var(--secondary-red), var(--primary-red));
+}
+
+.chunk-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.toggle-icon {
+  font-family: 'Source Serif Pro', serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.code-content {
+  background: #1e1e1e;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.code-content.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.code-content.expanded {
+  max-height: 5000px;
+  opacity: 1;
+}
+
+
+/* BOTÓN FLOTANTE GLOBAL */
+.global-code-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  background: linear-gradient(135deg, var(--primary-red), var(--secondary-red));
+  color: white;
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 50px;
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(179, 8, 56, 0.4);
+  transition: all 0.3s ease;
+}
+
+.global-code-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(179, 8, 56, 0.6);
+}
+
+/* INDICADOR DE ESTADO */
+.code-status {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.code-status.visible {
+  background: #4CAF50;
+}
+
+.code-status.hidden {
+  background: #ff9800;
+}
+* TOC - TABLA DE CONTENIDOS MEJORADA */
+#TOC {
+  background: linear-gradient(135deg, var(--parchment) 0%, white 100%) !important;
+  border: 2px solid var(--light-red) !important;
+  border-radius: 12px !important;
+  padding: 2rem !important;
+  margin: 2rem 0 !important;
+  box-shadow: 0 4px 20px rgba(122, 28, 28, 0.1) !important;
+  font-family: 'Playfair Display', serif !important;
+}
+
+#TOC::before {
+  content: \"Tabla de Contenidos\";
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary-red);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--gold);
+}
+
+#TOC ul {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+
+#TOC li {
+  margin: 0.8rem 0 !important;
+  padding: 0 !important;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+#TOC li:hover {
+  border-left-color: var(--accent-red);
+  background: var(--light-red);
+}
+
+#TOC a {
+  color: var(--secondary-red) !important;
+  text-decoration: none !important;
+  font-family: 'Source Serif Pro', serif !important;
+  font-size: 1rem !important;
+  padding: 0.5rem 1rem !important;
+  display: block !important;
+  transition: all 0.3s ease !important;
+  border-radius: 4px;
+}
+
+#TOC a:hover {
+  color: var(--primary-red) !important;
+  background: var(--light-red) !important;
+  transform: translateX(5px);
+}
+
+#TOC ul ul {
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+}
+
+#TOC ul ul a {
+  font-size: 0.95rem !important;
+  color: var(--dark-red) !important;
+  padding: 0.3rem 1rem !important;
+}
+
+#TOC ul ul li {
+  margin: 0.5rem 0 !important;
+}
+
+/* ESTILOS PARA EL CÓDIGO - TEMA RSTUDIO (CLARO) */
+pre.sourceCode {
+  display: block !important;
+  background: var(--W) !important;
+  color: var(--gris-texto) !important;
+  padding: 15px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  overflow-x: auto;
+  margin: 15px 0 !important;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 0.85em;
+  line-height: 1.4;
+  border-left: 4px solid var(--primary-red) !important;
+  box-shadow: 0 2px 4px rgba(179, 25, 66, 0.1);
+}
+
+
+pre.sourceCode code {
+  background: transparent !important;
+  color: #333 !important;
+  padding: 0 !important;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+}
+
+
+pre.sourceCode code .kw { color: var(--primary-red); font-weight: bold; } /* Keywords */
+pre.sourceCode code .dt { color: var(--gold); } /* Data types */
+pre.sourceCode code .dv { color: var(--gold); } /* Numeric values */
+pre.sourceCode code .st { color: var(--secondary-red); } /* Strings */
+pre.sourceCode code .co { color: #666; font-style: italic; } /* Comments */
+pre.sourceCode code .ot { color: var(--primary-red); } /* Operators */
+pre.sourceCode code .fu { color: var(--primary-red); } /* Functions */
+pre.sourceCode code .va { color: var(--accent-red); } /* Variables */
+pre.sourceCode code .ident { color: var(--accent-red); } /* Identifiers */
+
+/* Estilo para números de línea si se requieren */
+pre.sourceCode .number {
+  color: var(--secondary-red);
+  font-weight: bold;
+}
+
+/* Scrollbar personalizado para el bloque de código */
+pre.sourceCode::-webkit-scrollbar {
+  height: 8px;
+  background-color: var(--W);
+}
+
+pre.sourceCode::-webkit-scrollbar-thumb {
+  background-color: var(--gold);
+  border-radius: 4px;
+}
+
+pre.sourceCode::-webkit-scrollbar-thumb:hover {
+  background-color: var(--gold);
+}
+
+.main-content p {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  margin-bottom: 1.2rem;
+}
+
+/* ESTILOS PARA TABLAS ACADÉMICAS */
+.academic-table {
+  font-family: 'Source Serif Pro', serif !important;
+  border: 2px solid var(--light-red) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 20px rgba(122, 28, 28, 0.1) !important;
+  margin: 2rem auto !important;
+}
+
+.academic-table thead th {
+  font-family: 'Playfair Display', serif !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  padding: 1.2rem !important;
+  border-bottom: 3px solid var(--gold) !important;
+}
+
+.academic-table tbody tr {
+  transition: all 0.3s ease !important;
+}
+
+.academic-table tbody tr:hover {
+  background-color: var(--light-red) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(179, 8, 56, 0.1) !important;
+}
+
+.academic-table td {
+  padding: 1rem !important;
+  border-bottom: 1px solid var(--light-red) !important;
+  vertical-align: top !important;
+}
+
+.academic-table caption {
+  caption-side: top !important;
+  font-family: 'Playfair Display', serif !important;
+  font-weight: 700 !important;
+  color: var(--primary-red) !important;
+  font-size: 1.3rem !important;
+  margin-bottom: 1rem !important;
+  padding: 1rem !important;
+  background: linear-gradient(90deg, var(--light-red) 0%, transparent 100%) !important;
+  border-left: 5px solid var(--accent-red) !important;
+}
+
+/* Pie de tabla */
+.academic-table tfoot tr {
+  background: var(--parchment) !important;
+}
+
+.academic-table tfoot td {
+  border-top: 2px dashed var(--gold) !important;
+  font-style: italic !important;
+  color: var(--secondary-red) !important;
+  padding: 1rem !important;
+  text-align: center !important;
+}
+
+
+
+"
+
+writeLines(Sebastian_css, "Sebastian-styles.css")
+```
+
+
+
+
+
+# Introducción {.page-header}
+
+<div class="academic-card">
+Una correcta evaluación del riesgo crediticio termina siendo un pilar fundamental en la gestión financiera moderna. Es por esto que en contextos de otorgamiento masivo de préstamos la capacidad para diferenciar con precisión entre solicitantes de bajo y alto riesgo de incumplimiento determina, en gran medida, la sostenibilidad de la cartera y la rentabilidad de la entidad. Los procesos de crédito han evolucionado hacia procedimientos fundamentados en modelos estadísticos y algoritmos de aprendizaje automático, permitiendo decisiones más objetivas, replicables y escalables.
+
+Lending Club es una plataforma de crédito en línea que funciona como un mercado (peer-to-peer) para el otorgamiento de préstamos personales, conectando directamente a solicitantes con inversionistas. Mediante procesos digitales estándar, la plataforma recopila información proporcionada por el solicitante (como lo pueden ser ingresos, propósito del préstamo, puntajes crediticios, entre otros) y emplea reglas y modelos de evaluación de riesgo para decidir la aprobación y las condiciones del préstamo. La disponibilidad pública de historiales de préstamos originados en esta plataforma ha convertido a sus bases de datos en una fuente de referencia para la investigación en scoring crediticio y modelado del incumplimiento, permitiendo analizar patrones de morosidad y evaluar algoritmos de clasificación aplicables a procesos operativos de riesgo.
+
+En este trabajo se emplea esta base de datos pública (Lending Club) como insumo para un ejercicio de clasificación supervisada, cuyo propósito es estimar la probabilidad de incumplimiento de préstamos personales. El análisis toma como referencia solicitudes reales registradas en la plataforma y se centra en información disponible al momento de la decisión crediticia, con el fin de reproducir condiciones operativas reales de otorgamiento. Este enfoque permite estudiar la capacidad predictiva de modelos estadísticos clásicos (regresión logística) frente a algoritmos basados en dinstancias (KNN), así como evaluar su aplicabilidad práctica en escenarios de scoring crediticio.
+
+La importancia de clasificar de manera adecuada el riesgo de incumplimiento es múltiple. En primer lugar, reduce la exposición a pérdidas por préstamos morosos y optimiza el balance entre aceptación y rechazo de solicitudes, mejorando la rentabilidad ajustada por riesgo. En segundo lugar, una clasificación robusta contribuye a la inclusión financiera responsable; ya que, al identificar correctamente perfiles de riesgo, las entidades pueden diseñar productos y precios diferenciados que incentiven el acceso al crédito sin comprometer la sostenibilidad. Por último, la transparencia e interpretabilidad de los modelos (especialmente relevante en entornos regulatorios) facilita la auditoría de decisiones y la incorporación de salvaguardas frente a sesgos sistémicos. 
+
+El presente estudio tuvo como propósito desarrollar y comparar modelos de clasificación supervisada que permitieran predecir el riesgo de incumplimiento en préstamos personales, con el fin de aportar evidencia técnica para la toma de decisiones de crédito basadas en datos.  Desde un punto de vista metodológico general, el estudio adopta el paradigma del aprendizaje supervisado: se ajustan modelos sobre un subconjunto de observaciones con estado conocido (pagado / incumplido) y se evalúa su desempeño en datos independientes. La comparación entre regresión logística y KNN se orienta a contrastar dos aproximaciones distintas: una paramétrica y fácilmente interpretable (logit) frente a una no paramétrica basada en proximidad en el espacio de características (KNN). La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos. Los resultados serán interpretados en términos estadísticos.
+
+</div>
+
+# Metodología
+
+<div class="academic-card">
+El presente estudio siguió un enfoque de aprendizaje supervisado orientado a la clasificación binaria (pagado / incumplido). El procedimiento general consistió en aplicar dos familias de clasificadores (Logit y KNN) sobre datos previamente preparados, y evaluar su desempeño mediante métricas complementarias y procedimientos de validación.
+
+La implementación se realizó en R empleando flujos estandarizados de preprocesamiento y modelado. Para reducir la influencia de escalas dispares y valores extremos, se aplicaron filtros sobre outliers relevantes y se normalizaron las variables numéricas (centrado y escala) cuando correspondió; dicho escalado fue especialmente crítico para KNN, dada su dependencia de distancias euclidianas. La muestra final fue construida de forma estratificada para asegurar balance entre las clases objetivo, y todas las operaciones aleatorias (muestreo y particionado); además, se fijó la semilla (set.seed(28)) para garantizar reproducibilidad.
+
+En cuanto al ajuste de modelos, la regresión logística se estimó mediante glm(..., family = binomial()), obteniendo probabilidades predictivas que permitieron tanto el análisis de coeficientes como la construcción de curvas ROC y la determinación de umbrales operativos (índice de Youden). El KNN se abordó de dos maneras; una implementación básica con class::knn, evaluando k en un rango (k = 1:100) y seleccionando el k que maximizó la exactitud fuera de muestra; y una versión integrada en caret::train() que incorporó validación cruzada estratificada (5 folds), búsqueda automática de hiperparámetros (tuneLength) y optimización según el AUC (métrica ROC), lo que permitió una selección de modelo más robusta frente a la variabilidad de los datos.
+</div>
+## Definición de las variables
+
+Las variables utilizadas en el estudio se organizan en dos grupos: dependientes e independientes.
+La variable dependiente seleccionada es el estado de pago de la persona (**Estado**), construida a partir del indicador Default y se codificó como factor con niveles “Pagado” (no default) y “Incumplido” (default).
+Esta variable refleja el resultado del contrato crediticio y es una medida directa del riesgo de incumplimiento, por lo que su correcta definición y codificación es central para cualquier ejercicio de scoring, ya que no solo indica la ocurrencia del impago, sino que también sirve como referencia para estimar probabilidades de default y calibrar los umbrales de decisión en procesos de aprobación crediticia.
+
+Entre las variables independientes se incorporaron predictores financieros y de propósito del préstamo que, según la teoría del riesgo y la práctica del credit scoring, guardan relación con la capacidad de pago y la propensión al incumplimiento.
+El ingreso anual declarado por el solicitante **Ingreso** se emplea como variable de la capacidad de repago; a mayor ingreso disponible se espera una menor probabilidad de default, dado que permite absorber obligaciones adicionales y enfrentar eventos adversos sin perder la capacidad de servicio de la deuda.
+No obstante, la medida declarativa del ingreso puede presentar sesgos por subdeclaración o variabilidad temporal, por lo que su interpretación debe hacerse con cuidado.
+
+La **Relacion deuda/ingreso** sintetiza la carga financiera del solicitante al relacionar obligaciones vigentes con su ingreso.
+Un DTI (Debt-to-Income, que viene siendo la relación deuda/ingreso) elevado indica que una fracción significativa del ingreso ya está comprometida con otras deudas, lo que incrementa la vulnerabilidad ante shocks y aumenta la probabilidad de incumplimiento.
+Se toma en cuenta ya que permite captar no solo la magnitud del endeudamiento sino también la presión relativa sobre la liquidez del hogar o individuo.
+
+El monto solicitado **Monto prestamo** incorpora la dimensión contractual del crédito, que son los préstamos de mayor cuantía: los cuales, sin ajustes proporcionales en condiciones o capacidad de pago, tienden a elevar el riesgo de default por aumentar la carga mensual y alargar el horizonte de exposición.
+Además, el monto solicitado puede interactuar con otras variables (por ejemplo, ingreso o FICO) para dibujar perfiles diferenciados de riesgo.
+Su inclusión facilita distinguir situaciones en las que un mismo monto resulta asumible o riesgoso según el contexto financiero del solicitante.
+
+El puntaje crediticio **Puntaje FICO** funciona como un indicador consolidado del historial crediticio y de la probabilidad observada de cumplimiento en períodos previos.
+Puntajes más altos se asocian sistemáticamente con menor probabilidad de impago, pues reflejan comportamientos de pago estables, menor incidencia de morosidad previa y hábitos financieros más conservadores.
+Por su carácter informativo y su uso extendido en la industria, el puntaje FICO aporta a la discriminación del riesgo y suele mostrar efectos significativos en modelos paramétricos y no paramétricos.
+
+El propósito del préstamo reagrupado **Proposito agrupado** captura el destino del crédito, como lo puede ser una consolidación de deuda, compra de vivienda o vehículo, inversión en negocio, educación.
+Refleja diferencias cualitativas en la naturaleza y prioridad del gasto.
+Distintos propósitos implican perfiles de riesgo heterogéneos, es decir, un préstamo para consolidación de deuda puede indicar una situación financiera tensionada, mientras que un préstamo para inversión productiva o educación puede asociarse a retornos que faciliten el repago.
+
+```{r - Variables}
+
+variables_modelo <- data.frame(
+  Variable = c("Estado", "Ingreso", "Relación deuda/ingreso",
+               "Monto préstamo", "Puntaje FICO", "Propósito", "Binaria"),
+  
+  Descripción = c(
+    "Variable dependiente que representa el resultado final del crédito.",
+    "Ingreso anual declarado por el solicitante, indicador de capacidad de pago.",
+    "Ratio financiero que mide la carga de endeudamiento frente al ingreso.",
+    "Valor del préstamo solicitado por el cliente.",
+    "Puntaje crediticio que resume el historial de crédito del solicitante.",
+    "Motivo declarado del préstamo, agrupado en categorías mayores.",
+    "Versión numérica de la variable dependiente usada en el modelo."
+  ),
+  
+  Tipo_Variable = c(
+    "Categórica (binaria)",
+    "Cuantitativa continua",
+    "Cuantitativa continua",
+    "Cuantitativa continua",
+    "Cuantitativa continua",
+    "Categórica (agrupada)",
+    "Binaria (numérica)"
+  ),
+  
+  Ejemplos_Notas = c(
+    "Ej: 'Pagado', 'Incumplido'.",
+    "En dólares anuales.",
+    "Proporción (ej. 0.35).",
+    "Monto del préstamo en USD.",
+    "Rango típico: 300 – 850.",
+    "Ej: 'Consolidación', 'Negocio', 'Otros'.",
+    "0 = Paga, 1 = No paga."
+  )
+)
+
+# Versión corregida - sin text_align
+tabla_variables <- kable(
+  variables_modelo,
+  format = "html",
+  col.names = c("Variable", "Descripción", "Tipo de Variable", "Ejemplos / Notas"),
+  align = c('l', 'l', 'l', 'l'),
+  caption = "Tabla 1. Variables utilizadas en el Modelo de Riesgo Crediticio"
+) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#990000", color = "white", bold = TRUE) %>%
+  row_spec(1:7, background = "#FFFDF5") %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2, width = "6cm") %>%
+  column_spec(3, width = "3cm") %>%
+  column_spec(4, width = "3.5cm") %>%
+  footnote(
+    general = "Elaboración propia con base en el dataset Lending Club (2007-2018).",
+    general_title = "Fuente: ",
+    footnote_as_chunk = TRUE
+  )
+
+tabla_variables
+```
+
+
+
+# Analisis descriptivo
+
+## Diseño del Estudio
+
+
+
+# Resultados y Discusión
+
+## Análisis de Correlaciones
+
+```{r academic-correlation}
+# Matriz de correlación mejorada
+library(plotly)
+
+cor_data <- round(cor(mtcars), 3)
+
+plot_ly(
+  x = colnames(cor_data),
+  y = colnames(cor_data),
+  z = cor_data,
+  type = "heatmap",
+  colorscale = list(
+    c(0, "#f8f0ef"),
+    c(0.5, "#b74a4a"),
+    c(1, "#7a1c1c")
+  ),
+  hoverinfo = "x+y+z",
+  colorbar = list(
+    title = "Coeficiente",
+    titleside = "right"
+  )
+) %>% 
+  layout(
+    title = list(
+      text = "<b>Matriz de Correlación - Análisis Multivariable</b>",
+      font = list(family = "Playfair Display", size = 16, color = "#7a1c1c")
+    ),
+    xaxis = list(tickangle = -45, tickfont = list(family = "Source Serif Pro")),
+    yaxis = list(tickfont = list(family = "Source Serif Pro")),
+    margin = list(l = 100, r = 50, b = 100, t = 80)
+  )
+```
+
+<div class="academic-card">
+### Interpretación de Resultados
+
+Los coeficientes de correlación evidencian relaciones significativas entre las variables analizadas. Particularmente, se observa una correlación negativa pronunciada entre el peso del vehículo y su eficiencia energética (r = `r round(cor(mtcars$wt, mtcars$mpg), 3)`), consistente con hallazgos reportados en la literatura especializada.
+</div>
+
+# Conclusiones
+
+<div class="academic-card">
+## Hallazgos Principales
+
+1. **Relación inversa significativa** entre masa vehicular y eficiencia de combustible
+2. **Patrón consistente** en la distribución de características técnicas
+3. **Validación empírica** de los postulados teóricos establecidos
+
+## Implicaciones Prácticas
+
+Los resultados obtenidos proporcionan evidencia cuantitativa para el desarrollo de políticas de eficiencia energética y diseño vehicular optimizado.
+</div>
+
+---
+
+<div class="academic-footer">
+**Universidad del Valle** | 
+*Facultad de ingenieria* | 
+Gestion de datos
+</div>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Smooth scroll para navegación académica
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+  
+  // Resaltado de sección activa en TOC
+  const sections = document.querySelectorAll('h2, h3');
+  const navLinks = document.querySelectorAll('.tocify-item a');
+  
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.clientHeight;
+      if (scrollY >= (sectionTop - 100)) {
+        current = section.getAttribute('id');
+      }
+    });
+    
+    navLinks.forEach(link => {
+      link.classList.remove('active');
+      if (link.getAttribute('href') === `#${current}`) {
+        link.classList.add('active');
+      }
+    });
+  });
+});
+</script>
+
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Crear botón global
+  const globalToggle = document.createElement("button");
+  globalToggle.className = "global-code-toggle";
+  globalToggle.innerHTML = "Control de Código";
+  document.body.appendChild(globalToggle);
+
+  // Estado global
+  let allCodeVisible = true;
+
+  // Función para crear controles individuales
+  function initializeCodeToggles() {
+    const codeChunks = document.querySelectorAll("pre.r, pre.python, pre.sourceCode");
+    
+    codeChunks.forEach((chunk, index) => {
+      // Crear contenedor
+      const container = document.createElement("div");
+      container.className = "code-chunk";
+      
+      // Crear header
+      const header = document.createElement("div");
+      header.className = "code-header";
+      
+      // Obtener el lenguaje del código
+      const language = chunk.className.includes("r") ? "R" : 
+                      chunk.className.includes("python") ? "Python" : "Código";
+      
+      header.innerHTML = `
+        <div class="chunk-title">
+          <span class="code-status visible"></span>
+          ${language} - Chunk ${index + 1}
+        </div>
+        <div class="toggle-icon">▼</div>
+      `;
+      
+      // Crear contenido
+      const content = document.createElement("div");
+      content.className = "code-content expanded";
+      content.appendChild(chunk.cloneNode(true));
+      
+      // Reemplazar el chunk original
+      chunk.parentNode.replaceChild(container, chunk);
+      container.appendChild(header);
+      container.appendChild(content);
+      
+      // Agregar evento de click
+      header.addEventListener("click", function() {
+        const isExpanded = content.classList.contains("expanded");
+        const icon = this.querySelector(".toggle-icon");
+        const status = this.querySelector(".code-status");
+        
+        if (isExpanded) {
+          content.classList.remove("expanded");
+          content.classList.add("collapsed");
+          icon.classList.add("rotated");
+          status.classList.remove("visible");
+          status.classList.add("hidden");
+        } else {
+          content.classList.remove("collapsed");
+          content.classList.add("expanded");
+          icon.classList.remove("rotated");
+          status.classList.remove("hidden");
+          status.classList.add("visible");
+        }
+      });
+    });
+  }
+
+  // Función para toggle global
+  function toggleAllCode() {
+    const codeContents = document.querySelectorAll(".code-content");
+    const headers = document.querySelectorAll(".code-header");
+    
+    if (allCodeVisible) {
+      // Ocultar todo
+      codeContents.forEach(content => {
+        content.classList.remove("expanded");
+        content.classList.add("collapsed");
+      });
+      headers.forEach(header => {
+        const icon = header.querySelector(".toggle-icon");
+        const status = header.querySelector(".code-status");
+        icon.classList.add("rotated");
+        status.classList.remove("visible");
+        status.classList.add("hidden");
+      });
+      globalToggle.innerHTML = "Mostrar Todo el Código";
+      allCodeVisible = false;
+    } else {
+      // Mostrar todo
+      codeContents.forEach(content => {
+        content.classList.remove("collapsed");
+        content.classList.add("expanded");
+      });
+      headers.forEach(header => {
+        const icon = header.querySelector(".toggle-icon");
+        const status = header.querySelector(".code-status");
+        icon.classList.remove("rotated");
+        status.classList.remove("hidden");
+        status.classList.add("visible");
+      });
+      globalToggle.innerHTML = "Ocultar Todo el Código";
+      allCodeVisible = true;
+    }
+  }
+
+  // Inicializar
+  initializeCodeToggles();
+  
+  // Evento para el botón global
+  globalToggle.addEventListener("click", toggleAllCode);
+
+  // Agregar contenedor de controles globales
+  const globalControls = document.createElement("div");
+  globalControls.className = "code-toggle-container";
+  globalControls.innerHTML = `
+    <h4 style="margin-top: 0; color: var(--primary-red);">Controles de Visualización de Código</h4>
+    <p style="margin-bottom: 1rem; color: var(--dark-red);">
+      Utilice los siguientes controles para gestionar la visualización del código en este documento
+    </p>
+    <button class="code-toggle-btn" onclick="toggleAllCode()">Mostrar/Ocultar Todo el Código</button>
+    <button class="code-toggle-btn secondary" onclick="expandAllCode()">Expandir Todo</button>
+    <button class="code-toggle-btn secondary" onclick="collapseAllCode()">Contraer Todo</button>
+  `;
+
+  // Insertar después del primer h1
+  const firstHeading = document.querySelector("h1");
+  if (firstHeading) {
+    firstHeading.parentNode.insertBefore(globalControls, firstHeading.nextSibling);
+  }
+
+  // Funciones globales para los botones
+  window.toggleAllCode = toggleAllCode;
+  window.expandAllCode = function() {
+    const codeContents = document.querySelectorAll(".code-content");
+    const headers = document.querySelectorAll(".code-header");
+    
+    codeContents.forEach(content => {
+      content.classList.remove("collapsed");
+      content.classList.add("expanded");
+    });
+    headers.forEach(header => {
+      const icon = header.querySelector(".toggle-icon");
+      const status = header.querySelector(".code-status");
+      icon.classList.remove("rotated");
+      status.classList.remove("hidden");
+      status.classList.add("visible");
+    });
+    globalToggle.innerHTML = "Ocultar Todo el Código";
+    allCodeVisible = true;
+  };
+
+  window.collapseAllCode = function() {
+    const codeContents = document.querySelectorAll(".code-content");
+    const headers = document.querySelectorAll(".code-header");
+    
+    codeContents.forEach(content => {
+      content.classList.remove("expanded");
+      content.classList.add("collapsed");
+    });
+    headers.forEach(header => {
+      const icon = header.querySelector(".toggle-icon");
+      const status = header.querySelector(".code-status");
+      icon.classList.add("rotated");
+      status.classList.remove("visible");
+      status.classList.add("hidden");
+    });
+    globalToggle.innerHTML = "Mostrar Todo el Código";
+    allCodeVisible = false;
+  };
+});
+</script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
