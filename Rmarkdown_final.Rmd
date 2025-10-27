@@ -23,20 +23,19 @@ En este trabajo se emplea esta base de datos pública (Lending Club) como insumo
 
 La importancia de clasificar de manera adecuada el riesgo de incumplimiento es múltiple. En primer lugar, reduce la exposición a pérdidas por préstamos morosos y optimiza el balance entre aceptación y rechazo de solicitudes, mejorando la rentabilidad ajustada por riesgo. En segundo lugar, una clasificación robusta contribuye a la inclusión financiera responsable; ya que, al identificar correctamente perfiles de riesgo, las entidades pueden diseñar productos y precios diferenciados que incentiven el acceso al crédito sin comprometer la sostenibilidad. Por último, la transparencia e interpretabilidad de los modelos (especialmente relevante en entornos regulatorios) facilita la auditoría de decisiones y la incorporación de salvaguardas frente a sesgos sistémicos. 
 
-El presente estudio tuvo como propósito desarrollar y comparar modelos de clasificación supervisada que permitieran predecir el riesgo de incumplimiento en préstamos personales, con el fin de aportar evidencia técnica para la toma de decisiones de crédito basadas en datos.  Desde un punto de vista metodológico general, el estudio adopta el paradigma del aprendizaje supervisado: se ajustan modelos sobre un subconjunto de observaciones con estado conocido (pagado / incumplido) y se evalúa su desempeño en datos independientes. La comparación entre regresión logística y KNN se orienta a contrastar dos aproximaciones distintas: una paramétrica y fácilmente interpretable (logit) frente a una no paramétrica basada en proximidad en el espacio de características (KNN). La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos. Los resultados serán interpretados tanto en términos estadísticos como en implicaciones operativas para la gestión de cartera.
+El presente estudio tuvo como propósito desarrollar y comparar modelos de clasificación supervisada que permitieran predecir el riesgo de incumplimiento en préstamos personales, con el fin de aportar evidencia técnica para la toma de decisiones de crédito basadas en datos.  Desde un punto de vista metodológico general, el estudio adopta el paradigma del aprendizaje supervisado: se ajustan modelos sobre un subconjunto de observaciones con estado conocido (pagado / incumplido) y se evalúa su desempeño en datos independientes. La comparación entre regresión logística y KNN se orienta a contrastar dos aproximaciones distintas: una paramétrica y fácilmente interpretable (logit) frente a una no paramétrica basada en proximidad en el espacio de características (KNN). La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos. Los resultados serán interpretados en términos estadísticos.
 
 
 # Metodología
 
-## Fuente de datos
+El presente estudio siguió un enfoque de aprendizaje supervisado orientado a la clasificación binaria (paga / no_paga). El procedimiento general consistió en aplicar dos familias de clasificadores 
+(regresión logística paramétrica y K-Vecinos Más Cercanos no paramétrico) 
+sobre datos previamente preparados, y evaluar su desempeño mediante métricas 
+complementarias y procedimientos de validación.
 
-## Definición de variables
+La implementación se realizó en R empleando flujos estandarizados de preprocesamiento y modelado. Para reducir la influencia de escalas dispares y valores extremos, se aplicaron filtros sobre outliers relevantes y se normalizaron las variables numéricas (centrado y escala) cuando correspondió; dicho escalado fue especialmente crítico para KNN, dada su dependencia de distancias euclidianas. La muestra final fue construida de forma estratificada para asegurar balance entre las clases objetivo, y todas las operaciones aleatorias (muestreo y particionado); además, se fijó la semilla (set.seed(28)) para garantizar reproducibilidad.
 
-## Preparación y limpieza de datos
-
-# Análisis descriptivo
-
-El conjunto de datos analizado corresponde a registros de préstamos otorgados por la plataforma Lending Club, e incluye información relevante sobre las características financieras de los solicitantes y el comportamiento de pago asociado a cada crédito. Con el fin de comprender de manera preliminar la composición y variabilidad de las observaciones, se presenta a continuación un resumen de las principales estadísticas descriptivas y la distribución de frecuencias por estado de pago.
+En cuanto al ajuste de modelos, la regresión logística se estimó mediante glm(..., family = binomial()), obteniendo probabilidades predictivas que permitieron tanto el análisis de coeficientes como la construcción de curvas ROC y la determinación de umbrales operativos (índice de Youden). El KNN se abordó de dos maneras; una implementación básica con class::knn, evaluando k en un rango (k = 1:100) y seleccionando el k que maximizó la exactitud fuera de muestra; y una versión integrada en caret::train() que incorporó validación cruzada estratificada (5 folds), búsqueda automática de hiperparámetros (tuneLength) y optimización según el AUC (métrica ROC), lo que permitió una selección de modelo más robusta frente a la variabilidad de los datos.
 
 ```{r sep, echo = FALSE, warning = FALSE, message = FALSE}
 
@@ -60,6 +59,88 @@ library(ggplotify)
 library(broom)
 
 ```
+## Fuente de datos
+
+Para el presente trabajo se utiliza la base de datos pública Lending Club Loan Data (2007–2018) descargada desde Zenodo. La base de datos fue depurada y filtrada para mantener únicamente las observaciones y variables disponibles al momento de la decisión crediticia, con el objetivo de reproducir condiciones operativas reales en un ejercicio de scoring. En el proceso de limpieza se aplicaron filtros sobre valores extremos y se eliminaron las observaciones con valores faltantes en las variables de interés. Además, se construyó una muestra balanceada y reproducible compuesta por 10.000 observaciones (5.000 préstamos pagados y 5.000 préstamos en incumplimiento), a fin de evitar sesgos de clase en la estimación de los modelos.
+
+## Definición de variables
+
+Las variables utilizadas en el estudio se organizan en dos grupos: dependientes e independientes. La variable dependiente seleccionada es el estado de pago de la persona (estado_pago), construida a partir del indicador Default y se codificó como factor con niveles “Paga” (no default) y “No_paga” (default). Esta variable refleja el resultado del contrato crediticio y es una medida directa del riesgo de incumplimiento, por lo que su correcta definición y codificación es central para cualquier ejercicio de scoring, ya que no solo indica la ocurrencia del impago, sino que también sirve como referencia para estimar probabilidades de default y calibrar los umbrales de decisión en procesos de aprobación crediticia.
+
+Entre las variables independientes se incorporaron predictores financieros y de propósito del préstamo que, según la teoría del riesgo y la práctica del credit scoring, guardan relación con la capacidad de pago y la propensión al incumplimiento. El ingreso anual declarado por el solicitante `ingreso` se emplea como proxy de la capacidad de repago; a mayor ingreso disponible se espera una menor probabilidad de default, dado que permite absorber obligaciones adicionales y enfrentar eventos adversos sin perder la capacidad de servicio de la deuda. No obstante, la medida declarativa del ingreso puede presentar sesgos por subdeclaración o variabilidad temporal, por lo que su interpretación debe hacerse con cuidado.
+
+La relación deuda/ingreso `relacion_deuda_ingreso` sintetiza la carga financiera del solicitante al relacionar obligaciones vigentes con su ingreso. Un DTI (Debt-to-Income, que viene siendo la relación deuda/ingreso) elevado indica que una fracción significativa del ingreso ya está comprometida con otras deudas, lo que incrementa la vulnerabilidad ante shocks y aumenta la probabilidad de incumplimiento. Se toma en cuenta ya que permite captar no solo la magnitud del endeudamiento sino también la presión relativa sobre la liquidez del hogar o individuo.
+
+El monto solicitado `monto_prestamo` incorpora la dimensión contractual del crédito, que son los préstamos de mayor cuantía: los cuales, sin ajustes proporcionales en condiciones o capacidad de pago, tienden a elevar el riesgo de default por aumentar la carga mensual y alargar el horizonte de exposición. Además, el monto solicitado puede interactuar con otras variables (por ejemplo, ingreso o FICO) para dibujar perfiles diferenciados de riesgo. Su inclusión facilita distinguir situaciones en las que un mismo monto resulta asumible o riesgoso según el contexto financiero del solicitante.
+
+El puntaje crediticio `puntaje_fico` funciona como un indicador consolidado del historial crediticio y de la probabilidad observada de cumplimiento en períodos previos. Puntajes más altos se asocian sistemáticamente con menor probabilidad de impago, pues reflejan comportamientos de pago estables, menor incidencia de morosidad previa y hábitos financieros más conservadores. Por su carácter informativo y su uso extendido en la industria, el puntaje FICO aporta a la discriminación del riesgo y suele mostrar efectos significativos en modelos paramétricos y no paramétricos.
+
+El propósito del préstamo reagrupado `proposito_agrupado` captura el destino del crédito, como lo puede ser una consolidación de deuda, compra de vivienda o vehículo, inversión en negocio, educación. Refleja diferencias cualitativas en la naturaleza y prioridad del gasto. Distintos propósitos implican perfiles de riesgo heterogéneos, es decir, un préstamo para consolidación de deuda puede indicar una situación financiera tensionada, mientras que un préstamo para inversión productiva o educación puede asociarse a retornos que faciliten el repago. 
+
+```{r cars}
+
+variables_modelo <- data.frame(
+  Variable = c("estado_pago", "ingreso", "relacion_deuda_ingreso",
+               "monto_prestamo", "puntaje_fico", "proposito_agrupado", "default_num"),
+  
+  Descripción = c(
+    "Variable dependiente que representa el resultado final del crédito.",
+    "Ingreso anual declarado por el solicitante, indicador de capacidad de pago.",
+    "Ratio financiero que mide la carga de endeudamiento frente al ingreso.",
+    "Valor del préstamo solicitado por el cliente.",
+    "Puntaje crediticio que resume el historial de crédito del solicitante.",
+    "Motivo declarado del préstamo, agrupado en categorías mayores.",
+    "Versión numérica de la variable dependiente usada en el modelo Logit."
+  ),
+  
+  Tipo_Variable = c(
+    "Categórica (binaria)",
+    "Cuantitativa continua",
+    "Cuantitativa continua",
+    "Cuantitativa continua",
+    "Cuantitativa continua",
+    "Categórica (agrupada)",
+    "Binaria (numérica)"
+  ),
+  
+  Ejemplos_Notas = c(
+    "Ej: 'Paga', 'No_paga'.",
+    "En dólares anuales.",
+    "Proporción (ej. 0.35).",
+    "Monto del préstamo en USD.",
+    "Rango típico: 300 – 850.",
+    "Ej: 'Consolidación', 'Negocio', 'Otros'.",
+    "0 = Paga, 1 = No_paga."
+  )
+)
+
+# --- Formato elegante con kableExtra ---
+tabla_variables <- kable(
+  variables_modelo,
+  format = "html",
+  col.names = c("Variable", "Descripción", "Tipo de Variable", "Ejemplos / Notas"),
+  align = c('l', 'l', 'l', 'l'),
+  caption = "Tabla 1. Variables utilizadas en el Modelo Logit"
+) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2, width = "6cm") %>%
+  column_spec(3, width = "3cm") %>%
+  column_spec(4, width = "3.5cm") %>%
+  footnote(
+    general = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+tabla_variables
+```
 
 ```{r tema2, echo = FALSE, warning = FALSE, message = FALSE}
 tema <- theme_minimal() +
@@ -77,6 +158,83 @@ tema <- theme_minimal() +
     legend.position = "none"
   )
 ```
+
+## Preparación y limpieza de datos
+
+A partir de la base original descargada desde Zenodo, se seleccionaron únicamente las variables disponibles al momento de la decisión crediticia y relevantes para el objetivo de clasificación: ingreso anual (revenue), relación deuda/ingreso (dti_n), monto del préstamo (loan_amnt), puntaje crediticio FICO (fico_n), indicador de incumplimiento (Default), propósito del préstamo (purpose) y fecha de emisión (issue_d). Estas variables fueron renombradas empleando nomenclatura descriptiva en español para facilitar la interpretación de resultados.
+
+La variable dependiente `Default` (originalmente codificada como 0/1) se transformó a factor con niveles "Paga" y "No_paga", estableciendo de forma explícita la clase de interés para las métricas de evaluación. La variable `purpose` (propósito del préstamo), que contenía múltiples categorías detalladas, fue reagrupada mediante `fct_collapse()` en cuatro categorías más generales y operativamente interpretables: "Consolidacion" (consolidación de deuda y tarjetas de crédito), "Casa_Vehiculo" (mejoras al hogar, compras mayores, vehículos y vivienda), "Negocio_Estudio" (pequeños negocios y educación) y "Otros" (propósitos residuales). Esta reagrupación buscó reducir la dispersión categórica y concentrar la señal predictiva en grupos conceptualmente coherentes. 
+
+```{r Ingreso}
+
+ggplot(lending_raw, aes(x = revenue)) +
+  geom_histogram(
+    binwidth = 25000,
+    fill = "#90caf9",    # azul suave
+    color = "#1a5276",   # borde azul oscuro
+    alpha = 0.9
+  ) +
+  geom_vline(
+    xintercept = 250000,
+    linetype = "dashed",
+    color = "#c0392b",
+    linewidth = 1
+  ) +
+  xlim(0, 500000) +
+  labs(
+    title = "Distribución del Ingreso Anual de los Solicitantes",
+    subtitle = "Filtro aplicado: ingresos superiores a 250,000 USD se consideran atípicos",
+    x = "Ingreso anual (USD)",
+    y = "Frecuencia",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)."
+  ) +
+  tema +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5, color = "#2c3e50"),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "#34495e"),
+    axis.title = element_text(face = "bold", size = 12, color = "#2c3e50"),
+    axis.text = element_text(size = 10, color = "#34495e"),
+    plot.caption = element_text(size = 9, hjust = 0.5, color = "#7f8c8d")
+  )
+
+```
+```{r cars}
+
+ggplot(lending_raw, aes(x = dti_n)) +
+  geom_histogram(
+    binwidth = 5,
+    fill = "#90caf9",    
+    color = "#1a5276",   
+    alpha = 0.9
+  ) +
+  geom_vline(
+    xintercept = 50,
+    linetype = "dashed",
+    color = "#c0392b",
+    linewidth = 1
+  ) +
+  xlim(0, 100) +
+  labs(
+    title = "Distribución de la Relación Deuda–Ingreso (DTI)",
+    subtitle = "Filtro aplicado: DTI superiores a 50 se consideran valores atípicos",
+    x = "Relación Deuda/Ingreso (%)",
+    y = "Frecuencia",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)."
+  ) +
+  tema +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5, color = "#2c3e50"),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "#34495e"),
+    axis.title = element_text(face = "bold", size = 12, color = "#2c3e50"),
+    axis.text = element_text(size = 10, color = "#34495e"),
+    plot.caption = element_text(size = 9, hjust = 0.5, color = "#7f8c8d")
+  )
+
+```
+
+Con base en la exploración gráfica de las distribuciones (histogramas de ingreso y DTI), se identificaron valores extremos que podían distorsionar la estimación de los modelos o reflejar errores de registro. Se aplicaron dos filtros: se excluyeron registros con ingresos anuales superiores a 250,000 dólares (aproximadamente el percentil 99), y se eliminaron observaciones con relación deuda/ingreso mayor a 50 (casos de sobreendeudamiento extremo o datos inconsistentes). Estos umbrales fueron definidos mediante inspección visual de las distribuciones y considerando criterios de plausibilidad financiera. El filtrado permitió reducir la influencia de outliers sin comprometer la representatividad de la muestra.
+
+Tratamiento de valores faltantes: Una vez aplicados los filtros, se eliminaron todas las observaciones con valores faltantes (drop_na()) en cualquiera de las variables seleccionadas. Esta decisión se fundamentó en la necesidad de trabajar con registros completos para garantizar comparabilidad entre modelos y evitar imputaciones que pudieran introducir sesgos. Dado el tamaño original de la base, la eliminación de casos incompletos no comprometió la disponibilidad de datos para el modelado.
 
 ```{r carga_datos, echo = FALSE, warning = FALSE, message = FALSE}
 lending_raw <- read_csv("LC_loans_granting_model_dataset.csv", guess_max = 20000)
@@ -115,7 +273,9 @@ lending_base <- lending_base %>%
   drop_na()
 ```
 
+# Análisis descriptivo
 
+El conjunto de datos analizado corresponde a registros de préstamos otorgados por la plataforma Lending Club, e incluye información relevante sobre las características financieras de los solicitantes y el comportamiento de pago asociado a cada crédito. Con el fin de comprender de manera preliminar la composición y variabilidad de las observaciones, se presenta a continuación un resumen de las principales estadísticas descriptivas y la distribución de frecuencias por estado de pago.
 
 ```{r resumen_general, echo = FALSE, warning = FALSE, message = FALSE}
 
@@ -645,38 +805,6 @@ Inicialmente, de la base filtrada y limpia ("lending_base"), se extrajo una mues
 
 Posteriormente, la muestra balanceada ("lending_muestra") se dividió en subconjuntos de entrenamiento (75% de las observaciones, equivalente a 7,500 registros) y prueba (25%, o 2,500 registros), utilizando sample() con la misma semilla para mantener la aleatoriedad controlada y preservar el equilibrio equitativo entre clases en ambos conjuntos (aproximadamente 50% "Paga" y 50% "No_paga"). La proporción 75/25 es una convención común en machine learning para clasificación, ya que proporciona suficientes datos para el entrenamiento mientras reserva un conjunto de prueba independiente para validar el rendimiento generalizado, evitando sobreajuste en datasets de riesgo crediticio como el de Lending Club. Esta división se implementó mediante índices aleatorios index_entrena e index_test, asegurando que las variables predictoras (numéricas y categóricas) se mantuvieran representativas en ambos subconjuntos para una evaluación imparcial de los modelos KNN y logit.
 
-```{r tabla_proporcion}
-
-clases <- lending_base %>%
-  group_by(estado_pago) %>%
-  summarise(
-    N_observaciones = n(),
-    Porcentaje = round(100 * n() / nrow(lending_base), 2),
-    .groups = 'drop'
-  )
-tabla_clases=clases %>%
-  kbl(
-    caption = "Tabla 1. Distribución de clases antes del balanceo",
-    align = c("l", "r", "r"),
-    col.names = c("Estado de pago", "N observaciones", "Porcentaje (%)")
-  ) %>%
-  kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed"),
-    full_width = FALSE,
-    font_size = 14,
-    position = "center"
-  ) %>%
-    row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
-  column_spec(1, bold = TRUE, width = "3.5cm") %>%
-  column_spec(2:3, width = "3cm") %>%
-  footnote(
-    general = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018).",
-    general_title = "Nota:",
-    footnote_as_chunk = TRUE
-  )
-tabla_clases
-```
-
 ```{r particion}
 set.seed(28)
 paga <- lending_base %>% filter(estado_pago == "Paga") %>% sample_n(5000)
@@ -1161,6 +1289,11 @@ pred_clase_logit <- factor(ifelse(p_hat >= umbral, "No_paga", "Paga"),levels=c("
 
 La variable respuesta fue codificada binariamente previamente en el conjunto de entrenamiento, y el modelo estimó coeficientes para ingreso, relación deuda-ingreso, monto del préstamo, puntaje FICO y la variable categórica proposito_agrupado.
 
+$$
+P(\text{default\_num} = 1 \mid \text{ingreso}, \text{relacion\_deuda\_ingreso}, \text{monto\_prestamo}, \text{puntaje\_fico}, \text{proposito\_agrupado}) 
+= \frac{1}{1 + e^{- \left( \beta_0 + \beta_1 \cdot \text{Ingreso} + \beta_2 \cdot \text{Relación Deuda-Ingreso} + \beta_3 \cdot \text{Monto Préstamo} + \beta_4 \cdot \text{Puntaje FICO} + \beta_5 \cdot \text{Propósito Agrupado} \right)}}
+$$
+
 El ajuste permitió identificar el impacto individual de cada predictor sobre el logaritmo de las probabilidades de incumplimiento. Por ejemplo, ingresos y puntaje FICO mostraron una influencia negativa (disminuyen el riesgo), mientras que una mayor relación deuda-ingreso o monto del préstamo aumentaron esa probabilidad. Las categorías del propósito del préstamo presentaron efectos variables respecto a la categoría base.
 
 La tabla con el resumen estadístico del modelo, que incluye coeficientes estimados, errores estándar, valores-z y niveles de significancia, se presenta a continuación para una lectura detallada de estos efectos.
@@ -1582,6 +1715,91 @@ comparacion_integral %>%
   )
 
 ```
+
+La tabla de comparación integral entre KNN (con caret) y regresión logística (Logit) muestra que ambos modelos presentan desempeños relativamente similares en la mayoría de los indicadores, aunque existen diferencias que pueden resultar más relevantes dependiendo del objetivo analítico.
+
+Logit logra una mayor exactitud y mejor especificidad, lo que se traduce en un menor número de falsos positivos al identificar pagos correctamente. KNN, por su parte, exhibe una sensibilidad ligeramente superior y clasifica más casos de “No_paga” de manera correcta, lo que puede ser valioso cuando la prioridad es identificar el mayor número posible de incumplimientos, aun aceptando un número mayor de falsos positivos.
+
+```{r area}
+
+roc_knn_df <- data.frame(
+  FPR = 1 - roc_knn$specificities,
+  TPR = roc_knn$sensitivities,
+  Modelo = "KNN"
+)
+
+roc_logit_df <- data.frame(
+  FPR = 1 - roc_logit$specificities,
+  TPR = roc_logit$sensitivities,
+  Modelo = "Logit"
+)
+
+roc_comparada <- rbind(roc_knn_df, roc_logit_df)
+
+auc_knn <- round(auc(roc_knn), 3)
+auc_logit <- round(auc(roc_logit), 3)
+
+ggplot(roc_comparada, aes(x = FPR, y = TPR, color = Modelo)) +
+  geom_line(linewidth = 1.2) +
+  geom_abline(linetype = "dashed", color = "#b0b0b0") +
+  annotate("text", x = 0.65, y = 0.15,
+           label = paste0("AUC KNN = ", auc_knn),
+           color = "#1a5276", fontface = "bold", size = 4.2) +
+  annotate("text", x = 0.65, y = 0.07,
+           label = paste0("AUC Logit = ", auc_logit),
+           color = "#2874a6", fontface = "bold", size = 4.2) +
+  scale_color_manual(values = c("KNN" = "#1a5276", "Logit" = "#2874a6")) +
+  labs(
+    title = "Curvas ROC comparadas entre KNN y Logit",
+    subtitle = "Visualización de la capacidad discriminativa de ambos modelos",
+    x = "Tasa de falsos positivos (1 - Especificidad)",
+    y = "Tasa de verdaderos positivos (Sensibilidad)",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)"
+  ) +
+  tema +
+  theme(legend.position = "bottom", legend.title = element_blank())
+
+```
+
+Sin embargo, la diferencia en el área bajo la curva (AUC) es mínima, denotando que ambos modelos muestran una capacidad similar para distinguir entre pagos e impagos de manera global.
+
+```{r barras}
+metricas_comparacion <- data.frame(
+  Métrica = rep(c("Accuracy", "Sensibilidad", "Especificidad", "Precisión", "Balanced Accuracy"), each = 2),
+  Modelo = rep(c("KNN", "Logit"), times = 5),
+  Valor = c(
+    cm_caret$overall["Accuracy"],
+    cm_logit$overall["Accuracy"],
+    cm_caret$byClass["Sensitivity"],
+    cm_logit$byClass["Sensitivity"],
+    cm_caret$byClass["Specificity"],
+    cm_logit$byClass["Specificity"],
+    cm_caret$byClass["Pos Pred Value"],
+    cm_logit$byClass["Pos Pred Value"],
+    cm_caret$byClass["Balanced Accuracy"],
+    cm_logit$byClass["Balanced Accuracy"]
+  )
+)
+
+ggplot(metricas_comparacion, aes(x = Métrica, y = Valor, fill = Modelo)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.6) +
+  geom_text(aes(label = round(Valor, 3)), 
+            position = position_dodge(0.75), vjust = -0.5, size = 3.5, color = "#323130") +
+  scale_fill_manual(values = c("KNN" = "#1a5276", "Logit" = "#2874a6")) +
+  labs(
+    title = "Comparación de métricas clave entre KNN y Logit",
+    subtitle = "Las barras muestran el desempeño relativo de los modelos",
+    x = "",
+    y = "Valor de la métrica",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)"
+  ) +
+  tema +
+  theme(legend.position = "bottom", legend.title = element_blank())
+```
+
+Estas métricas reflejan que ninguno de los dos modelos predomina claramente sobre el otro en todos los aspectos; cada uno presenta fortalezas y limitaciones que se deben ponderar según el contexto del problema y la tolerancia al riesgo o error que se adopten en la aplicación real. Así, la decisión de adoptar, combinar, o mejorar alguno de estos enfoques requerirá una reflexión adicional sobre el objetivo de negocio y las restricciones prácticas del sistema de decisión.
+
+
 
 # Conclusiones
 
