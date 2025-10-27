@@ -14,7 +14,7 @@ library(scales)
 library(gridExtra)
 library(grid)
 library(ggplotify)
-
+library(broom)
 # Base de Datos
 
 lending_raw <- read_csv("LC_loans_granting_model_dataset.csv", guess_max = 20000)
@@ -572,40 +572,57 @@ curva_roc_identica <- ggplot(roc_data, aes(x = specificity, y = sensitivity)) +
 print(curva_roc_identica)
 
 
-coefs_logit <- summary(fit_logit)$coefficients %>%
-as.data.frame() %>%
-rownames_to_column("Variable") %>%
-mutate(
-OR = round(exp(Estimate), 3),
-Significancia = ifelse(Pr(>|z|) < 0.05, "Significativo", "No significativo")
-) %>%
-rename(
-Estimación = Estimate,
-Error estándar = Std. Error,
-Valor z = z value,
-p-valor = Pr(>|z|)
-)
 
 
+#### logit
 
 
-coefs_logit %>%
+# Resumen del modelo logit
+
+resumen_logit <- broom::tidy(fit_logit) %>%
+  mutate(across(where(is.numeric), ~ round(., 6))) %>%
+  rename(
+    Variable = term,
+    Coeficiente = estimate,
+    `Error Estándar` = std.error,
+    `Estadístico z` = statistic,
+    `Valor p` = p.value
+  ) %>%
+  mutate(
+    Significancia = case_when(
+      `Valor p` < 0.001 ~ "***",
+      `Valor p` < 0.01  ~ "**",
+      `Valor p` < 0.05  ~ "*",
+      `Valor p` < 0.1   ~ ".",
+      TRUE ~ ""
+    ),
+    `Valor p` = case_when(
+      is.na(`Valor p`) ~ "1",
+      `Valor p` < 2e-16 ~ "<2e-16",
+      TRUE ~ formatC(`Valor p`, format = "e", digits = 3)
+    ),
+    `OR (e^β)` = round(exp(Coeficiente), 3)
+  ) %>%
+  select(Variable, Coeficiente, `Error Estándar`, `Estadístico z`, `Valor p`, Significancia, `OR (e^β)`)
+
+# Tabla formateada profesional
 kbl(
-caption = "Coeficientes y Odds Ratios del Modelo Logit",
-align = c("l", "c", "c", "c", "c", "c"),
-col.names = c("Variable", "Estimación", "Error estándar", "Valor z", "p-valor", "OR")
+  resumen_logit,
+  caption = "Tabla 4. Resultados del Modelo Logit: Coeficientes, Significancia y Razones de Odds (OR)",
+  align = c("l", "r", "r", "r", "r", "c", "r"),
+  col.names = names(resumen_logit)
 ) %>%
-kable_styling(
-bootstrap_options = c("striped", "hover", "condensed"),
-full_width = FALSE,
-font_size = 12,
-position = "center"
-) %>%
-row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
-column_spec(1, bold = TRUE, width = "4cm") %>%
-column_spec(6, bold = TRUE, width = "2cm") %>%
-footnote(
-general = "El OR > 1 indica un incremento en la probabilidad de 'No_paga'.",
-general_title = "Nota:",
-footnote_as_chunk = TRUE
-)
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "4cm") %>%
+  column_spec(2:7, width = "2.3cm") %>%
+  footnote(
+    general = "Elaboración propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Fuente:",
+    footnote_as_chunk = TRUE
+  )
