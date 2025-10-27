@@ -603,15 +603,207 @@ resumen_logit <- broom::tidy(fit_logit) %>%
     ),
     `OR (e^β)` = round(exp(Coeficiente), 3)
   ) %>%
-  select(Variable, Coeficiente, `Error Estándar`, `Estadístico z`, `Valor p`, Significancia, `OR (e^β)`)
+  mutate(across(everything(), as.character))  # <-- convierte todas las columnas a texto
 
-# Tabla formateada profesional
-kbl(
-  resumen_logit,
-  caption = "Tabla 4. Resultados del Modelo Logit: Coeficientes, Significancia y Razones de Odds (OR)",
-  align = c("l", "r", "r", "r", "r", "c", "r"),
-  col.names = names(resumen_logit)
+# Añadir medidas globales del modelo
+resumen_global <- glance(fit_logit)
+
+AIC_val   <- round(resumen_global$AIC, 2)
+null_dev  <- round(resumen_global$null.deviance, 2)
+resid_dev <- round(resumen_global$deviance, 2)
+df_null   <- resumen_global$df.null
+df_resid  <- resumen_global$df.residual
+
+filas_resumen <- tibble(
+  Variable = c(
+    "AIC", "Null deviance", "Residual deviance",
+    "Grados de libertad (Null)", "Grados de libertad (Residual)"
+  ),
+  Coeficiente = as.character(c(AIC_val, null_dev, resid_dev, df_null, df_resid)),
+  `Error Estándar` = "", `Estadístico z` = "", `Valor p` = "",
+  Significancia = "", `OR (e^β)` = ""
+)
+
+# Combinar resultados de coeficientes + resumen general
+tabla_logit_final <- bind_rows(resumen_logit, filas_resumen)
+
+# Presentar tabla en formato elegante
+tabla_logit_final %>%
+  kbl(
+    caption = "Tabla 4. Resultados del modelo de regresión logística (Logit)",
+    align = c("l", "r", "r", "r", "r", "c", "r"),
+    col.names = names(tabla_logit_final)
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "4cm") %>%
+  column_spec(2:7, width = "2.5cm") %>%
+  row_spec(
+    (nrow(resumen_logit) + 1):(nrow(resumen_logit) + nrow(filas_resumen)),
+    bold = TRUE, italic = FALSE, background = "#e6f0ff"
+  ) %>%
+  footnote(
+    general = "Elaboración propia con base en el modelo Logit aplicado al dataset Lending Club (2007–2018). 
+               Los valores de OR (e^β) indican el cambio multiplicativo en las probabilidades de incumplimiento 
+               por unidad de cambio en cada variable independiente.",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+
+# Visaje 
+
+performa <- function(cutoff, prob, ref, postarget, negtarget) {
+  predict <- factor(ifelse(prob >= cutoff, postarget, negtarget))
+  
+if (length(unique(predict)) < 2) return(rep(NA, 4))
+  
+  conf <- caret::confusionMatrix(predict, ref, positive = postarget)
+  
+  acc  <- conf$overall["Accuracy"]
+  rec  <- conf$byClass["Sensitivity"]
+  prec <- conf$byClass["Precision"]
+  spec <- conf$byClass["Specificity"]
+  
+  return(c(recall = rec, accuracy = acc, precision = prec, specificity = spec))
+}
+
+co <- seq(0.01, 0.80, length = 100)
+result <- t(sapply(co, performa,
+                   prob = p_hat,
+                   ref = test_logit$estado_pago,
+                   postarget = "No_paga",
+                   negtarget = "Paga"))
+
+# --- 3. Convertir a data frame ---
+result <- as.data.frame(result)
+colnames(result) <- c("Recall", "Accuracy", "Precision", "Specificity")
+
+# --- 4. Preparar para ggplot ---
+result <- result %>%
+  mutate(Cutoff = co) %>%
+  pivot_longer(cols = c(Recall, Accuracy, Precision, Specificity),
+               names_to = "Métrica",
+               values_to = "Valor")
+
+# --- 5. Gráfico elegante con estilo unificado ---
+grafico_umbral_logit <- ggplot(result, aes(x = Cutoff, y = Valor, color = Métrica)) +
+  geom_line(linewidth = 1.2, alpha = 0.9) +
+  geom_vline(xintercept = umbral, color = "#c0392b", linetype = "dashed", linewidth = 1) +
+  annotate(
+    "label",
+    x = umbral, y = 0.95,
+    label = paste0("Umbral óptimo = ", round(umbral, 3)),
+    color = "white", fill = "#c0392b", fontface = "bold",
+    size = 3.5, label.size = 0.3, label.padding = unit(0.15, "lines")
+  ) +
+  scale_color_manual(values = c(
+    "Recall" = "#f39c12",
+    "Accuracy" = "#1a5276",
+    "Precision" = "#27ae60",
+    "Specificity" = "#8e44ad"
+  )) +
+  scale_y_continuous(breaks = seq(0, 1, 0.1), limits = c(0, 1)) +
+  scale_x_continuous(breaks = seq(0, 0.8, 0.1)) +
+  labs(
+    title = "Desempeño del Modelo Logit según el Umbral (Cutoff)",
+    subtitle = "Comparación de métricas de clasificación al variar el punto de corte",
+    x = "Umbral de decisión",
+    y = "Valor de la métrica",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)."
+  ) +
+  tema +  # mismo tema que en tus otros gráficos
+  theme(
+    text = element_text(family = "Segoe UI"),
+    plot.title = element_text(face = "bold", size = 15, hjust = 0.5, color = "#2c3e50"),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "#34495e", margin = margin(b = 10)),
+    plot.caption = element_text(size = 9, color = "#7f8c8d", hjust = 0.5, margin = margin(t = 15)),
+    axis.title = element_text(face = "bold", size = 11, color = "#2c3e50"),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10, color = "#2c3e50")
+  )
+
+grafico_umbral_logit
+## Curva roc 
+
+roc_data_logit <- data.frame(
+  Especificidad = roc_logit$specificities,
+  Sensibilidad = roc_logit$sensitivities
 ) %>%
+  arrange(Especificidad)
+
+# Área bajo la curva (AUC)
+auc_logit <- round(auc(roc_logit), 3)
+
+# Curva ROC con estilo elegante y consistente
+Curva_ROC_Logit <- ggplot(roc_data_logit, aes(x = Especificidad, y = Sensibilidad)) +
+  geom_ribbon(aes(ymin = 0, ymax = Sensibilidad),
+              fill = "#d6eaf8", alpha = 0.8) +
+  geom_segment(aes(x = 1, y = 0, xend = 0, yend = 1),
+               color = "grey60", linetype = "dashed", linewidth = 0.8) +
+  geom_line(color = "#1a5276", linewidth = 1.4) +
+  geom_text(
+    aes(x = 0.3, y = 0.1),
+    label = paste("AUC =", auc_logit, "\nUmbral óptimo =", round(umbral, 3)),
+    color = "#1a5276",
+    fontface = "bold",
+    size = 4
+  ) +
+  scale_x_reverse(
+    name = "Especificidad",
+    limits = c(1, 0),
+    breaks = seq(1, 0, -0.2),
+    expand = c(0.02, 0.02)
+  ) +
+  scale_y_continuous(
+    name = "Sensibilidad",
+    limits = c(0, 1),
+    breaks = seq(0, 1, 0.2),
+    expand = c(0.02, 0.02)
+  ) +
+  labs(
+    title = "Curva ROC del Modelo Logit",
+    subtitle = "Evaluación del desempeño del modelo de regresión logística en la clasificación de incumplimientos",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)."
+  ) +
+  tema +  
+  theme(
+    text = element_text(family = "Segoe UI"),
+    plot.title = element_text(face = "bold", size = 15, hjust = 0.5, color = "#2c3e50"),
+    plot.subtitle = element_text(size = 11, hjust = 0.5, color = "#34495e", margin = margin(b = 10)),
+    plot.caption = element_text(size = 9, color = "#7f8c8d", hjust = 0.5, margin = margin(t = 15)),
+    axis.title = element_text(face = "bold", size = 11, color = "#2c3e50"),
+    legend.position = "none"
+  )
+
+Curva_ROC_Logit
+
+
+## confucion log
+
+cm_logit <- confusionMatrix(pred_clase_logit, test_logit$estado_pago, positive = "No_paga")
+
+matriz_conf_logit <- matrix(
+  c(cm_logit$table[1], cm_logit$table[2],
+    cm_logit$table[3], cm_logit$table[4]),
+  nrow = 2, byrow = TRUE,
+  dimnames = list(
+    "Predicción" = c("Paga", "No_paga"),
+    "Referencia" = c("Paga", "No_paga"))
+)
+
+matriz_conf_logit %>%
+  kbl(
+    caption = "Tabla 5. Matriz de Confusión del Modelo Logit (con umbral óptimo)",
+    align = c("c", "c", "c"),
+    col.names = c("Paga", "No_paga")
+  ) %>%
   kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
     full_width = FALSE,
@@ -619,10 +811,188 @@ kbl(
     position = "center"
   ) %>%
   row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
-  column_spec(1, bold = TRUE, width = "4cm") %>%
-  column_spec(2:7, width = "2.3cm") %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  add_header_above(c(" " = 1, "Referencia" = 2),
+                   bold = TRUE, background = "#2b6cb0", color = "white") %>%
   footnote(
-    general = "Elaboración propia con base en el dataset Lending Club (2007–2018).",
-    general_title = "Fuente:",
+    general = "La matriz presenta las predicciones frente a los valores reales para la clase positiva 'No_paga'.",
+    general_title = "Nota:",
     footnote_as_chunk = TRUE
   )
+
+acc <- round(cm_logit$overall["Accuracy"], 4)
+acc_ci <- paste0("(", round(cm_logit$overall[["AccuracyLower"]], 4), ", ",
+                 round(cm_logit$overall[["AccuracyUpper"]], 4), ")")
+
+no_info_rate <- round(as.numeric(cm_logit$overall[[3]]), 4)
+p_value_acc <- "<2.2e-16"
+kappa <- round(cm_logit$overall["Kappa"], 4)
+mcnemar <- formatC(as.numeric(cm_logit$overall["McnemarPValue"]), format = "e", digits = 2)
+
+metricas_logit <- data.frame(
+  Métrica = c(
+    "Accuracy (Exactitud)",
+    "95% CI (Intervalo de Confianza)",
+    "No Information Rate",
+    "P-Value [Acc > NIR]",
+    "Kappa",
+    "Mcnemar's Test P-Value",
+    "Sensitivity",
+    "Specificity",
+    "Pos Pred Value",
+    "Neg Pred Value",
+    "Prevalence",
+    "Detection Rate",
+    "Detection Prevalence",
+    "Balanced Accuracy"
+  ),
+  Valor = c(
+    acc,
+    acc_ci,
+    no_info_rate,
+    p_value_acc,
+    kappa,
+    mcnemar,
+    round(cm_logit$byClass["Sensitivity"], 4),
+    round(cm_logit$byClass["Specificity"], 4),
+    round(cm_logit$byClass["Pos Pred Value"], 4),
+    round(cm_logit$byClass["Neg Pred Value"], 4),
+    round(cm_logit$byClass["Prevalence"], 4),
+    round(cm_logit$byClass["Detection Rate"], 4),
+    round(cm_logit$byClass["Detection Prevalence"], 4),
+    round(cm_logit$byClass["Balanced Accuracy"], 4)
+  ),
+  Interpretación = c(
+    "Proporción total de clasificaciones correctas realizadas por el modelo Logit.",
+    "Margen de incertidumbre del 95% sobre la precisión estimada del modelo.",
+    "Exactitud esperada si el modelo predijera siempre la clase mayoritaria.",
+    "Evalúa si la exactitud del modelo es significativamente mejor que el azar.",
+    "Grado de concordancia entre predicciones y valores reales, ajustado por azar.",
+    "Evalúa si existe sesgo en los errores entre clases 'Paga' y 'No_paga'.",
+    "Proporción de casos 'No_paga' correctamente identificados (sensibilidad).",
+    "Proporción de casos 'Paga' correctamente identificados (especificidad).",
+    "Probabilidad de que una predicción 'No_paga' sea correcta (precisión positiva).",
+    "Probabilidad de que una predicción 'Paga' sea correcta (precisión negativa).",
+    "Frecuencia real de la clase 'No_paga' en los datos de prueba.",
+    "Porcentaje de 'No_paga' correctamente detectados entre todos los casos.",
+    "Frecuencia con la que el modelo predice 'No_paga' en el total de observaciones.",
+    "Promedio entre sensibilidad y especificidad, mide desempeño global balanceado."
+  )
+)
+metricas_logit %>%
+  kbl(
+    caption = "Tabla 6. Métricas de Evaluación del Modelo Logit (con umbral óptimo)",
+    align = c("l", "c", "l"),
+    col.names = c("Métrica", "Valor", "Interpretación")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3.5cm") %>%
+  column_spec(2, width = "2.5cm") %>%
+  column_spec(3, width = "10cm") %>%
+  footnote(
+    general = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+
+### commpa 
+
+cm_caret <- confusionMatrix(pred_clase_knn, test$estado_pago, positive = "No_paga")
+
+# --- 2. MATRIZ DE CONFUSIÓN LOGIT ---
+cm_logit <- confusionMatrix(pred_clase_logit, test_logit$estado_pago, positive = "No_paga")
+
+# --- 3. TABLA COMPARATIVA ---
+comparacion_integral <- data.frame(
+  Metrica = c(
+    "Accuracy (Exactitud)",
+    "Sensitivity (Sensibilidad)",
+    "Specificity (Especificidad)",
+    "Precision (Valor Predictivo Positivo)",
+    "Balanced Accuracy",
+    "AUC (Area bajo la curva ROC)",
+    "Casos correctamente clasificados - Paga",
+    "Casos correctamente clasificados - No_paga"
+  ),
+  `Modelo KNN` = c(
+    round(cm_caret$overall["Accuracy"], 4),
+    round(cm_caret$byClass["Sensitivity"], 4),
+    round(cm_caret$byClass["Specificity"], 4),
+    round(cm_caret$byClass["Pos Pred Value"], 4),
+    round(cm_caret$byClass["Balanced Accuracy"], 4),
+    round(auc(roc_knn), 4),
+    cm_caret$table[1, 1],
+    cm_caret$table[2, 2]
+  ),
+  `Modelo Logit` = c(
+    round(cm_logit$overall["Accuracy"], 4),
+    round(cm_logit$byClass["Sensitivity"], 4),
+    round(cm_logit$byClass["Specificity"], 4),
+    round(cm_logit$byClass["Pos Pred Value"], 4),
+    round(cm_logit$byClass["Balanced Accuracy"], 4),
+    round(auc(roc_logit), 4),
+    cm_logit$table[1, 1],
+    cm_logit$table[2, 2]
+  )
+)
+
+comparacion_integral %>%
+  kbl(
+    caption = "Tabla 7. Comparacion integral del desempeno entre los modelos KNN y Logit",
+    align = c("l", "c", "c"),
+    col.names = c("Metrica", "KNN", "Logit")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  row_spec(6, extra_css = "border-bottom: 2px solid #2b6cb0;") %>%
+  column_spec(1, bold = TRUE, width = "5cm") %>%
+  column_spec(2:3, width = "3cm") %>%
+  footnote(
+    general = "Elaboracion propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+library(fmsb)
+
+metricas_comparativas <- data.frame(
+  Modelo = c("KNN (caret)", "Logit"),
+  Accuracy = c(0.597, 0.612),
+  Sensibilidad = c(0.659, 0.644),
+  Especificidad = c(0.537, 0.582),
+  Balanced_Accuracy = c(0.598, 0.613),
+  AUC = c(0.645, 0.646)
+)
+radar_data <- rbind(
+  max = c(1, 1, 1, 1, 1),   # máximo para escalar el radar
+  min = c(0, 0, 0, 0, 0),   # mínimo
+  metricas_comparativas[, -1]
+)
+rownames(radar_data) <- c("max", "min", "KNN (caret)", "Logit")
+
+# Colores para cada modelo
+colors_border <- c("#117a65", "#b03a2e")
+colors_in <- c(scales::alpha("#117a65", 0.3), scales::alpha("#b03a2e", 0.3))
+
+radarchart(radar_data,
+           axistype = 1,
+           pcol = colors_border, pfcol = colors_in, plwd = 3, plty = 1,
+           cglcol = "grey70", cglty = 1, axislabcol = "grey30", caxislabels = seq(0, 1, 0.2), cglwd = 0.8,
+           vlcex = 0.8,
+           title = "Comparación de desempeño: KNN (caret) vs Logit"
+)
+
+legend("bottomleft", legend = c("KNN (caret)", "Logit"),
+       col = colors_border, lty = 1, lwd = 3, bty = "n")

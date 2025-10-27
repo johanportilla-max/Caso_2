@@ -57,6 +57,7 @@ library(scales)
 library(gridExtra)
 library(grid)
 library(ggplotify)
+library(broom)
 
 ```
 
@@ -1147,6 +1148,15 @@ fit_logit <- glm(default_num ~ ingreso + relacion_deuda_ingreso + monto_prestamo
 puntaje_fico + proposito_agrupado,
 data = train_logit, family = binomial())
 
+p_hat <- predict(fit_logit, newdata = test_logit, type = "response")
+
+roc_logit <- roc(response = test_logit$estado_pago, predictor = p_hat, levels = c("Paga", "No_paga"))
+thr <- coords(roc_logit, x = "best", best.method = "youden", ret = "threshold")
+
+umbral <- as.numeric(thr)
+
+pred_clase_logit <- factor(ifelse(p_hat >= umbral, "No_paga", "Paga"),levels=c("Paga","No_paga"))
+
 ```
 
 La variable respuesta fue codificada binariamente previamente en el conjunto de entrenamiento, y el modelo estimó coeficientes para ingreso, relación deuda-ingreso, monto del préstamo, puntaje FICO y la variable categórica proposito_agrupado.
@@ -1156,6 +1166,32 @@ El ajuste permitió identificar el impacto individual de cada predictor sobre el
 La tabla con el resumen estadístico del modelo, que incluye coeficientes estimados, errores estándar, valores-z y niveles de significancia, se presenta a continuación para una lectura detallada de estos efectos.
 
 ```{r Tabla_mod}
+resumen_logit <- broom::tidy(fit_logit) %>%
+  mutate(across(where(is.numeric), ~ round(., 6))) %>%
+  rename(
+    Variable = term,
+    Coeficiente = estimate,
+    `Error Estándar` = std.error,
+    `Estadístico z` = statistic,
+    `Valor p` = p.value
+  ) %>%
+  mutate(
+    Significancia = case_when(
+      `Valor p` < 0.001 ~ "***",
+      `Valor p` < 0.01  ~ "**",
+      `Valor p` < 0.05  ~ "*",
+      `Valor p` < 0.1   ~ ".",
+      TRUE ~ ""
+    ),
+    `Valor p` = case_when(
+      is.na(`Valor p`) ~ "1",
+      `Valor p` < 2e-16 ~ "<2e-16",
+      TRUE ~ formatC(`Valor p`, format = "e", digits = 3)
+    ),
+    `OR (e^β)` = round(exp(Coeficiente), 3)
+  ) %>%
+  mutate(across(everything(), as.character))
+
 
 resumen_global <- glance(fit_logit)
 
@@ -1216,7 +1252,7 @@ En la regresión logística, el umbral de corte (también conocido como cutoff) 
 
 En este caso, para determinar objetivamente el punto de corte se empleó el índice de Youden, que se calcula a partir de la curva ROC y busca maximizar la suma de sensibilidad y especificidad. Este método resulta en un umbral que balancea la detección de impagos reales con la minimización de falsos positivos, ajustándose de manera más precisa al objetivo del análisis.
 
-```{r roc_logit}
+```{r roc}
 roc_data_logit <- data.frame(
   Especificidad = roc_logit$specificities,
   Sensibilidad = roc_logit$sensitivities
@@ -1270,6 +1306,8 @@ Curva_ROC_Logit
 ```
 
 El valor óptimo hallado para el umbral fue aproximadamente igual a `r round(umbral, 3)`. Esta selección garantiza que las predicciones del modelo logístico sean lo más equilibradas posible en términos de identificación de impagos y minimización de errores.
+
+El valor del área bajo la curva (AUC) que obtenemos de la curva ROC para el modelo logístico es de aproximadamente 0.646, lo cual indica que el modelo tiene una capacidad moderada para distinguir entre los préstamos que serán pagados y los que incumplirán. Un AUC de 0.5 representa un modelo sin capacidad discriminativa (aleatorio), mientras que un AUC de 1 indica discriminación perfecta. Por tanto, un valor cercano a 0.65 muestra que el modelo tiene un rendimiento mejor que el azar, pero aún bajo para ser concluyente.
 
 La siguiente gráfica muestra la variación de las principales métricas (precisión, sensibilidad, especificidad y exactitud) en función del punto de corte, permitiendo identificar visualmente el umbral óptimo y su impacto sobre el desempeño del clasificador.
 
@@ -1345,7 +1383,205 @@ grafico_umbral_logit <- ggplot(result, aes(x = Cutoff, y = Valor, color = Métri
 grafico_umbral_logit
 
 ```
+
+Posteriormente, se obtienen las predicciones para el conjunto de prueba, con las cuales se construye la matriz de confusión que permite evaluar el desempeño del modelo en términos de clasificaciones correctas e incorrectas. Además, se calculan las métricas clave que describen la eficacia del modelo para detectar tanto los incumplimientos (“No_paga”) como los préstamos pagados (“Paga”).
+
+```{r con_logit}
+cm_logit <- confusionMatrix(pred_clase_logit, test_logit$estado_pago, positive = "No_paga")
+
+matriz_conf_logit <- matrix(
+  c(cm_logit$table[1], cm_logit$table[2],
+    cm_logit$table[3], cm_logit$table[4]),
+  nrow = 2, byrow = TRUE,
+  dimnames = list(
+    "Predicción" = c("Paga", "No_paga"),
+    "Referencia" = c("Paga", "No_paga"))
+)
+
+matriz_conf_logit %>%
+  kbl(
+    caption = "Tabla 5. Matriz de Confusión del Modelo Logit (con umbral óptimo)",
+    align = c("c", "c", "c"),
+    col.names = c("Paga", "No_paga")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  add_header_above(c(" " = 1, "Referencia" = 2),
+                   bold = TRUE, background = "#2b6cb0", color = "white") %>%
+  footnote(
+    general = "La matriz presenta las predicciones frente a los valores reales para la clase positiva 'No_paga'.",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+acc <- round(cm_logit$overall["Accuracy"], 4)
+acc_ci <- paste0("(", round(cm_logit$overall[["AccuracyLower"]], 4), ", ",
+                 round(cm_logit$overall[["AccuracyUpper"]], 4), ")")
+
+no_info_rate <- round(as.numeric(cm_logit$overall[[3]]), 4)
+p_value_acc <- "<2.2e-16"
+kappa <- round(cm_logit$overall["Kappa"], 4)
+mcnemar <- formatC(as.numeric(cm_logit$overall["McnemarPValue"]), format = "e", digits = 2)
+
+metricas_logit <- data.frame(
+  Métrica = c(
+    "Accuracy (Exactitud)",
+    "95% CI (Intervalo de Confianza)",
+    "No Information Rate",
+    "P-Value [Acc > NIR]",
+    "Kappa",
+    "Mcnemar's Test P-Value",
+    "Sensitivity",
+    "Specificity",
+    "Pos Pred Value",
+    "Neg Pred Value",
+    "Prevalence",
+    "Detection Rate",
+    "Detection Prevalence",
+    "Balanced Accuracy"
+  ),
+  Valor = c(
+    acc,
+    acc_ci,
+    no_info_rate,
+    p_value_acc,
+    kappa,
+    mcnemar,
+    round(cm_logit$byClass["Sensitivity"], 4),
+    round(cm_logit$byClass["Specificity"], 4),
+    round(cm_logit$byClass["Pos Pred Value"], 4),
+    round(cm_logit$byClass["Neg Pred Value"], 4),
+    round(cm_logit$byClass["Prevalence"], 4),
+    round(cm_logit$byClass["Detection Rate"], 4),
+    round(cm_logit$byClass["Detection Prevalence"], 4),
+    round(cm_logit$byClass["Balanced Accuracy"], 4)
+  ),
+  Interpretación = c(
+    "Proporción total de clasificaciones correctas realizadas por el modelo Logit.",
+    "Margen de incertidumbre del 95% sobre la precisión estimada del modelo.",
+    "Exactitud esperada si el modelo predijera siempre la clase mayoritaria.",
+    "Evalúa si la exactitud del modelo es significativamente mejor que el azar.",
+    "Grado de concordancia entre predicciones y valores reales, ajustado por azar.",
+    "Evalúa si existe sesgo en los errores entre clases 'Paga' y 'No_paga'.",
+    "Proporción de casos 'No_paga' correctamente identificados (sensibilidad).",
+    "Proporción de casos 'Paga' correctamente identificados (especificidad).",
+    "Probabilidad de que una predicción 'No_paga' sea correcta (precisión positiva).",
+    "Probabilidad de que una predicción 'Paga' sea correcta (precisión negativa).",
+    "Frecuencia real de la clase 'No_paga' en los datos de prueba.",
+    "Porcentaje de 'No_paga' correctamente detectados entre todos los casos.",
+    "Frecuencia con la que el modelo predice 'No_paga' en el total de observaciones.",
+    "Promedio entre sensibilidad y especificidad, mide desempeño global balanceado."
+  )
+)
+metricas_logit %>%
+  kbl(
+    caption = "Tabla 6. Métricas de Evaluación del Modelo Logit (con umbral óptimo)",
+    align = c("l", "c", "l"),
+    col.names = c("Métrica", "Valor", "Interpretación")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3.5cm") %>%
+  column_spec(2, width = "2.5cm") %>%
+  column_spec(3, width = "10cm") %>%
+  footnote(
+    general = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+```
+
+Los resultados de la matriz de confusión muestran un desempeño moderado del modelo. Se observa que el modelo predice correctamente 742 casos de préstamos pagados y 788 casos de incumplimiento, lo cual es positivo. Sin embargo, también comete errores importantes, clasificando erróneamente 534 préstamos pagados como incumplidos (falsos positivos) y 436 incumplimientos como pagos (falsos negativos).
+
+La exactitud global de 61.2% indica que el modelo acierta en seis de cada diez casos, lo cual mejora respecto a la tasa de información nula (51%) y es estadísticamente significativo (p-valor < 2.2e-16). No obstante, el coeficiente Kappa de 0.225 revela que la concordancia entre las predicciones y las observaciones reales solo es moderadamente mejor que el azar.
+
+La sensibilidad del 64.4% muestra que el modelo identifica correctamente cerca de dos tercios de los incumplimientos reales, mientras que la especificidad del 58.2% indica que detecta un poco más de la mitad de los pagos correctamente. Los valores predictivos también son moderados, con un 59.6% para la clase "No_paga" y un 63.0% para la clase "Paga".
+
+En conjunto, estos indicadores sugieren que aunque el modelo Logit tiene capacidad para identificar el riesgo crediticio mejor que un modelo aleatorio, su desempeño no es óptimo ni robusto para aplicaciones críticas sin ajustes adicionales o modelos complementarios. Representa un punto de partida aceptable, pero requiere optimizaciones para mejorar la confiabilidad en la detección de incumplimientos y minimizar las falsas alarmas que podrían afectar decisiones financieras.
+
+
 # Comparación de modelos
+
+Para comparar los modelos KNN y regresión logística utilizados en este análisis, se opta por evaluar el desempeño del modelo KNN implementado con el paquete caret, que facilita la integración de variables categóricas y numéricas, así como la optimización de sus hiperparámetros mediante validación cruzada.
+
+La comparación se basa en métricas clave como la exactitud, sensibilidad, especificidad y el área bajo la curva ROC (AUC), que ya hemos abordado anteriormente. Estas medidas permiten evaluar cuál modelo clasifica mejor, identifica con mayor precisión los incumplimientos y mantiene un buen equilibrio entre detección y falsos positivos.
+
+A continuación, se presenta una tabla resumen con los valores principales de estas métricas para ambos modelos, que permite una comparación rápida y clara de sus rendimientos y limita el juicio a evidencia cuantitativa.
+
+```{r comparacion}
+cm_caret <- confusionMatrix(pred_clase_knn, test$estado_pago, positive = "No_paga")
+
+# --- 2. MATRIZ DE CONFUSIÓN LOGIT ---
+cm_logit <- confusionMatrix(pred_clase_logit, test_logit$estado_pago, positive = "No_paga")
+
+# --- 3. TABLA COMPARATIVA ---
+comparacion_integral <- data.frame(
+  Metrica = c(
+    "Accuracy (Exactitud)",
+    "Sensitivity (Sensibilidad)",
+    "Specificity (Especificidad)",
+    "Precision (Valor Predictivo Positivo)",
+    "Balanced Accuracy",
+    "AUC (Area bajo la curva ROC)",
+    "Casos correctamente clasificados - Paga",
+    "Casos correctamente clasificados - No_paga"
+  ),
+  `Modelo KNN` = c(
+    round(cm_caret$overall["Accuracy"], 4),
+    round(cm_caret$byClass["Sensitivity"], 4),
+    round(cm_caret$byClass["Specificity"], 4),
+    round(cm_caret$byClass["Pos Pred Value"], 4),
+    round(cm_caret$byClass["Balanced Accuracy"], 4),
+    round(auc(roc_knn), 4),
+    cm_caret$table[1, 1],
+    cm_caret$table[2, 2]
+  ),
+  `Modelo Logit` = c(
+    round(cm_logit$overall["Accuracy"], 4),
+    round(cm_logit$byClass["Sensitivity"], 4),
+    round(cm_logit$byClass["Specificity"], 4),
+    round(cm_logit$byClass["Pos Pred Value"], 4),
+    round(cm_logit$byClass["Balanced Accuracy"], 4),
+    round(auc(roc_logit), 4),
+    cm_logit$table[1, 1],
+    cm_logit$table[2, 2]
+  )
+)
+
+comparacion_integral %>%
+  kbl(
+    caption = "Tabla 7. Comparacion integral del desempeno entre los modelos KNN y Logit",
+    align = c("l", "c", "c"),
+    col.names = c("Metrica", "KNN", "Logit")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  row_spec(6, extra_css = "border-bottom: 2px solid #2b6cb0;") %>%
+  column_spec(1, bold = TRUE, width = "5cm") %>%
+  column_spec(2:3, width = "3cm") %>%
+  footnote(
+    general = "Elaboracion propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+```
 
 # Conclusiones
 
@@ -1365,7 +1601,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r cars}
-
 
 ```
 
