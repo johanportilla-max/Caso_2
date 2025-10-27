@@ -958,6 +958,7 @@ print(p_comparativo)
 
 Conjuntamente, los boxplots sugieren un patrón coherente: mayor ingreso y mayor puntaje FICO actúan como factores protectores frente al incumplimiento, mientras que una mayor relación deuda/ingreso incrementa el riesgo. El monto del préstamo por sí solo no explica totalmente el comportamiento (medianas similares), pero su mayor dispersión entre los morosos indica que créditos elevados en prestatarios vulnerables pueden agravar la probabilidad de default. Para la gestión del riesgo crediticio estas observaciones implican: priorizar la evaluación de DTI y FICO en la toma de decisiones, contemplar límites o condiciones más estrictas para solicitudes con alta DTI, y considerar estrategias de segmentación donde el tamaño del préstamo se ajuste a la capacidad de pago observada.
 
+# Relaciónes
 ## Relación entre puntaje FICO y relación deuda/ingreso
 
 ```{r fico_dti_simplificado}
@@ -1041,40 +1042,7 @@ p_monto <- ggplot(lending_base, aes(x = ingreso, y = monto_prestamo)) +
 p_monto
 ```
 
-El gráfico confirma que el ingreso es un predictor relevante del monto del préstamo —a mayor ingreso, mayor tendencia a recibir montos mayores— pero la relación es moderada y sujeta a límites operativos y a la influencia de otras variables crediticias. Por tanto, las decisiones de crédito deben combinar información de ingreso con medidas de riesgo (DTI, FICO) y restricciones de producto para optimizar la asignación y minimizar el riesgo de default.
-
-```{r decil}
-
-lending_tasa <- lending_base %>%
-mutate(decil_ingreso = ntile(ingreso, 10)) %>%
-group_by(decil_ingreso) %>%
-summarise(
-tasa_default = mean(estado_pago == "No_paga", na.rm = TRUE),
-ingreso_prom = mean(ingreso, na.rm = TRUE),
-.groups = "drop"
-)
-
-p_tasa <- ggplot(lending_tasa, aes(x = reorder(factor(decil_ingreso), ingreso_prom),
-y = tasa_default, group = 1)) +
-geom_line(color = "#2b6cb0", size = 1.2) +
-geom_point(size = 3, color = "#2b6cb0", fill = "white", shape = 21) +
-geom_text(aes(label = scales::percent(tasa_default, accuracy = 0.1)),
-vjust = -0.8, size = 3.2) +
-scale_y_continuous(labels = percent_format(accuracy = 1)) +
-scale_x_discrete(labels = paste0("D", 1:10)) +
-labs(
-x = "Decil de ingreso",
-y = "Tasa de default (No_paga)"
-) +
-tema +
-theme(legend.position = "none")
-```
-
-La gráfica evidencia una relación negativa clara entre el nivel de ingreso y la tasa de default (probabilidad de no pago). A medida que se avanza de los deciles inferiores hacia los superiores, la tasa de incumplimiento disminuye de forma consistente: desde un 24% en el decil más bajo (D1) hasta aproximadamente un 15% en el decil más alto (D10). Este comportamiento refleja que los prestatarios con mayores ingresos presentan un menor riesgo crediticio, lo que puede atribuirse a una mejor capacidad de pago, mayor estabilidad económica y menor vulnerabilidad ante imprevistos financieros.
-
-La pendiente descendente del gráfico muestra una tendencia casi lineal, lo que refuerza la solidez de la relación entre ingreso y riesgo de default. En los primeros deciles (D1–D4), la tasa se mantiene elevada y relativamente estable, lo que sugiere que los ingresos bajos concentran una proporción importante de prestatarios con dificultades de cumplimiento. A partir del decil medio (D5 en adelante), la reducción se acentúa, indicando un cambio estructural en el perfil de riesgo conforme aumenta la capacidad económica.
-
-En términos prácticos, este patrón confirma que el ingreso es un predictor clave de la probabilidad de no pago.
+El gráfico confirma que el ingreso es un predictor relevante del monto del préstamo —a mayor ingreso, mayor tendencia a recibir montos mayores— pero la relación es moderada y sujeta a límites operativos y a la influencia de otras variables crediticias. Por tanto, las decisiones de crédito deben combinar información de ingreso con medidas de riesgo (DTI, FICO) y restricciones de producto para optimizar la  asignación y minimizar el riesgo de default.
 
 
 ## Relación entre puntaje FICO y relación deuda/ingreso
@@ -1104,6 +1072,44 @@ La curva suavizada mediante el método LOESS refleja una disminución progresiva
 La zona sombreada alrededor de la curva representa la incertidumbre de la estimación y se amplía en los extremos del gráfico, lo que indica menor densidad de observaciones y mayor variabilidad en esos tramos (especialmente en puntajes muy bajos o muy altos). Esto es común en bases de datos crediticias, donde los extremos suelen tener menor representación poblacional.
 
 En términos analíticos, la gráfica refuerza la complementariedad entre FICO y DTI como indicadores clave del riesgo crediticio. Un puntaje FICO alto combinado con una baja relación deuda/ingreso representa un perfil de bajo riesgo, mientras que un FICO bajo junto con una DTI elevada sugiere mayor probabilidad de incumplimiento.
+
+# Tasas
+## Tasa de default por decil de ingreso
+
+```{r decil}
+
+lending_tasa <- lending_base %>%
+mutate(decil_ingreso = ntile(ingreso, 10)) %>%
+group_by(decil_ingreso) %>%
+summarise(
+tasa_default = mean(estado_pago == "No_paga", na.rm = TRUE),
+ingreso_prom = mean(ingreso, na.rm = TRUE),
+.groups = "drop"
+)
+
+p_tasa <- ggplot(lending_tasa, aes(x = reorder(factor(decil_ingreso), ingreso_prom),
+y = tasa_default, group = 1)) +
+geom_line(color = "#2b6cb0", size = 1.2) +
+geom_point(size = 3, color = "#2b6cb0", fill = "white", shape = 21) +
+geom_text(aes(label = scales::percent(tasa_default, accuracy = 0.1)),
+vjust = -0.8, size = 3.2) +
+scale_y_continuous(labels = percent_format(accuracy = 1)) +
+scale_x_discrete(labels = paste0("D", 1:10)) +
+labs(
+x = "Decil de ingreso",
+y = "Tasa de default (No_paga)"
+) +
+tema +
+theme(legend.position = "none")
+lending_tasa
+```
+
+La gráfica evidencia una relación negativa clara entre el nivel de ingreso y la tasa de default (probabilidad de no pago). A medida que se avanza de los deciles inferiores hacia los superiores, la tasa de incumplimiento disminuye de forma consistente: desde un 24% en el decil más bajo (D1) hasta aproximadamente un 15% en el decil más alto (D10). Este comportamiento refleja que los prestatarios con mayores ingresos presentan un menor riesgo crediticio, lo que puede atribuirse a una mejor capacidad de pago, mayor estabilidad económica y menor vulnerabilidad ante imprevistos financieros.
+
+La pendiente descendente del gráfico muestra una tendencia casi lineal, lo que refuerza la solidez de la relación entre ingreso y riesgo de default. En los primeros deciles (D1–D4), la tasa se mantiene elevada y relativamente estable, lo que sugiere que los ingresos bajos concentran una proporción importante de prestatarios con dificultades de cumplimiento. A partir del decil medio (D5 en adelante), la reducción se acentúa, indicando un cambio estructural en el perfil de riesgo conforme aumenta la capacidad económica.
+
+En términos prácticos, este patrón confirma que el ingreso es un predictor clave de la probabilidad de no pago.
+
 
 ## Tasa de Default e Indicadores por Propósito del Préstamo
 
@@ -1145,6 +1151,8 @@ Por otro lado, los préstamos para Casa o Vehículo muestran la menor tasa de no
 
 En conjunto, los resultados evidencian que el propósito del préstamo influye directamente en la probabilidad de incumplimiento, siendo más riesgoso cuando los fondos se destinan a proyectos de inversión personal o productiva que dependen de ingresos futuros inciertos.
 
+# Propósito
+
 ## Distribución del puntaje FICO por propósito y estado de pago
 
 ```{r fico proposito}
@@ -1166,7 +1174,7 @@ La gráfica muestra la distribución del puntaje FICO según el propósito del p
 
 En particular, los préstamos para Negocio o Estudio y Consolidación exhiben una mayor superposición entre ambos grupos, lo que sugiere una menor capacidad del FICO para discriminar el riesgo en esos propósitos. En contraste, los préstamos para Casa o Vehículo muestran una separación más clara entre pagadores y no pagadores, indicando que en este tipo de crédito el puntaje FICO es un indicador más efectivo del comportamiento de pago.
 
-
+# Correlacion
 ## Matriz de correlaciones entre variables numéricas
 
 ```{r correlacion}
