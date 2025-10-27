@@ -9,10 +9,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Barros Rayo Alejandro (2415837), Muñoz Portela Diego Fernando (2415620), Portilla Aguirre Johan Camilo (2422468), Aguirre Aldana Joan Sebastian (2419550)" />
 
 
-<title>Modelo de regresión logística para el análisis del riesgo de incumplimiento en préstamos personales (Lending Club 2007–2018).</title>
+<title>Comparación de Modelos de Clasificación Supervisada para la Predicción de Riesgo de Incumplimiento en Préstamos Personales: Un Análisis con K-Vecinos Más Cercanos y Regresión Logística ).</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1818,12 +1817,15 @@ font-size: 0.95em;
 
 
 
-<h1 class="title toc-ignore">Modelo de regresión logística para el
-análisis del riesgo de incumplimiento en préstamos personales (Lending
-Club 2007–2018).</h1>
-<h4 class="author">Barros Rayo Alejandro (2415837), Muñoz Portela Diego
-Fernando (2415620), Portilla Aguirre Johan Camilo (2422468), Aguirre
-Aldana Joan Sebastian (2419550)</h4>
+<h1 class="title toc-ignore">Comparación de Modelos de Clasificación
+Supervisada para la Predicción de Riesgo de Incumplimiento en Préstamos
+Personales: Un Análisis con K-Vecinos Más Cercanos y Regresión Logística
+).</h1>
+<h4 class="author"><p><strong>Autores:</strong><br />
+Barros Rayo Alejandro (2415837),<br />
+Muñoz Portela Diego Fernando (2415620),<br />
+Portilla Aguirre Johan Camilo (2422468),<br />
+Aguirre Aldana Joan Sebastian (2419550)</p></h4>
 
 </div>
 
@@ -1832,6 +1834,7 @@ Aldana Joan Sebastian (2419550)</h4>
 
 * {
 box-sizing: border-box !important;
+max-width: 100% !important; 
 }
 
 :root {
@@ -1843,21 +1846,38 @@ box-sizing: border-box !important;
 --light-bg: #f7fafc;
 --border-color: #e2e8f0;
 --shadow-light: rgba(0,0,0,0.06);
---sidebar-width: 300px;
+--sidebar-width: 280px;
 }
 
-.main-container {
-max-width: 1400px !important;
+html, body {
+overflow-x: hidden !important;
+width: 100% !important;
+max-width: 100vw !important; 
+}
+body {
 margin: 0 auto !important;
+padding: 0 !important;
 font-family: "Georgia", "Palatino Linotype", "Book Antiqua", serif !important;
 line-height: 1.75 !important;
 color: var(--text-color) !important;
-background: #ffffff !important;
+background: #f8f9fa !important;
+}
+
+.container-fluid, .main-container {
+max-width: 1600px !important; 
+width: 100% !important;
+margin: 0 auto !important;
 padding: 20px !important;
+overflow-x: hidden !important;
+}
+
+.row {
 display: flex !important;
-gap: 30px !important;
-align-items: flex-start !important;
-position: relative !important;
+flex-wrap: nowrap !important;
+gap: 25px !important;
+margin: 0 !important;
+width: 100% !important;
+max-width: 100% !important;
 }
 
 #TOC {
@@ -1875,12 +1895,9 @@ top: 20px !important;
 overflow-y: auto !important;
 overflow-x: hidden !important;
 flex-shrink: 0 !important;
-margin: 0 !important;
-max-height: calc(100vh - 40px) !important; 
+max-height: calc(100vh - 40px) !important;
 align-self: flex-start !important;
-transition: all 0.3s ease !important;
 }
-
 #TOC::-webkit-scrollbar {
 width: 6px !important;
 }
@@ -1892,17 +1909,8 @@ border-radius: 3px !important;
 background: var(--accent-light) !important;
 border-radius: 3px !important;
 }
-#TOC::-webkit-scrollbar-thumb:hover {
-background: var(--accent-color) !important;
-}
-
-#TOC * {
-box-sizing: border-box !important;
-max-width: 100% !important;
-overflow: visible !important;
-}
 #TOC::before {
-content: "📋 Índice de Contenidos" !important;
+content: "Índice de Contenidos" !important;
 display: block !important;
 font-family: "Times New Roman", serif !important;
 font-size: 1.3em !important;
@@ -1911,133 +1919,123 @@ color: var(--primary-color) !important;
 border-bottom: 2px solid var(--accent-color) !important;
 padding-bottom: 12px !important;
 margin-bottom: 20px !important;
-text-align: left !important;
 position: sticky !important;
 top: 0 !important;
 background: white !important;
 z-index: 2 !important;
-margin-top: 0 !important;
 }
-
 #TOC ul {
 list-style: none !important;
 padding-left: 0 !important;
 margin: 0 !important;
 width: 100% !important;
-overflow: visible !important;
 }
 #TOC li {
 margin: 6px 0 !important;
-padding: 0 !important;
-line-height: 1.5 !important;
 width: 100% !important;
-overflow: visible !important;
 }
 #TOC a {
 color: var(--text-color) !important;
 text-decoration: none !important;
-font-size: 0.92em !important;
+font-size: 0.9em !important;
 display: block !important;
 padding: 8px 12px !important;
 border-left: 3px solid transparent !important;
 transition: all 0.3s ease !important;
 border-radius: 4px !important;
-width: 100% !important;
 white-space: normal !important;
 word-wrap: break-word !important;
-overflow-wrap: break-word !important;
 }
 #TOC a:hover {
 color: var(--accent-color) !important;
 background-color: var(--light-bg) !important;
 border-left: 3px solid var(--accent-color) !important;
 padding-left: 15px !important;
-transform: translateX(2px) !important;
 }
 #TOC .toc-section-number {
 color: var(--accent-color) !important;
 font-weight: 600 !important;
 margin-right: 6px !important;
-display: inline-block !important;
-min-width: 18px !important;
-font-size: 0.9em !important;
 }
-
 #TOC ul ul {
 padding-left: 18px !important;
 margin-top: 4px !important;
-width: 100% !important;
 }
 #TOC ul ul a {
 font-size: 0.85em !important;
 color: #666666 !important;
-border-left: 2px solid var(--border-color) !important;
-padding: 6px 10px !important;
-width: calc(100% - 0px) !important;
-}
-#TOC ul ul a:hover {
-color: var(--accent-color) !important;
-border-left: 2px solid var(--accent-light) !important;
-background-color: #f8f9fa !important;
 }
 
-.toc-content {
+.toc-content, #content, .col-md-9 {
 flex: 1 !important;
-margin-left: 0 !important;
+min-width: 0 !important; 
+width: 100% !important;
+max-width: calc(100% - var(--sidebar-width) - 25px) !important; 
 padding: 40px !important;
 background: white !important;
 box-shadow: 0 0 20px var(--shadow-light) !important;
 border-radius: 8px !important;
-min-width: 0 !important;
+overflow: visible !important;
 }
-.section.level1 {
-margin-bottom: 50px !important;
-padding: 35px !important;
+
+.section, .section.level1, .section.level2 {
+margin-bottom: 40px !important;
+padding: 30px !important;
 background: white !important;
 border: 1px solid var(--border-color) !important;
 border-radius: 8px !important;
 box-shadow: 0 2px 8px var(--shadow-light) !important;
 width: 100% !important;
+max-width: 100% !important;
+overflow: visible !important;
 }
 
 h1, h2, h3, h4, h5, h6 {
 font-family: "Times New Roman", "Times", serif !important;
 font-weight: 600 !important;
-text-align: left !important;
+word-wrap: break-word !important;
+overflow-wrap: break-word !important;
 }
 h1 {
 color: var(--primary-color) !important;
 border-bottom: 3px double var(--accent-color) !important;
 padding-bottom: 20px !important;
-font-size: 2.4em !important;
-margin-bottom: 35px !important;
+font-size: 2.2em !important;
+margin-bottom: 30px !important;
 text-align: center !important;
-letter-spacing: 0.5px !important;
-font-weight: 700 !important;
+}
+h1.title {
+font-size: 2em !important;
+line-height: 1.3 !important;
+margin-bottom: 15px !important;
 }
 h2 {
 color: var(--primary-color) !important;
 border-bottom: 2px solid var(--accent-light) !important;
 padding-bottom: 12px !important;
-font-size: 1.9em !important;
-margin-top: 40px !important;
-margin-bottom: 25px !important;
+font-size: 1.8em !important;
+margin-top: 35px !important;
+margin-bottom: 20px !important;
 padding-left: 15px !important;
 border-left: 4px solid var(--accent-color) !important;
 }
 h3 {
 color: var(--secondary-color) !important;
-font-size: 1.5em !important;
-margin-top: 30px !important;
-margin-bottom: 18px !important;
+font-size: 1.4em !important;
+margin-top: 25px !important;
+margin-bottom: 15px !important;
 padding-left: 10px !important;
 border-left: 3px solid var(--border-color) !important;
 }
 
-p, div, .section, .main-container, li, td {
+p {
 text-align: justify !important;
 text-justify: inter-word !important;
 hyphens: auto !important;
+margin-bottom: 18px !important;
+line-height: 1.8 !important;
+width: 100% !important;
+max-width: 100% !important;
 }
 
 .abstract {
@@ -2045,38 +2043,45 @@ background: linear-gradient(135deg, var(--light-bg) 0%, #edf2f7 100%) !important
 padding: 30px 35px !important;
 border-left: 5px solid var(--accent-color) !important;
 margin-bottom: 35px !important;
-font-style: normal !important;
-color: var(--text-color) !important;
-text-align: justify !important;
-font-size: 1.1em !important;
+font-size: 1.05em !important;
 line-height: 1.8 !important;
 border-radius: 0 8px 8px 0 !important;
 }
 
 table {
 width: 100% !important;
+max-width: 100% !important;
 border-collapse: collapse !important;
-margin: 25px 0 !important;
-font-family: "Georgia", serif !important;
-font-size: 0.95em !important;
+margin: 25px auto !important;
+font-size: 0.9em !important;
 box-shadow: 0 1px 6px var(--shadow-light) !important;
 border-radius: 6px !important;
-overflow: hidden !important;
+overflow-x: auto !important;
+display: block !important;
+}
+.table-responsive {
+width: 100% !important;
+overflow-x: auto !important;
 }
 th {
 background: linear-gradient(135deg, var(--primary-color) 0%, #2d3748 100%) !important;
 color: white !important;
-padding: 14px 16px !important;
+padding: 12px 14px !important;
 text-align: left !important;
 font-weight: 600 !important;
-border: none !important;
 }
 td {
-padding: 12px 16px !important;
+padding: 10px 14px !important;
 border-bottom: 1px solid var(--border-color) !important;
 background: white !important;
 }
 
+img, .figure img, .plot {
+max-width: 100% !important;
+height: auto !important;
+display: block !important;
+margin: 20px auto !important;
+}
 .figure {
 text-align: center !important;
 margin: 30px 0 !important;
@@ -2085,6 +2090,8 @@ background: white !important;
 border-radius: 8px !important;
 box-shadow: 0 1px 6px var(--shadow-light) !important;
 border: 1px solid var(--border-color) !important;
+width: 100% !important;
+max-width: 100% !important;
 }
 
 pre {
@@ -2092,123 +2099,66 @@ background: #1a202c !important;
 border-left: 4px solid var(--accent-color) !important;
 padding: 18px !important;
 border-radius: 0 6px 6px 0 !important;
-font-family: "Courier New", monospace !important;
 color: #e2e8f0 !important;
 margin: 20px 0 !important;
+overflow-x: auto !important;
+max-width: 100% !important;
 }
 code {
 background: #edf2f7 !important;
 color: #2b6cb0 !important;
 padding: 3px 6px !important;
-font-family: "Courier New", monospace !important;
 border-radius: 4px !important;
-border: 1px solid #e2e8f0 !important;
-}
-
-.navbar {
-background: linear-gradient(135deg, var(--primary-color) 0%, #2d3748 100%) !important;
-border: none !important;
-}
-.navbar-brand {
-color: white !important;
-font-family: "Times New Roman", serif !important;
-font-weight: bold !important;
-}
-
-@media (max-width: 1024px) {
-.main-container {
-flex-direction: column !important;
-gap: 20px !important;
-}
-#TOC {
-width: 100% !important;
-min-width: 100% !important;
-max-width: 100% !important;
-position: relative !important;
-top: 0 !important;
-margin-bottom: 20px !important;
-max-height: none !important;
-overflow: visible !important;
-}
-.toc-content {
-margin-left: 0 !important;
-padding: 25px !important;
-}
-.section.level1 {
-padding: 25px !important;
-}
-#TOC::before {
-position: relative !important;
-}
-}
-@media (max-width: 768px) {
-.main-container {
-padding: 10px !important;
-}
-.toc-content {
-padding: 20px !important;
-}
-.section.level1 {
-padding: 20px !important;
-}
-.abstract {
-padding: 20px !important;
-}
-#TOC {
-padding: 20px !important;
-}
-#TOC a {
-padding: 8px 10px !important;
-font-size: 0.9em !important;
-}
-#TOC ul ul {
-padding-left: 15px !important;
-}
-h1 {
-font-size: 2em !important;
-}
-h2 {
-font-size: 1.6em !important;
-}
-}
-
-p {
-margin-bottom: 18px !important;
-line-height: 1.8 !important;
-text-align: justify !important;
-}
-strong {
-color: var(--accent-color) !important;
-font-weight: 600 !important;
-}
-em {
-color: #4a5568 !important;
-}
-
-.footnote {
-font-size: 0.9em !important;
-color: #666666 !important;
-border-top: 1px solid var(--border-color) !important;
-padding-top: 15px !important;
-margin-top: 25px !important;
+word-wrap: break-word !important;
 }
 
 a {
 color: var(--accent-color) !important;
 text-decoration: none !important;
+word-wrap: break-word !important;
 }
 a:hover {
 color: var(--primary-color) !important;
 text-decoration: underline !important;
 }
 
-html, body {
-overflow-x: hidden !important;
-height: 100% !important;
+@media (max-width: 1200px) {
+.row {
+flex-direction: column !important;
 }
-.main-container {
-overflow: visible !important;
-min-height: 100vh !important;
+#TOC {
+width: 100% !important;
+max-width: 100% !important;
+position: relative !important;
+top: 0 !important;
+margin-bottom: 20px !important;
+max-height: 400px !important;
+}
+.toc-content, #content, .col-md-9 {
+max-width: 100% !important;
+width: 100% !important;
+padding: 30px !important;
+}
+}
+@media (max-width: 768px) {
+.container-fluid, .main-container {
+padding: 10px !important;
+}
+.toc-content, #content {
+padding: 20px !important;
+}
+.section, .section.level1 {
+padding: 20px !important;
+}
+h1 {
+font-size: 1.8em !important;
+}
+h2 {
+font-size: 1.5em !important;
+}
+table {
+font-size: 0.8em !important;
+}
 }
 
 html {
@@ -2220,30 +2170,6 @@ color: var(--accent-color) !important;
 background-color: var(--light-bg) !important;
 border-left: 3px solid var(--accent-color) !important;
 font-weight: 600 !important;
-}
-
-#TOC, .toc-content, .section {
-transition: all 0.3s ease !important;
-}
-
-#TOC a {
-position: relative !important;
-z-index: 1 !important;
-}
-#TOC a::before {
-content: '' !important;
-position: absolute !important;
-top: 0 !important;
-left: 0 !important;
-right: 0 !important;
-bottom: 0 !important;
-background: linear-gradient(90deg, transparent 70%, white 100%) !important;
-z-index: -1 !important;
-opacity: 0 !important;
-transition: opacity 0.3s ease !important;
-}
-#TOC a:hover::before {
-opacity: 1 !important;
 }
 </style>
 <div id="introducción" class="section level1" number="1">
@@ -4583,6 +4509,144 @@ negocio y las restricciones prácticas del sistema de decisión.</p>
 </div>
 <div id="conclusiones" class="section level1" number="6">
 <h1><span class="header-section-number">6</span> Conclusiones</h1>
+<p>El presente estudio tuvo como objetivo desarrollar y comparar modelos
+de clasificación supervisada para predecir el riesgo de incumplimiento
+en préstamos personales, empleando datos públicos de Lending Club y
+contrastando dos aproximaciones metodológicas: K-Vecinos Más Cercanos
+(KNN) y regresión logística (Logit). Los hallazgos obtenidos permiten
+extraer conclusiones tanto sobre el desempeño técnico de los modelos
+como sobre las implicaciones prácticas para la gestión del riesgo
+crediticio.</p>
+<p>Ambos modelos demostraron una capacidad moderada para discriminar
+entre préstamos pagados e incumplimientos, con métricas de exactitud
+cercanas al 60% y valores de AUC alrededor de 0.65. Estos resultados, si
+bien superan significativamente el desempeño aleatorio (p &lt; 0.001),
+revelan limitaciones importantes en la capacidad predictiva cuando se
+emplean únicamente variables disponibles ex ante en un contexto de
+scoring crediticio. El modelo de regresión logística alcanzó una
+exactitud del 61.2% y un AUC de 0.646, mostrando ligeras ventajas en
+términos de especificidad (58.2%) y precisión general. Su naturaleza
+paramétrica facilitó la interpretación de los efectos individuales de
+cada predictor: el ingreso anual y el puntaje FICO mostraron efectos
+protectores estadísticamente significativos (coeficientes negativos, p
+&lt; 0.001), mientras que la relación deuda/ingreso y el monto del
+préstamo incrementaron el riesgo de incumplimiento de manera
+sistemática. La determinación del umbral óptimo mediante el índice de
+Youden (0.513) permitió balancear sensibilidad (64.4%) y especificidad,
+optimizando la capacidad discriminativa del modelo dentro de sus límites
+estructurales.</p>
+<p>Por su parte, el modelo KNN implementado con caret evidenció una
+exactitud del 59.8% y un AUC de 0.645, con una sensibilidad superior
+(66.2%) que lo hace más efectivo para identificar casos de
+incumplimiento, aunque a costa de una especificidad menor (53.6%). La
+optimización automática mediante validación cruzada identificó k=235
+como el valor óptimo, y la incorporación de la variable categórica
+proposito_agrupado enriqueció la información disponible respecto a
+implementaciones más básicas del algoritmo. No obstante, la naturaleza
+no paramétrica de KNN limita la interpretabilidad de las decisiones, lo
+que puede representar una desventaja en contextos regulatorios o cuando
+se requiere justificar explícitamente los criterios de aprobación
+crediticia.</p>
+<p>El análisis descriptivo y los coeficientes estimados en el modelo
+Logit confirmaron patrones esperados desde la teoría del riesgo
+crediticio. El puntaje FICO se consolidó como el predictor más robusto,
+reflejando su capacidad para sintetizar información histórica sobre
+comportamiento de pago. Los ingresos elevados actuaron como factor
+protector, aunque con efectos moderados, posiblemente debido a la
+subdeclaración o variabilidad temporal inherente a esta medida. La
+relación deuda/ingreso demostró ser un indicador crítico de presión
+financiera, con efectos positivos significativos sobre la probabilidad
+de default.</p>
+<p>El propósito del préstamo, aunque incluido en ambos modelos, mostró
+efectos marginalmente significativos o no significativos en varias
+categorías, sugiriendo que su poder discriminativo es limitado cuando se
+controla por variables financieras cuantitativas. Esto indica que las
+diferencias en el riesgo asociado al destino del crédito pueden estar
+mediadas principalmente por otras características del solicitante
+(capacidad de pago, historial) más que por el propósito en sí mismo.</p>
+<p>El monto del préstamo presentó un efecto positivo sobre el
+incumplimiento, coherente con la hipótesis de que obligaciones mayores
+incrementan la carga mensual y alargan el horizonte de exposición al
+riesgo, especialmente en ausencia de ajustes proporcionales en las
+condiciones o capacidad de pago del solicitante.</p>
+<p>La construcción de una muestra balanceada mediante undersampling
+(5,000 casos por clase) permitió entrenar modelos sin sesgos hacia la
+clase mayoritaria, mejorando la sensibilidad en la detección de
+incumplimientos. Esta decisión metodológica fue apropiada para el
+contexto de evaluación de algoritmos, aunque debe reconocerse que la
+prevalencia real en la población original (aproximadamente 20% de
+incumplimientos) implica que las métricas obtenidas podrían variar en
+aplicaciones operativas donde se preserve el desbalance natural.</p>
+<p>El uso de validación cruzada estratificada y la búsqueda sistemática
+de hiperparámetros en KNN garantizaron robustez en la selección de
+modelos, minimizando el riesgo de sobreajuste. La estandarización de
+variables numéricas y el tratamiento adecuado de valores extremos
+mediante filtros justificados contribuyeron a la calidad de los datos
+empleados en el modelado.</p>
+<p>La fijación de semillas aleatorias (set.seed(28)) en todas las
+operaciones estocásticas aseguró reproducibilidad, un requisito esencial
+para la validación científica y la replicabilidad de los resultados.</p>
+<p><strong>¿Logró el estudio responder al objetivo de
+investigación?</strong></p>
+<p>Los modelos desarrollados demostraron capacidad para identificar
+patrones de riesgo y clasificar solicitantes con un desempeño
+parcialmente superior al azar, cumpliendo así con el propósito de
+comparar dos aproximaciones metodológicas (paramétrica vs. no
+paramétrica) y evaluar su aplicabilidad en scoring crediticio. Sin
+embargo, los niveles de exactitud y AUC obtenidos (cercanos al 60% y
+0.65 respectivamente) son insuficientes para sostener un sistema de
+decisión crediticia operativo sin complementos adicionales.</p>
+<p>En términos técnicos, el estudio evidenció que las variables
+financieras tradicionales (ingreso, DTI, FICO, monto) contienen señal
+predictiva real, pero esta señal es limitada. La brecha entre el
+desempeño observado y el desempeño óptimo sugiere que existen factores
+de riesgo no capturados por las variables disponibles, tales como:
+características cualitativas del empleo, estabilidad laboral, estructura
+del hogar, historial de pagos no financieros, comportamiento
+transaccional, o incluso variables macroeconómicas y temporales que
+podrían modular el riesgo de incumplimiento.</p>
+<p>Desde una perspectiva práctica, ninguno de los dos modelos alcanzó
+niveles de sensibilidad y especificidad suficientes para ser
+implementados como herramienta única de decisión crediticia. La tasa de
+falsos negativos (préstamos clasificados como pagados que terminan en
+incumplimiento) osciló entre 36% y 44%, lo que implicaría aceptar
+solicitantes de alto riesgo con consecuencias financieras adversas.
+Simultáneamente, las tasas de falsos positivos (préstamos clasificados
+como incumplimientos que en realidad se pagarían) oscilaron entre 42% y
+46%, lo que limitaría el acceso al crédito de solicitantes viables y
+reduciría la rentabilidad de la cartera.</p>
+<ul>
+<li></li>
+</ul>
+<p>Con base en los hallazgos, se proponen varias estrategias para
+mejorar la práctica crediticia. La incorporación de variables
+adicionales, como antigüedad laboral, tipo de contrato o comportamiento
+transaccional, puede enriquecer la base de datos y potenciar la
+capacidad predictiva. Además, la adopción de modelos ensemble, que
+combinan múltiples algoritmos para captar relaciones complejas,
+representa una prometedora vía para superar las limitaciones de modelos
+individuales.</p>
+<p>La segmentación de cartera permite adaptar modelos específicos a
+grupos homogéneos, optimizando la precisión según características
+particulares. Es recomendable también implementar ajustes dinámicos en
+los umbrales de decisión para adaptarse al apetito de riesgo y
+condiciones del mercado. En la práctica, un sistema híbrido que integre
+modelos estadísticos y reglas de negocio, junto con monitoreo continuo y
+recalibración, garantizará mayor robustez y adaptabilidad frente a
+cambios.</p>
+<p>No obstante, es importante reconocer las limitaciones del análisis
+realizado. El uso de undersampling y la exclusión de valores extremos
+pueden sesgar las métricas obtenidas, y la base pública carece de
+información detallada que está disponible en entornos reales de crédito.
+Tampoco se controlaron efectos temporales ni se aplicó validación
+cruzada extensa, lo que limita la generalización de los resultados.</p>
+<p>Finalmente, el estudio confirma la viabilidad del aprendizaje
+supervisado para la clasificación de riesgo crediticio, pero evidencia
+que los modelos Logit y KNN por sí solos en estas condiciones podrian no
+ser suficientes para aplicaciones operativas directas. Cada enfoque
+tiene fortalezas y debilidades complementarias, y la mejora continua
+mediante inclusive más variables, técnicas avanzadas y controles éticos
+es clave para su aplicación práctica.</p>
 </div>
 <div id="bibliografia" class="section level1" number="7">
 <h1><span class="header-section-number">7</span> Bibliografia</h1>

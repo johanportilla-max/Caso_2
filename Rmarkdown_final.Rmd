@@ -1,5 +1,5 @@
 ---
-title: "Comparación de Modelos de Clasificación Supervisada para la Predicción de Riesgo de Incumplimiento en Préstamos Personales: Un Análisis con K-Vecinos Más Cercanos y Regresión Logística )."
+title: "Comparación de Modelos de Clasificación Supervisada para la Predicción de Riesgo de Incumplimiento en Préstamos Personales: Un Análisis con K-Vecinos Más Cercanos y Regresión Logística."
 author: |
   **Autores:**  
   Barros Rayo Alejandro (2415837),  
@@ -636,7 +636,7 @@ ggplot(lending_raw, aes(x = revenue)) +
 ggplot(lending_raw, aes(x = dti_n)) +
   geom_histogram(
     binwidth = 5,
-    fill = "#90caf9",    
+    fill = "#1a5276",    
     color = "#1a5276",   
     alpha = 0.9
   ) +
@@ -1084,7 +1084,6 @@ theme(legend.position = "none")
 
 ```{r ficovsdti}
 
-
 set.seed(123)
 sample_plot <- lending_base %>% sample_n(min(10000, nrow(.)))
 
@@ -1100,6 +1099,7 @@ y = "Relación deuda/ingreso (%)"
 ) +
 tema
 print(p_fico_dti_smooth)
+
 ```
 
 
