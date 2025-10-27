@@ -773,7 +773,7 @@ Los resultados muestran que el 79.89% de los préstamos se encuentran en estado 
 
 El equilibrio entre ambos grupos servirá como base para los análisis posteriores, donde se buscará identificar los factores que explican el incumplimiento y las variables que mejor predicen el riesgo crediticio.
 
-## Distribución individual de variables numéricas
+# Distribución individual de variables numéricas
 
 ## Histograma del ingreso
 
@@ -790,7 +790,6 @@ p1 <- ggplot(lending_base, aes(x = ingreso)) +
   scale_x_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ",")) +
   scale_y_continuous(labels = scales::comma_format()) +
   labs(
-    title = "Histograma de ingreso (mediana en rojo)",
     x = "Ingreso",
     y = "Frecuencia"
   ) +
@@ -818,7 +817,6 @@ p_dti <- ggplot(lending_base, aes(x = relacion_deuda_ingreso)) +
   scale_x_continuous(labels = scales::percent_format(scale = 1)) +
   scale_y_continuous(labels = scales::comma_format()) +
   labs(
-    title = "Distribución de la relación deuda/ingreso",
     x = "Relación deuda/ingreso (%)",
     y = "Densidad"
   ) +
@@ -860,7 +858,6 @@ p_fico <- ggplot(lending_base, aes(x = puntaje_fico)) +
     labels = scales::comma_format()
   ) +
   labs(
-    title = "Distribución del puntaje FICO",
     x = "Puntaje FICO",
     y = "Densidad"
   ) +
@@ -893,7 +890,6 @@ p_monto_hist <- ggplot(lending_base, aes(x = monto_prestamo)) +
   scale_x_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
   scale_y_continuous(labels = comma_format()) +
   labs(
-    title = "Distribución del monto del préstamo (mediana en rojo)",
     x = "Monto del préstamo (USD)",
     y = "Frecuencia"
   ) +
@@ -905,13 +901,13 @@ p_monto_hist
 El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000. Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
 Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
 
+#Varia por estado de pago
 ## Puntaje FICO por estado de pago
 
 ```{r ficopagaono}
 p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
 geom_boxplot() +
 labs(
-title = "Puntaje FICO por estado de pago",
 x = "Estado de pago",
 y = "Puntaje FICO"
 ) +
@@ -931,8 +927,6 @@ geom_boxplot(alpha = 0.7, outlier.color = "gray40", outlier.alpha = 0.4) +
 scale_fill_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
 scale_y_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ",")) +
 labs(
-title = "Distribución del ingreso por estado de pago",
-subtitle = "Comparación mediante boxplots (mediana y dispersión)",
 x = "Estado de pago",
 y = "Ingreso (USD)"
 ) +
@@ -955,8 +949,6 @@ facet_wrap(~ variable, scales = "free", ncol = 2) +
 scale_y_continuous(labels = comma) +
 scale_fill_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
 labs(
-title = "Comparación de variables numéricas según estado de pago",
-subtitle = "Boxplots por clase (Paga vs No_paga)",
 x = "Estado de pago",
 y = "Valor"
 ) +
@@ -986,7 +978,6 @@ p_fico_dti <- ggplot(sample_plot, aes(x = puntaje_fico, y = relacion_deuda_ingre
   scale_y_continuous(labels = scales::percent_format(scale = 1)) +
   scale_x_continuous(breaks = seq(600, 850, 25)) +
   labs(
-    title = "Relación entre puntaje FICO y relación deuda/ingreso",
     
     x = "Puntaje FICO",
     y = "Relación deuda/ingreso (%)"
@@ -1033,7 +1024,6 @@ p_monto <- ggplot(lending_base, aes(x = ingreso, y = monto_prestamo)) +
     name = "Estado de pago"
   ) +
   labs(
-    title = "Relación entre ingreso y monto del préstamo",
     x = "Ingreso del solicitante (USD)",
     y = "Monto del préstamo (USD)"
   ) +
@@ -1073,8 +1063,6 @@ vjust = -0.8, size = 3.2) +
 scale_y_continuous(labels = percent_format(accuracy = 1)) +
 scale_x_discrete(labels = paste0("D", 1:10)) +
 labs(
-title = "Tasa de default por decil de ingreso",
-subtitle = "Relación negativa clara entre ingreso y probabilidad de no pago",
 x = "Decil de ingreso",
 y = "Tasa de default (No_paga)"
 ) +
@@ -1088,6 +1076,9 @@ La pendiente descendente del gráfico muestra una tendencia casi lineal, lo que 
 
 En términos prácticos, este patrón confirma que el ingreso es un predictor clave de la probabilidad de no pago.
 
+
+## Relación entre puntaje FICO y relación deuda/ingreso
+
 ```{r ficovsdti}
 
 set.seed(123)
@@ -1098,8 +1089,6 @@ geom_point(alpha = 0.05, size = 0.6, color = "#6baed6") +
 geom_smooth(method = "loess", se = TRUE, color = "black", size = 1) +
 scale_y_continuous(labels = percent_format(scale = 1)) +
 labs(
-title = "Relación entre puntaje FICO y relación deuda/ingreso",
-subtitle = "Tendencia general estimada con suavizado LOESS",
 x = "Puntaje FICO",
 y = "Relación deuda/ingreso (%)"
 ) +
@@ -1115,6 +1104,8 @@ La curva suavizada mediante el método LOESS refleja una disminución progresiva
 La zona sombreada alrededor de la curva representa la incertidumbre de la estimación y se amplía en los extremos del gráfico, lo que indica menor densidad de observaciones y mayor variabilidad en esos tramos (especialmente en puntajes muy bajos o muy altos). Esto es común en bases de datos crediticias, donde los extremos suelen tener menor representación poblacional.
 
 En términos analíticos, la gráfica refuerza la complementariedad entre FICO y DTI como indicadores clave del riesgo crediticio. Un puntaje FICO alto combinado con una baja relación deuda/ingreso representa un perfil de bajo riesgo, mientras que un FICO bajo junto con una DTI elevada sugiere mayor probabilidad de incumplimiento.
+
+## Tasa de Default e Indicadores por Propósito del Préstamo
 
 ```{r tasadeafuprposiotltingreso}
 
@@ -1154,6 +1145,7 @@ Por otro lado, los préstamos para Casa o Vehículo muestran la menor tasa de no
 
 En conjunto, los resultados evidencian que el propósito del préstamo influye directamente en la probabilidad de incumplimiento, siendo más riesgoso cuando los fondos se destinan a proyectos de inversión personal o productiva que dependen de ingresos futuros inciertos.
 
+## Distribución del puntaje FICO por propósito y estado de pago
 
 ```{r fico proposito}
 
@@ -1163,7 +1155,6 @@ geom_density(alpha = 0.5) +
 facet_wrap(~ proposito_agrupado, ncol = 2) +
 scale_fill_manual(values = c("Paga" = "#4daf4a", "No_paga" = "#e41a1c")) +
 labs(
-title = "Distribución del puntaje FICO por propósito y estado de pago",
 x = "Puntaje FICO",
 y = "Densidad"
 ) +
@@ -1174,6 +1165,9 @@ print(p_fico_proposito)
 La gráfica muestra la distribución del puntaje FICO según el propósito del préstamo y el estado de pago. En todos los casos, se observa que los clientes que no pagan (en rojo) tienden a concentrarse en los niveles más bajos del puntaje FICO, mientras que los que sí pagan (en verde) presentan una distribución desplazada hacia valores más altos, evidenciando la relación directa entre mayor FICO y menor riesgo de default.
 
 En particular, los préstamos para Negocio o Estudio y Consolidación exhiben una mayor superposición entre ambos grupos, lo que sugiere una menor capacidad del FICO para discriminar el riesgo en esos propósitos. En contraste, los préstamos para Casa o Vehículo muestran una separación más clara entre pagadores y no pagadores, indicando que en este tipo de crédito el puntaje FICO es un indicador más efectivo del comportamiento de pago.
+
+
+## Matriz de correlaciones entre variables numéricas
 
 ```{r correlacion}
 
