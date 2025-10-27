@@ -131,11 +131,9 @@ resumen_general <- lending_base %>%
   )
 ```
 
-<<<<<<< HEAD
 ##Estadísticas descriptivas de las variables principales
-=======
+
 titulo1 Introducción general del dataset
->>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
 
 ```{r tabla_resumen }
 
@@ -212,17 +210,13 @@ tabla_estado %>%
 
 La Tabla 2 presenta la distribución de los préstamos según el estado de pago, variable cualitativa que clasifica a los deudores en dos grupos: aquellos que cumplen con sus obligaciones (“Paga”) y los que incurren en incumplimiento (“No paga”).
 
-<<<<<<< HEAD
 Los resultados muestran que el 79.89% de los préstamos se encuentran en estado de pago activo o finalizado correctamente, mientras que el 20.11% corresponde a créditos en incumplimiento. Esta proporción indica que la gran mayoría de los prestatarios mantienen un comportamiento de pago responsable, aunque la presencia de una quinta parte de préstamos en mora representa un segmento de riesgo relevante para las entidades crediticias.
 
 El equilibrio entre ambos grupos servirá como base para los análisis posteriores, donde se buscará identificar los factores que explican el incumplimiento y las variables que mejor predicen el riesgo crediticio.
 
 # Distribución individual de variables numéricas
-
 ## Histograma del ingreso
-=======
-titulo2 Distribución individual de variables numéricas
->>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
+ 
 
 ```{r p1}
 library(plotly)
@@ -237,7 +231,6 @@ p1 <- ggplot(lending_base, aes(x = ingreso)) +
   scale_x_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ",")) +
   scale_y_continuous(labels = scales::comma_format()) +
   labs(
-    title = "Histograma de ingreso (mediana en rojo)",
     x = "Ingreso",
     y = "Frecuencia"
   ) +
@@ -265,7 +258,6 @@ p_dti <- ggplot(lending_base, aes(x = relacion_deuda_ingreso)) +
   scale_x_continuous(labels = scales::percent_format(scale = 1)) +
   scale_y_continuous(labels = scales::comma_format()) +
   labs(
-    title = "Distribución de la relación deuda/ingreso",
     x = "Relación deuda/ingreso (%)",
     y = "Densidad"
   ) +
@@ -288,9 +280,9 @@ La forma suavizada del gráfico evidencia una distribución continua y bien conc
 ```{r fico}
 p_fico <- ggplot(lending_base, aes(x = puntaje_fico)) +
   geom_density(
-    bw = 15,                # suaviza la curva (ajusta entre 10–25 según tus datos)
-    fill = "#52b788",       # verde más elegante
-    color = "#1b4332",      # borde oscuro
+    bw = 15,                
+    fill = "#52b788",      
+    color = "#1b4332",      
     alpha = 0.8,
     size = 1.1
   ) +
@@ -307,7 +299,6 @@ p_fico <- ggplot(lending_base, aes(x = puntaje_fico)) +
     labels = scales::comma_format()
   ) +
   labs(
-    title = "Distribución del puntaje FICO",
     x = "Puntaje FICO",
     y = "Densidad"
   ) +
@@ -340,7 +331,6 @@ p_monto_hist <- ggplot(lending_base, aes(x = monto_prestamo)) +
   scale_x_continuous(labels = dollar_format(prefix = "$", big.mark = ",")) +
   scale_y_continuous(labels = comma_format()) +
   labs(
-    title = "Distribución del monto del préstamo (mediana en rojo)",
     x = "Monto del préstamo (USD)",
     y = "Frecuencia"
   ) +
@@ -352,14 +342,12 @@ p_monto_hist
 El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000. Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
 Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
 
-<<<<<<< HEAD
 ## puntaje FICO por estado de pago
 
 ```{r ficopagaono}
 p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
 geom_boxplot() +
 labs(
-title = "Puntaje FICO por estado de pago",
 x = "Estado de pago",
 y = "Puntaje FICO"
 ) +
@@ -370,7 +358,7 @@ print(p_fico_box)
 ```
 El boxplot evidencia una diferencia notable en el puntaje FICO según el estado de pago. Los prestatarios que pagan tienden a tener un FICO ligeramente superior, con una mediana cercana a los 700 puntos, mientras que quienes no pagan se concentran alrededor de 680–690 puntos. Esta diferencia confirma que un mejor historial crediticio se asocia con un mayor cumplimiento en los pagos.
 
-## ingreso por estado de pago
+## Distribución del ingreso por estado de pago
 
 ```{r ingresopaga on o paga}
 
@@ -416,9 +404,7 @@ Conjuntamente, los boxplots sugieren un patrón coherente: mayor ingreso y mayor
 
 
 ## Relación entre puntaje FICO y relación deuda/ingreso
-=======
-titulo3 Comparación entre clases (Paga vs No_paga)
->>>>>>> c8d34699f3e693ab88136be36a5efed6c7c2397b
+
 
 ```{r fico_dti_simplificado}
 
@@ -438,8 +424,6 @@ p_fico_dti <- ggplot(sample_plot, aes(x = puntaje_fico, y = relacion_deuda_ingre
   scale_y_continuous(labels = scales::percent_format(scale = 1)) +
   scale_x_continuous(breaks = seq(600, 850, 25)) +
   labs(
-    title = "Relación entre puntaje FICO y relación deuda/ingreso",
-    
     x = "Puntaje FICO",
     y = "Relación deuda/ingreso (%)"
   ) +
@@ -453,6 +437,7 @@ p_fico_dti <- ggplot(sample_plot, aes(x = puntaje_fico, y = relacion_deuda_ingre
 p_fico_dti
 
 ```
+
 La curva  muestra una relación inversa clara: a medida que el puntaje FICO aumenta, la proporción deuda/ingreso (DTI) tiende a disminuir . Esto indica que los prestatarios con mejor historial crediticio manejan proporcionalmente menos deuda respecto a su ingreso, mientras que los puntajes medios-bajos concentran mayor carga financiera. La mayor incertidumbre en los extremos del rango (colas más amplias) sugiere escasez de datos y mayor variabilidad en esos tramos. En términos prácticos, el gráfico respalda usar FICO y DTI de forma conjunta para discriminar riesgo: perfiles con FICO bajo y DTI alto son candidatos de mayor riesgo, perfiles inversos, de menor riesgo.
 
 ## Relación entre ingreso y monto del préstamo
@@ -484,7 +469,6 @@ p_monto <- ggplot(lending_base, aes(x = ingreso, y = monto_prestamo)) +
     name = "Estado de pago"
   ) +
   labs(
-    title = "Relación entre ingreso y monto del préstamo",
     x = "Ingreso del solicitante (USD)",
     y = "Monto del préstamo (USD)"
   ) +
@@ -504,10 +488,8 @@ p_monto
 
 El gráfico confirma que el ingreso es un predictor relevante del monto del préstamo —a mayor ingreso, mayor tendencia a recibir montos mayores— pero la relación es moderada y sujeta a límites operativos y a la influencia de otras variables crediticias. Por tanto, las decisiones de crédito deben combinar información de ingreso con medidas de riesgo (DTI, FICO) y restricciones de producto para optimizar la asignación y minimizar el riesgo de default.
 
-<<<<<<< HEAD
-=======
 
-## 
+## Tasa de default por decil de ingreso
 
 ```{r decil}
 
@@ -529,13 +511,14 @@ vjust = -0.8, size = 3.2) +
 scale_y_continuous(labels = percent_format(accuracy = 1)) +
 scale_x_discrete(labels = paste0("D", 1:10)) +
 labs(
-title = "Tasa de default por decil de ingreso",
 subtitle = "Relación negativa clara entre ingreso y probabilidad de no pago",
 x = "Decil de ingreso",
 y = "Tasa de default (No_paga)"
 ) +
 tema +
 theme(legend.position = "none")
+p_tasa
+
 ```
 
 ```{r ficovsdti}
