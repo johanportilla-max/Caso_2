@@ -841,9 +841,9 @@ La forma suavizada del gráfico evidencia una distribución continua y bien conc
 ```{r fico}
 p_fico <- ggplot(lending_base, aes(x = puntaje_fico)) +
   geom_density(
-    bw = 15,                # suaviza la curva (ajusta entre 10–25 según tus datos)
-    fill = "#52b788",       # verde más elegante
-    color = "#1b4332",      # borde oscuro
+    bw = 15,                
+    fill = "#52b788",       
+    color = "#1b4332",      
     alpha = 0.8,
     size = 1.1
   ) +
@@ -1082,6 +1082,12 @@ tema +
 theme(legend.position = "none")
 ```
 
+La gráfica evidencia una relación negativa clara entre el nivel de ingreso y la tasa de default (probabilidad de no pago). A medida que se avanza de los deciles inferiores hacia los superiores, la tasa de incumplimiento disminuye de forma consistente: desde un 24% en el decil más bajo (D1) hasta aproximadamente un 15% en el decil más alto (D10). Este comportamiento refleja que los prestatarios con mayores ingresos presentan un menor riesgo crediticio, lo que puede atribuirse a una mejor capacidad de pago, mayor estabilidad económica y menor vulnerabilidad ante imprevistos financieros.
+
+La pendiente descendente del gráfico muestra una tendencia casi lineal, lo que refuerza la solidez de la relación entre ingreso y riesgo de default. En los primeros deciles (D1–D4), la tasa se mantiene elevada y relativamente estable, lo que sugiere que los ingresos bajos concentran una proporción importante de prestatarios con dificultades de cumplimiento. A partir del decil medio (D5 en adelante), la reducción se acentúa, indicando un cambio estructural en el perfil de riesgo conforme aumenta la capacidad económica.
+
+En términos prácticos, este patrón confirma que el ingreso es un predictor clave de la probabilidad de no pago.
+
 ```{r ficovsdti}
 
 set.seed(123)
@@ -1102,6 +1108,13 @@ print(p_fico_dti_smooth)
 
 ```
 
+La gráfica muestra una tendencia inversa entre el puntaje FICO y la relación deuda/ingreso (DTI), lo que significa que, a medida que el puntaje FICO aumenta, la proporción de deuda con respecto al ingreso tiende a disminuir. En otras palabras, los prestatarios con mejor historial crediticio (puntajes FICO más altos) suelen mantener niveles de endeudamiento más bajos en proporción a sus ingresos, mientras que aquellos con puntajes más bajos presentan mayores cargas financieras relativas.
+
+La curva suavizada mediante el método LOESS refleja una disminución progresiva de la DTI desde aproximadamente un 20% en los puntajes cercanos a 680, hasta valores más reducidos, en torno al 15% para puntajes superiores a 800. Esta tendencia sugiere que los prestatarios con mayor solvencia crediticia no solo cuentan con un historial de pago más sólido, sino también con una estructura de deuda más controlada respecto a su capacidad de ingresos.
+
+La zona sombreada alrededor de la curva representa la incertidumbre de la estimación y se amplía en los extremos del gráfico, lo que indica menor densidad de observaciones y mayor variabilidad en esos tramos (especialmente en puntajes muy bajos o muy altos). Esto es común en bases de datos crediticias, donde los extremos suelen tener menor representación poblacional.
+
+En términos analíticos, la gráfica refuerza la complementariedad entre FICO y DTI como indicadores clave del riesgo crediticio. Un puntaje FICO alto combinado con una baja relación deuda/ingreso representa un perfil de bajo riesgo, mientras que un FICO bajo junto con una DTI elevada sugiere mayor probabilidad de incumplimiento.
 
 ```{r tasadeafuprposiotltingreso}
 
@@ -1135,6 +1148,12 @@ position = "center"
 row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE)
 ```
 
+La tabla muestra la tasa de default (no pago) y los indicadores de ingreso y puntaje FICO medianos según el propósito del préstamo. Se observa que los créditos destinados a Negocio o Estudio presentan la mayor tasa de incumplimiento (29.7%), a pesar de tener el ingreso mediano más alto (75,000). Esto sugiere que, aunque los solicitantes en este grupo cuentan con mayores ingresos, el riesgo asociado a la inversión en educación o emprendimientos es más elevado debido a la incertidumbre en los retornos futuros.
+
+Por otro lado, los préstamos para Casa o Vehículo muestran la menor tasa de no pago (18.1%), acompañada de un FICO mediano de 697, reflejando un perfil más estable y solvente. Los créditos para Consolidación de deudas y Otros propósitos presentan tasas intermedias (20–21%), lo que indica un riesgo moderado.
+
+En conjunto, los resultados evidencian que el propósito del préstamo influye directamente en la probabilidad de incumplimiento, siendo más riesgoso cuando los fondos se destinan a proyectos de inversión personal o productiva que dependen de ingresos futuros inciertos.
+
 
 ```{r fico proposito}
 
@@ -1151,6 +1170,10 @@ y = "Densidad"
 tema
 print(p_fico_proposito)
 ```
+
+La gráfica muestra la distribución del puntaje FICO según el propósito del préstamo y el estado de pago. En todos los casos, se observa que los clientes que no pagan (en rojo) tienden a concentrarse en los niveles más bajos del puntaje FICO, mientras que los que sí pagan (en verde) presentan una distribución desplazada hacia valores más altos, evidenciando la relación directa entre mayor FICO y menor riesgo de default.
+
+En particular, los préstamos para Negocio o Estudio y Consolidación exhiben una mayor superposición entre ambos grupos, lo que sugiere una menor capacidad del FICO para discriminar el riesgo en esos propósitos. En contraste, los préstamos para Casa o Vehículo muestran una separación más clara entre pagadores y no pagadores, indicando que en este tipo de crédito el puntaje FICO es un indicador más efectivo del comportamiento de pago.
 
 ```{r correlacion}
 
@@ -1169,6 +1192,13 @@ outline.col = "white"
 ) + tema
 ```
 
+La matriz de correlaciones muestra las relaciones lineales entre las principales variables numéricas del análisis: ingreso, relación deuda/ingreso, monto del préstamo y puntaje FICO. En general, los coeficientes de correlación son bajos o moderados, lo que indica que no existen relaciones lineales extremadamente fuertes entre las variables, aunque sí se observan patrones lógicos y consistentes con la teoría financiera.
+
+El ingreso presenta una correlación positiva moderada (0.49) con el monto del préstamo, lo cual sugiere que los individuos con mayores ingresos tienden a solicitar montos de préstamo más altos, posiblemente debido a su mayor capacidad de pago. Por otro lado, el ingreso tiene una correlación negativa (-0.19) con la relación deuda/ingreso, lo que implica que a medida que los ingresos aumentan, la proporción de deuda sobre el ingreso tiende a reducirse, reflejando una posición financiera más saludable.
+
+Respecto al puntaje FICO, las correlaciones son positivas pero débiles con el ingreso (0.11) y con el monto del préstamo (0.11), indicando que los clientes con mayor ingreso o montos de préstamo ligeramente más altos tienden a tener mejores historiales crediticios, aunque la relación no es muy fuerte. La correlación negativa entre puntaje FICO y relación deuda/ingreso (-0.07) refuerza la idea de que niveles de endeudamiento más altos se asocian con un menor puntaje crediticio, aunque el efecto no es muy pronunciado.
+
+En conjunto, la matriz refleja una consistencia entre las variables financieras: los prestatarios con ingresos mayores y una menor carga de deuda relativa tienden a mostrar mejores indicadores de riesgo (mayor FICO), mientras que quienes tienen una alta relación deuda/ingreso podrían ser más vulnerables al incumplimiento. Sin embargo, la baja magnitud de las correlaciones sugiere que el comportamiento crediticio depende también de otros factores no considerados en esta matriz, como historial de pagos, propósito del préstamo o condiciones económicas externas.
 ## Caracterización de las clases
 
 ## Comportamiento según propósito del préstamo
