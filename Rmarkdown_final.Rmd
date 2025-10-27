@@ -1178,7 +1178,7 @@ En particular, los préstamos para Negocio o Estudio y Consolidación exhiben un
 ## Matriz de correlaciones entre variables numéricas
 
 ```{r correlacion}
-
+library(plotly)
 numeric_vars <- lending_base %>%
   select(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico)
 
@@ -1192,6 +1192,23 @@ colors = c("#de425b", "white", "#2ca25f"),
 title = "Matriz de correlaciones entre variables numéricas",
 outline.col = "white"
 ) + tema
+p_cor <- ggcorrplot(
+  cor_mat,
+  lab = TRUE,
+  lab_size = 4, 
+  colors = c("#de425b", "white", "#2ca25f"),
+  title = "Matriz de correlaciones entre variables numéricas",
+  outline.col = "white"
+) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(size = 12, angle = 45, hjust = 1, vjust = 1),
+    axis.text.y = element_text(size = 12),
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
+  )
+p_cor_interactivo <- ggplotly(p_cor, tooltip = c("x", "y", "text"))
+p_cor_interactivo
+
 ```
 
 La matriz de correlaciones muestra las relaciones lineales entre las principales variables numéricas del análisis: ingreso, relación deuda/ingreso, monto del préstamo y puntaje FICO. En general, los coeficientes de correlación son bajos o moderados, lo que indica que no existen relaciones lineales extremadamente fuertes entre las variables, aunque sí se observan patrones lógicos y consistentes con la teoría financiera.
