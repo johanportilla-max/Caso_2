@@ -1234,6 +1234,7 @@ font_size = 14,
 position = "center"
 ) %>%
 row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE)
+tasa_por_proposito
 ```
 
 La tabla muestra la tasa de default (no pago) y los indicadores de ingreso y puntaje FICO medianos según el propósito del préstamo.
@@ -1281,14 +1282,6 @@ numeric_vars <- lending_base %>%
 
 cor_mat <- cor(numeric_vars, use = "complete.obs")
 
-ggcorrplot(
-cor_mat,
-lab = TRUE,
-lab_size = 3,
-colors = c("#de425b", "white", "#2ca25f"),
-title = "Matriz de correlaciones entre variables numéricas",
-outline.col = "white"
-) + tema
 p_cor <- ggcorrplot(
   cor_mat,
   lab = TRUE,
