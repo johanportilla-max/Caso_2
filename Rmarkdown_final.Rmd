@@ -1012,15 +1012,14 @@ Esta diferencia confirma que un mejor historial crediticio se asocia con un mayo
 
 ```{r ingresopaga on o paga}
 
-p_box_ingreso <- ggplot(lending_base, aes(x = estado_pago, y = ingreso, fill = estado_pago)) +
+p_box_ingreso <- ggplot(Base_datos, aes(x = Estado, y = Ingreso, fill = Estado)) +
 geom_boxplot(alpha = 0.7, outlier.color = "gray40", outlier.alpha = 0.4) +
 scale_fill_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
 scale_y_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ",")) +
 labs(
 x = "Estado de pago",
 y = "Ingreso (USD)"
-) +
-tema
+) 
 p_box_ingreso
 ```
 
@@ -1031,10 +1030,10 @@ Aunque la dispersión en ambos grupos es amplia, se observa una mayor presencia 
 
 ```{r todasvariable}
 
-p_comparativo <- lending_base %>%
-pivot_longer(cols = c(ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico),
+p_comparativo <- Base_datos %>%
+pivot_longer(cols = c(Ingreso, Relacion_deuda_ingreso, Monto_prestado, FICO),
 names_to = "variable", values_to = "valor") %>%
-ggplot(aes(x = estado_pago, y = valor, fill = estado_pago)) +
+ggplot(aes(x = Estado, y = valor, fill = Estado)) +
 geom_boxplot(alpha = 0.6, outlier.alpha = 0.3) +
 facet_wrap(~ variable, scales = "free", ncol = 2) +
 scale_y_continuous(labels = comma) +
@@ -1042,8 +1041,7 @@ scale_fill_manual(values = c("Paga" = "#1b9e77", "No_paga" = "#d95f02")) +
 labs(
 x = "Estado de pago",
 y = "Valor"
-) +
-tema
+) 
 print(p_comparativo)
 ```
 
@@ -1372,7 +1370,8 @@ Esta decisión permitió enfocar el análisis en las variables cuantitativas.
 El manejo de variables cualitativas se dejará para fases posteriores o para el uso de paquetes más flexibles.
 
 ```{r particion_class}
-vars_input <- c("ingreso", "relacion_deuda_ingreso", "monto_prestamo", "puntaje_fico")
+library(class)
+vars_input <- c("Ingreso", "Relacion_deuda_ingreso", "Monto_prestamo", "FICO")
 train_input <- train[, vars_input]
 test_input  <- test[, vars_input]
 train_output <- train$estado_pago
