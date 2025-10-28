@@ -796,9 +796,25 @@ resumen_general <- lending_base %>%
 ## Estadísticas descriptivas de las variables principales
 
 ```{r tabla_resumen }
+tabla_resumen <- resumen_general %>%
+  select(-n) %>%
+  mutate(
+    Variable = recode(
+      variable,
+      ingreso = "Ingreso",
+      relacion_deuda_ingreso = "Relación deuda-ingreso",
+      monto_prestamo = "Monto del préstamo",
+      puntaje_fico = "Puntaje FICO"
+    ),
+    Media = comma(Media, accuracy = 0.01),
+    Mediana = comma(Mediana, accuracy = 0.01),
+    `Desv. Estándar` = comma(Desv_Estandar, accuracy = 0.01),
+    Mínimo = comma(Mínimo, accuracy = 0.01),
+    Máximo = comma(Máximo, accuracy = 0.01)
+  ) %>%
+  select(Variable, Media, Mediana, `Desv. Estándar`, Mínimo, Máximo)
 
-tabla_resumen = resumen_general %>%
-  select(-n) %>%  
+tabla_resumen %>%
   kable(
     format = "html",
     col.names = c("Variable", "Media", "Mediana", "Desv. Estándar", "Mínimo", "Máximo"),
@@ -812,19 +828,15 @@ tabla_resumen = resumen_general %>%
     position = "center"
   ) %>%
   row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
-  column_spec(1, bold = TRUE, width = "3cm") %>%
-  column_spec(2, width = "2cm") %>%
-  column_spec(3, width = "2cm") %>%
-  column_spec(4, width = "2.5cm") %>%
-  column_spec(5, width = "2cm") %>%
-  column_spec(6, width = "2cm") %>%
+  column_spec(1, bold = TRUE, width = "3.5cm") %>%
   footnote(
     general = "Fuente: Elaboración propia con base en datos de Lending Club",
     general_title = "Nota:",
     footnote_as_chunk = TRUE
   )
 
-tabla_resumen
+tabla_resumen 
+
 ```
 
 La Tabla 1 resume las medidas de tendencia central y dispersión de las variables cuantitativas incluidas en el estudio.
@@ -1234,6 +1246,7 @@ font_size = 14,
 position = "center"
 ) %>%
 row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE)
+tasa_por_proposito
 ```
 
 La tabla muestra la tasa de default (no pago) y los indicadores de ingreso y puntaje FICO medianos según el propósito del préstamo.
@@ -1281,14 +1294,6 @@ numeric_vars <- lending_base %>%
 
 cor_mat <- cor(numeric_vars, use = "complete.obs")
 
-ggcorrplot(
-cor_mat,
-lab = TRUE,
-lab_size = 3,
-colors = c("#de425b", "white", "#2ca25f"),
-title = "Matriz de correlaciones entre variables numéricas",
-outline.col = "white"
-) + tema
 p_cor <- ggcorrplot(
   cor_mat,
   lab = TRUE,
