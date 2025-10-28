@@ -1,11 +1,11 @@
 ---
 title: "Comparación de Modelos de Clasificación Supervisada para la Predicción de Riesgo de Incumplimiento en Préstamos Personales: Un Análisis con K-Vecinos Más Cercanos y Regresión Logística."
 author: |
+  **Autores:**  
   Barros Rayo Alejandro (2415837),  
   Muñoz Portela Diego Fernando (2415620),  
   Portilla Aguirre Johan Camilo (2422468),  
   Aguirre Aldana Joan Sebastian (2419550)
-  **Autores:**  
 output: 
   html_document:
     theme: lumen
@@ -89,15 +89,16 @@ body {
     width: var(--sidebar-width) !important;
     min-width: var(--sidebar-width) !important;
     max-width: var(--sidebar-width) !important;
+    position: -webkit-sticky !important; /* Safari */
     position: sticky !important;
     top: 20px !important;
+    align-self: flex-start !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     flex-shrink: 0 !important;
     max-height: calc(100vh - 40px) !important;
-    align-self: flex-start !important;
+    z-index: 100 !important; /* IMPORTANTE */
 }
-
 #TOC::-webkit-scrollbar {
     width: 6px !important;
 }
@@ -176,6 +177,7 @@ body {
     color: #666666 !important;
 }
 
+
 /* CONTENIDO PRINCIPAL - ARREGLADO */
 .toc-content, #content, .col-md-9 {
     flex: 1 !important;
@@ -187,6 +189,18 @@ body {
     box-shadow: 0 0 20px var(--shadow-light) !important;
     border-radius: 8px !important;
     overflow: visible !important;
+}
+
+/* ASEGURAR QUE EL CONTENEDOR PADRE PERMITA STICKY */
+.row, .container-fluid, .main-container {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+/* COL-SM-3 (contenedor del TOC) */
+.col-sm-3 {
+    position: relative !important;
+    height: fit-content !important;
 }
 
 /* SECCIONES */
@@ -436,8 +450,7 @@ Por último, la transparencia e interpretabilidad de los modelos (especialmente 
 El presente estudio tuvo como propósito desarrollar y comparar modelos de clasificación supervisada que permitieran predecir el riesgo de incumplimiento en préstamos personales, con el fin de aportar evidencia técnica para la toma de decisiones de crédito basadas en datos.
 Desde un punto de vista metodológico general, el estudio adopta el paradigma del aprendizaje supervisado: se ajustan modelos sobre un subconjunto de observaciones con estado conocido (pagado / incumplido) y se evalúa su desempeño en datos independientes.
 La comparación entre regresión logística y KNN se orienta a contrastar dos aproximaciones distintas: una paramétrica y fácilmente interpretable (logit) frente a una no paramétrica basada en proximidad en el espacio de características (KNN).
-La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos.
-Los resultados serán interpretados en términos estadísticos.
+La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos. Los resultados serán interpretados en términos estadísticos.
 
 # Metodología
 
@@ -445,11 +458,9 @@ El presente estudio siguió un enfoque de aprendizaje supervisado orientado a la
 El procedimiento general consistió en aplicar dos familias de clasificadores (regresión logística paramétrica y K-Vecinos Más Cercanos no paramétrico) sobre datos previamente preparados, y evaluar su desempeño mediante métricas complementarias y procedimientos de validación.
 
 La implementación se realizó en R empleando flujos estandarizados de preprocesamiento y modelado.
-Para reducir la influencia de escalas dispares y valores extremos, se aplicaron filtros sobre outliers relevantes y se normalizaron las variables numéricas (centrado y escala) cuando correspondió; dicho escalado fue especialmente crítico para KNN, dada su dependencia de distancias euclidianas.
-La muestra final fue construida de forma estratificada para asegurar balance entre las clases objetivo, y todas las operaciones aleatorias (muestreo y particionado); además, se fijó la semilla (set.seed(28)) para garantizar reproducibilidad.
+Para reducir la influencia de escalas dispares y valores extremos, se aplicaron filtros sobre outliers relevantes y se normalizaron las variables numéricas (centrado y escala) cuando correspondió; dicho escalado fue especialmente crítico para KNN, dada su dependencia de distancias euclidianas. La muestra final fue construida de forma estratificada para asegurar balance entre las clases objetivo, y todas las operaciones aleatorias (muestreo y particionado); además, se fijó la semilla `set.seed(28)` para garantizar reproducibilidad.
 
-En cuanto al ajuste de modelos, la regresión logística se estimó mediante glm(..., family = binomial()), obteniendo probabilidades predictivas que permitieron tanto el análisis de coeficientes como la construcción de curvas ROC y la determinación de umbrales operativos (índice de Youden).
-El KNN se abordó de dos maneras; una implementación básica con class::knn, evaluando k en un rango (k = 1:100) y seleccionando el k que maximizó la exactitud fuera de muestra; y una versión integrada en caret::train() que incorporó validación cruzada estratificada (5 folds), búsqueda automática de hiperparámetros (tuneLength) y optimización según el AUC (métrica ROC), lo que permitió una selección de modelo más robusta frente a la variabilidad de los datos.
+En cuanto al ajuste de modelos, la regresión logística se estimó mediante glm(..., family = binomial()), obteniendo probabilidades predictivas que permitieron tanto el análisis de coeficientes como la construcción de curvas ROC y la determinación de umbrales operativos (índice de Youden). El KNN se abordó de dos maneras; una implementación básica con `class::knn`, evaluando k en un rango (k = 1:100) y seleccionando el k que maximizó la exactitud fuera de muestra; y una versión integrada en `caret::train()` que incorporó validación cruzada estratificada (5 folds), búsqueda automática de hiperparámetros `tuneLength` y optimización según el AUC (métrica ROC), lo que permitió una selección de modelo más robusta frente a la variabilidad de los datos.
 
 ```{r sep, echo = FALSE, warning = FALSE, message = FALSE}
 
@@ -591,6 +602,7 @@ tema <- theme_minimal() +
 ## Preparación y limpieza de datos
 
 ```{r carga_datos, echo = FALSE, warning = FALSE, message = FALSE}
+
 lending_raw <- read_csv("LC_loans_granting_model_dataset.csv", guess_max = 20000)
 
 lending_base <- lending_raw %>%
@@ -622,12 +634,22 @@ lending_base <- lending_raw %>%
   ) %>%
   select(-proposito)
 
+lending_completa <- lending_base
+
 lending_base <- lending_base %>%
   filter(ingreso <= 250000, relacion_deuda_ingreso <= 50) %>%
   drop_na()
+
+set.seed(28)
+paga <- lending_base %>% filter(estado_pago == "Paga") %>% sample_n(5000)
+nopaga <- lending_base %>% filter(estado_pago == "No_paga") %>% sample_n(5000)
+lending_muestra <- bind_rows(paga, nopaga) %>% arrange(sample(1:n()))
+
+lending_base <- lending_muestra
+
 ```
 
-A partir de la base original descargada desde Zenodo, se seleccionaron únicamente las variables disponibles al momento de la decisión crediticia y relevantes para el objetivo de clasificación: ingreso anual (revenue), relación deuda/ingreso (dti_n), monto del préstamo (loan_amnt), puntaje crediticio FICO (fico_n), indicador de incumplimiento (Default), propósito del préstamo (purpose) y fecha de emisión (issue_d).
+A partir de la base original descargada desde Zenodo, se seleccionaron únicamente las variables disponibles al momento de la decisión crediticia y relevantes para el objetivo de clasificación: ingreso anual `revenue`, relación deuda/ingreso `dti_n`, monto del préstamo `loan_amnt`, puntaje crediticio FICO `fico_n`, indicador de incumplimiento `Default`, propósito del préstamo `purpose` y fecha de emisión `issue_d`.
 Estas variables fueron renombradas empleando nomenclatura descriptiva en español para facilitar la interpretación de resultados.
 
 La variable dependiente `Default` (originalmente codificada como 0/1) se transformó a factor con niveles "Paga" y "No_paga", estableciendo de forma explícita la clase de interés para las métricas de evaluación.
@@ -711,6 +733,42 @@ Tratamiento de valores faltantes: Una vez aplicados los filtros, se eliminaron t
 Esta decisión se fundamentó en la necesidad de trabajar con registros completos para garantizar comparabilidad entre modelos y evitar imputaciones que pudieran introducir sesgos.
 Dado el tamaño original de la base, la eliminación de casos incompletos no comprometió la disponibilidad de datos para el modelado.
 
+## Distribución de frecuencias por estado de pago
+
+```{r tabla_frecuencias}
+tabla_estado <- as.data.frame(table(lending_raw$Default))
+colnames(tabla_estado) <- c("estado_pago", "n")
+tabla_estado$porcentaje <- round(prop.table(tabla_estado$n) * 100, 2)
+tabla_estado$estado_pago <- ifelse(
+  tabla_estado$estado_pago == 0, 
+  "Paga", 
+  "No_paga"
+)
+
+tabla_estado %>%
+  kbl(
+    caption = "Distribución de Frecuencias por Estado de Pago en la base original",
+    align = c("l", "r", "r"),
+    col.names = c("Estado Pago", "Frecuencia", "Porcentaje (%)")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2:3, width = "2.5cm") %>%
+  footnote(
+    general = "Fuente: Elaboración propia con base en datos de Lending Club",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+```
+
+Para evitar sesgos de clase en la estimación (la base filtrada presentaba desbalance entre pagos e incumplimientos), se construyó una muestra estratificada de 10,000 observaciones: 5,000 préstamos con estado "Paga" y 5,000 con estado "No_paga". El muestreo aleatorio dentro de cada clase se realizó con semilla fija `set.seed(28)` para garantizar reproducibilidad. Esta estrategia de balanceo permite que los modelos aprendan con igual representación de ambas clases, mejorando la sensibilidad frente al incumplimiento sin comprometer la especificidad. A partir de este punto, todos los análisis descriptivos y modelos se realizan sobre esta muestra balanceada.
+
 # Análisis descriptivo
 
 El conjunto de datos analizado corresponde a registros de préstamos otorgados por la plataforma Lending Club, e incluye información relevante sobre las características financieras de los solicitantes y el comportamiento de pago asociado a cada crédito.
@@ -782,46 +840,9 @@ Su baja desviación estándar (31.7) indica una distribución relativamente conc
 
 En conjunto, estas estadísticas evidencian una población de solicitantes con ingresos moderados a altos, niveles de endeudamiento diversos y un comportamiento crediticio predominantemente positivo.
 
-## Distribución de frecuencias por estado de pago
+## Distribución individual de variables numéricas
 
-```{r tabla_frecuencias}
-
-tabla_estado <- as.data.frame(table(lending_base$estado_pago))
-colnames(tabla_estado) <- c("estado_pago", "n")
-tabla_estado$porcentaje <- round(prop.table(tabla_estado$n) * 100, 2)
-
-tabla_estado %>%
-  kbl(
-    caption = "Tabla 2: Distribución de Frecuencias por Estado de Pago",
-    align = c("l", "r", "r"),
-    col.names = c("Estado Pago", "Frecuencia", "Porcentaje (%)")
-  ) %>%
-  kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed"),
-    full_width = FALSE,
-    font_size = 14,
-    position = "center"
-  ) %>%
-  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
-  column_spec(1, bold = TRUE, width = "3cm") %>%
-  column_spec(2:3, width = "2.5cm") %>%
-  footnote(
-    general = "Fuente: Elaboración propia con base en datos de Lending Club",
-    general_title = "Nota:",
-    footnote_as_chunk = TRUE
-  )
-```
-
-La Tabla 2 presenta la distribución de los préstamos según el estado de pago, variable cualitativa que clasifica a los deudores en dos grupos: aquellos que cumplen con sus obligaciones (“Paga”) y los que incurren en incumplimiento (“No paga”).
-
-Los resultados muestran que el 79.89% de los préstamos se encuentran en estado de pago activo o finalizado correctamente, mientras que el 20.11% corresponde a créditos en incumplimiento.
-Esta proporción indica que la gran mayoría de los prestatarios mantienen un comportamiento de pago responsable, aunque la presencia de una quinta parte de préstamos en mora representa un segmento de riesgo relevante para las entidades crediticias.
-
-El equilibrio entre ambos grupos servirá como base para los análisis posteriores, donde se buscará identificar los factores que explican el incumplimiento y las variables que mejor predicen el riesgo crediticio.
-
-# Distribución individual de variables numéricas
-
-## Histograma del ingreso
+### Histograma del ingreso
 
 ```{r p1}
 library(plotly)
@@ -853,7 +874,7 @@ Esta concentración en niveles intermedios de ingreso sugiere que la base de dat
 Los valores más altos de ingreso, aunque minoritarios, representan a solicitantes con mayor capacidad financiera, lo que puede influir positivamente en su probabilidad de aprobación y cumplimiento del crédito.
 En conjunto, la distribución muestra una población heterogénea, pero con predominio de ingresos medios dentro del conjunto analizado.
 
-## Distribución de la relación deuda/ingreso
+### Distribución de la relación deuda/ingreso
 
 ```{r pdti}
 p_dti <- ggplot(lending_base, aes(x = relacion_deuda_ingreso)) +
@@ -884,7 +905,7 @@ Sin embargo, se observan algunos valores altos por encima del 40% que correspond
 
 La forma suavizada del gráfico evidencia una distribución continua y bien concentrada, lo que sugiere que el comportamiento de esta variable sigue una tendencia general homogénea dentro de la población crediticia.
 
-## Distribución del puntaje FICO
+### Distribución del puntaje FICO
 
 ```{r fico}
 p_fico <- ggplot(lending_base, aes(x = puntaje_fico)) +
@@ -929,7 +950,7 @@ Esto indica que la mayoría de los solicitantes poseen un historial crediticio c
 La distribución es ligeramente asimétrica hacia la derecha, lo cual refleja que existen prestatarios con puntajes altos (mayores a 750), pero en menor proporción.
 Este comportamiento es esperable, dado que los puntajes más altos suelen corresponder a individuos con un historial crediticio más largo y estable.
 
-## Distribución del monto del préstamo
+### Distribución del monto del préstamo
 
 ```{r p_monto}
 p_monto_hist <- ggplot(lending_base, aes(x = monto_prestamo)) +
@@ -953,8 +974,6 @@ p_monto_hist
 El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000.
 Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
 Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
-
-# Variable por estado de pago
 
 ## Puntaje FICO por estado de pago
 
@@ -1018,9 +1037,9 @@ Conjuntamente, los boxplots sugieren un patrón coherente: mayor ingreso y mayor
 El monto del préstamo por sí solo no explica totalmente el comportamiento (medianas similares), pero su mayor dispersión entre los morosos indica que créditos elevados en prestatarios vulnerables pueden agravar la probabilidad de default.
 Para la gestión del riesgo crediticio estas observaciones implican: priorizar la evaluación de DTI y FICO en la toma de decisiones, contemplar límites o condiciones más estrictas para solicitudes con alta DTI, y considerar estrategias de segmentación donde el tamaño del préstamo se ajuste a la capacidad de pago observada.
 
-# Relaciónes
+## Relaciónes
 
-## Relación entre puntaje FICO y relación deuda/ingreso
+### Relación entre puntaje FICO y relación deuda/ingreso
 
 ```{r fico_dti_simplificado}
 
@@ -1060,7 +1079,7 @@ Esto indica que los prestatarios con mejor historial crediticio manejan proporci
 La mayor incertidumbre en los extremos del rango (colas más amplias) sugiere escasez de datos y mayor variabilidad en esos tramos.
 En términos prácticos, el gráfico respalda usar FICO y DTI de forma conjunta para discriminar riesgo: perfiles con FICO bajo y DTI alto son candidatos de mayor riesgo, perfiles inversos, de menor riesgo.
 
-## Relación entre ingreso y monto del préstamo
+### Relación entre ingreso y monto del préstamo
 
 ```{r montovsingresos}
 corr_val <- cor(lending_base$ingreso, lending_base$monto_prestamo, use = "complete.obs")
@@ -1109,7 +1128,7 @@ p_monto
 El gráfico confirma que el ingreso es un predictor relevante del monto del préstamo —a mayor ingreso, mayor tendencia a recibir montos mayores— pero la relación es moderada y sujeta a límites operativos y a la influencia de otras variables crediticias.
 Por tanto, las decisiones de crédito deben combinar información de ingreso con medidas de riesgo (DTI, FICO) y restricciones de producto para optimizar la asignación y minimizar el riesgo de default.
 
-## Relación entre puntaje FICO y relación deuda/ingreso
+### Relación entre puntaje FICO y relación deuda/ingreso
 
 ```{r ficovsdti}
 
@@ -1141,9 +1160,9 @@ Esto es común en bases de datos crediticias, donde los extremos suelen tener me
 En términos analíticos, la gráfica refuerza la complementariedad entre FICO y DTI como indicadores clave del riesgo crediticio.
 Un puntaje FICO alto combinado con una baja relación deuda/ingreso representa un perfil de bajo riesgo, mientras que un FICO bajo junto con una DTI elevada sugiere mayor probabilidad de incumplimiento.
 
-# Tasas
+## Tasas
 
-## Tasa de default por decil de ingreso
+### Tasa de default por decil de ingreso
 
 ```{r decil}
 
@@ -1183,7 +1202,7 @@ A partir del decil medio (D5 en adelante), la reducción se acentúa, indicando 
 
 En términos prácticos, este patrón confirma que el ingreso es un predictor clave de la probabilidad de no pago.
 
-## Tasa de Default e Indicadores por Propósito del Préstamo
+### Tasa de Default e Indicadores por Propósito del Préstamo
 
 ```{r tasadeafuprposiotltingreso}
 
@@ -1226,9 +1245,9 @@ Los créditos para Consolidación de deudas y Otros propósitos presentan tasas 
 
 En conjunto, los resultados evidencian que el propósito del préstamo influye directamente en la probabilidad de incumplimiento, siendo más riesgoso cuando los fondos se destinan a proyectos de inversión personal o productiva que dependen de ingresos futuros inciertos.
 
-# Propósito
+## Propósito
 
-## Distribución del puntaje FICO por propósito y estado de pago
+### Distribución del puntaje FICO por propósito y estado de pago
 
 ```{r fico proposito}
 
@@ -1251,9 +1270,9 @@ En todos los casos, se observa que los clientes que no pagan (en rojo) tienden a
 En particular, los préstamos para Negocio o Estudio y Consolidación exhiben una mayor superposición entre ambos grupos, lo que sugiere una menor capacidad del FICO para discriminar el riesgo en esos propósitos.
 En contraste, los préstamos para Casa o Vehículo muestran una separación más clara entre pagadores y no pagadores, indicando que en este tipo de crédito el puntaje FICO es un indicador más efectivo del comportamiento de pago.
 
-# Correlacion
+## Correlacion
 
-## Matriz de correlaciones entre variables numéricas
+### Matriz de correlaciones entre variables numéricas
 
 ```{r correlacion}
 library(plotly)
@@ -1300,9 +1319,6 @@ La correlación negativa entre puntaje FICO y relación deuda/ingreso (-0.07) re
 
 En conjunto, la matriz refleja una consistencia entre las variables financieras: los prestatarios con ingresos mayores y una menor carga de deuda relativa tienden a mostrar mejores indicadores de riesgo (mayor FICO), mientras que quienes tienen una alta relación deuda/ingreso podrían ser más vulnerables al incumplimiento.
 Sin embargo, la baja magnitud de las correlaciones sugiere que el comportamiento crediticio depende también de otros factores no considerados en esta matriz, como historial de pagos, propósito del préstamo o condiciones económicas externas.
-## Caracterización de las clases
-
-## Comportamiento según propósito del préstamo
 
 # Modelos de clasificación
 
@@ -1313,19 +1329,15 @@ A continuación, se detalla la división de los datos y la implementación de ca
 
 ## División de los datos
 
-Para el desarrollo de los modelos de clasificación, se realizó un muestreo estratificado balanceado seguido de una partición aleatoria, con el objetivo de mitigar el desbalance inherente en el dataset original de Lending Club, donde aproximadamente el 80% de las observaciones corresponden a préstamos pagados y cerca del 20% a incumplimientos, lo que podría sesgar los algoritmos hacia la clase mayoritaria.
-Inicialmente, de la base filtrada y limpia ("lending_base"), se extrajo una muestra aleatoria de 10,000 observaciones utilizando sample_n() en R con semilla fija set.seed(28) para reproducibilidad: 5,000 de la clase "Paga" y 5,000 de "No_paga", aplicando undersampling a la clase dominante para igualar las proporciones y mejorar la sensibilidad de los modelos en la detección de riesgos crediticios.
-Esta técnica de balanceo es estándar en problemas de clasificación binaria desbalanceada, como los de préstamos P2P, ya que permite evaluaciones más robustas de métricas como precisión, recall y AUC sin requerir oversampling sintético.
+Para el desarrollo de los modelos de clasificación, se utilizó la base balanceada obtenida en la etapa de preparación y limpieza, conformada por 10.000 observaciones distribuidas equitativamente entre las clases “Paga” y “No_paga”.
+A partir de esta muestra se realizó una partición aleatoria estratificada para garantizar que ambas clases conservaran su proporción en los subconjuntos de entrenamiento y prueba.
 
-Posteriormente, la muestra balanceada ("lending_muestra") se dividió en subconjuntos de entrenamiento (75% de las observaciones, equivalente a 7,500 registros) y prueba (25%, o 2,500 registros), utilizando sample() con la misma semilla para mantener la aleatoriedad controlada y preservar el equilibrio equitativo entre clases en ambos conjuntos (aproximadamente 50% "Paga" y 50% "No_paga").
-La proporción 75/25 es una convención común en machine learning para clasificación, ya que proporciona suficientes datos para el entrenamiento mientras reserva un conjunto de prueba independiente para validar el rendimiento generalizado, evitando sobreajuste en datasets de riesgo crediticio como el de Lending Club.
-Esta división se implementó mediante índices aleatorios index_entrena e index_test, asegurando que las variables predictoras (numéricas y categóricas) se mantuvieran representativas en ambos subconjuntos para una evaluación imparcial de los modelos KNN y logit.
+Con una semilla fija (set.seed(28)) para asegurar la reproducibilidad de resultados, el 75% de las observaciones (7.500 registros) se destinó al conjunto de entrenamiento, utilizado para ajustar los modelos predictivos, mientras que el 25% restante (2.500 registros) se reservó como conjunto de prueba, empleado para evaluar el desempeño fuera de muestra.
+
+Esta proporción 75/25 sigue las recomendaciones habituales en aprendizaje supervisado, ya que permite disponer de suficientes datos para el entrenamiento, al tiempo que mantiene un subconjunto independiente para validar la capacidad de generalización de los modelos.
+La división se implementó mediante índices aleatorios (index_entrena e index_test), garantizando la representatividad de las variables predictoras (numéricas y categóricas) y evitando sesgos en la evaluación comparativa de los modelos KNN y Logit.
 
 ```{r particion}
-set.seed(28)
-paga <- lending_base %>% filter(estado_pago == "Paga") %>% sample_n(5000)
-nopaga <- lending_base %>% filter(estado_pago == "No_paga") %>% sample_n(5000)
-lending_muestra <- bind_rows(paga, nopaga) %>% arrange(sample(1:n()))
 
 set.seed(28)
 index_muestra <- sample(1:nrow(lending_muestra), nrow(lending_muestra))
@@ -1334,6 +1346,7 @@ index_test <- setdiff(index_muestra, index_entrena)
 
 train <- lending_muestra[index_entrena, ]
 test <- lending_muestra[index_test, ]
+
 ```
 
 ## Modelo KNN
@@ -1790,8 +1803,7 @@ Se observa una mejoría relevante en la sensibilidad, con un 66.2% de identifica
 
 ## Modelo Logit
 
-La regresión logística (modelo Logit) es un método de clasificación paramétrico que estima la probabilidad de que una observación pertenezca a una de dos categorías, en función de variables explicativas.
-A diferencia del KNN, el Logit construye un modelo matemático explícito: el logaritmo del odds (razón de probabilidades) se modela linealmente respecto a los predictores.
+La regresión logística (modelo Logit) es un método de clasificación paramétrico que estima la probabilidad de que una observación pertenezca a una de dos categorías, en función de variables explicativas. A diferencia del KNN, el Logit construye un modelo matemático explícito: el logaritmo del odds (razón de probabilidades) se modela linealmente respecto a los predictores.
 
 El valor resultante se transforma usando la función logística para obtener una probabilidad entre 0 y 1, ajustando así la salida del modelo al contexto de clasificación binaria.
 Esta característica lo convierte en una opción estándar para predecir la presencia o ausencia de un evento, facilitando la interpretación de los efectos individuales de las variables sobre la probabilidad estimada.
@@ -1825,7 +1837,8 @@ La variable respuesta fue codificada binariamente previamente en el conjunto de 
 
 $$
 P(\text{default\_num} = 1 \mid \text{ingreso}, \text{relacion\_deuda\_ingreso}, \text{monto\_prestamo}, \text{puntaje\_fico}, \text{proposito\_agrupado}) 
-= \frac{1}{1 + e^{- \left( \beta_0 + \beta_1 \cdot \text{Ingreso} + \beta_2 \cdot \text{Relación Deuda-Ingreso} + \beta_3 \cdot \text{Monto Préstamo} + \beta_4 \cdot \text{Puntaje FICO} + \beta_5 \cdot \text{Propósito Agrupado} \right)}}
+=
+\frac{1}{1 + e^{- \left( \beta_0 + \beta_1 \cdot \text{Ingreso} + \beta_2 \cdot \text{Relación Deuda-Ingreso} + \beta_3 \cdot \text{Monto Préstamo} + \beta_4 \cdot \text{Puntaje FICO} + \beta_5 \cdot \text{Propósito Agrupado} \right)}}
 $$
 
 El ajuste permitió identificar el impacto individual de cada predictor sobre el logaritmo de las probabilidades de incumplimiento.
