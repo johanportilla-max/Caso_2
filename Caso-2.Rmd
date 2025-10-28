@@ -1389,9 +1389,7 @@ library(purrr)
 mediana_fico <- median(Base_datos$FICO, na.rm = TRUE)
 media_fico <- mean(Base_datos$FICO, na.rm = TRUE)
 
-# Función para crear frames de animación
 crear_frame_fico <- function(porcentaje) {
-  # Filtrar datos progresivamente
   datos_anim <- Base_datos %>%
     arrange(FICO) %>%
     slice(1:round(n() * porcentaje))
@@ -1434,8 +1432,6 @@ crear_frame_fico <- function(porcentaje) {
         "N:", scales::comma(round(nrow(Base_datos) * porcentaje)), "observaciones"
       )
     )
-  
-  # Aplicar el tema correctamente
   p + TS() +
     theme(
       plot.title = element_text(
@@ -1453,23 +1449,20 @@ crear_frame_fico <- function(porcentaje) {
     )
 }
 
-# Crear secuencia de frames
 porcentajes <- seq(0.1, 1, by = 0.1)
 frames <- map(porcentajes, crear_frame_fico)
 
-# Guardar frames temporales
 temp_files <- map_chr(seq_along(frames), function(i) {
   archivo <- tempfile(fileext = ".png")
   ggsave(archivo, frames[[i]], width = 10, height = 6, dpi = 100, bg = "white")
   archivo
 })
 
-# Crear animación con magick
+
 animacion_fico <- image_read(temp_files) %>%
   image_animate(fps = 2, optimize = TRUE) %>%
   image_write("animacion_fico.gif")
 
-# Mostrar la animación
 knitr::include_graphics("animacion_fico.gif")
 
 ```
@@ -1647,13 +1640,156 @@ Se observa también la presencia de montos más altos, aunque con menor frecuenc
 
 
 ```{r ficopagaono}
-p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
-geom_boxplot() +
-labs(
-x = "Estado de pago",
-y = "Puntaje FICO"
-) 
-print(p_fico_box)
+
+stats_fico <- Base_datos %>%
+  group_by(Estado) %>%
+  summarise(
+    mediana = median(FICO, na.rm = TRUE),
+    q1 = quantile(FICO, 0.25, na.rm = TRUE),
+    q3 = quantile(FICO, 0.75, na.rm = TRUE),
+    n = n()
+  )
+
+
+p_fico_box_interactivo <- plot_ly(
+  Base_datos, 
+  x = ~Estado, 
+  y = ~FICO, 
+  color = ~Estado,  
+  colors = c(SC["primary_red"], SC["accent_red"]),  
+  type = "box",       # Jitter para evitar sobreposición
+  marker = list(
+    size = 4,
+    opacity = 0.6,
+    line = list(width = 1, color = "white")
+  ),
+  line = list(width = 2),
+  whiskerwidth = 0.8,
+  fillcolor = "rgba(255,255,255,0.3)",  # Relleno semitransparente
+  hoverinfo = "y+x+name"
+) %>%
+  layout(
+    title = list(
+      text = "<b>Distribución del Puntaje FICO por Estado de Pago</b>",
+      font = list(
+        family = "Playfair Display",
+        size = 22,
+        color = SC["primary_red"]
+      ),
+      x = 0.05
+    ),
+    xaxis = list(
+      title = list(
+        text = "Estado de Pago",
+        font = list(
+          family = "Playfair Display",
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      gridcolor = SC["light_red"],
+      tickfont = list(family = "Source Serif Pro", size = 12)
+    ),
+    yaxis = list(
+      title = list(
+        text = "Puntaje FICO",
+        font = list(
+          family = "Playfair Display", 
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      gridcolor = SC["light_red"],
+      zerolinecolor = SC["light_red"],
+      range = c(min(Base_datos$FICO, na.rm = TRUE) * 0.95, 
+                max(Base_datos$FICO, na.rm = TRUE) * 1.05)  
+    ),
+    plot_bgcolor = SC["parchment"],
+    paper_bgcolor = "white",
+    font = list(family = "Source Serif Pro", size = 12),
+    margin = list(l = 80, r = 50, t = 80, b = 100),
+    hoverlabel = list(
+      font = list(family = "Source Serif Pro")
+    ),
+    showlegend = FALSE,
+    annotations = list(
+      list(
+        x = 0, 
+        y = stats_fico$mediana[stats_fico$Estado == "Pagado"],
+        text = paste("Mediana:", round(stats_fico$mediana[stats_fico$Estado == "Pagado"])),
+        showarrow = FALSE,
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["dark_red"]
+        ),
+        bgcolor = "white",
+        bordercolor = SC["dark_red"],
+        borderpad = 4,
+        borderwidth = 1
+      ),
+      list(
+        x = 1,  
+        y = stats_fico$mediana[stats_fico$Estado == "Incumplido"],
+        text = paste("Mediana:", round(stats_fico$mediana[stats_fico$Estado == "Incumplido"])),
+        showarrow = FALSE,
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["dark_red"]
+        ),
+        bgcolor = "white",
+        bordercolor = SC["dark_red"],
+        borderpad = 4,
+        borderwidth = 1
+      ),
+      list(
+        x = 1,
+        y = min(Base_datos$FICO, na.rm = TRUE),
+        text = paste(
+          "Total: N =", scales::comma(nrow(Base_datos)), "observaciones<br>",
+          "Pagado: N =", scales::comma(stats_fico$n[stats_fico$Estado == "Pagado"]), "<br>",
+          "Incumplido: N =", scales::comma(stats_fico$n[stats_fico$Estado == "Incumplido"])
+        ),
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "y",
+        xanchor = "right",
+        align = "right",
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["secondary_red"]
+        ),
+        bgcolor = "rgba(255,255,255,0.8)",
+        bordercolor = SC["light_red"],
+        borderwidth = 1,
+        borderpad = 4
+      ),
+      # Fuente
+      list(
+        x = 1,
+        y = -0.2,
+        text = "Fuente: Dataset Lending Club",
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "right",
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["secondary_red"]
+        )
+      )
+    )
+  ) %>%
+  config(
+    displayModeBar = TRUE,
+    modeBarButtonsToRemove = c("pan2d", "lasso2d", "select2d"),
+    displaylogo = FALSE
+  )
+
+p_fico_box_interactivo
 
 
 ```
@@ -1661,6 +1797,408 @@ print(p_fico_box)
 El boxplot evidencia una diferencia notable en el puntaje FICO según el estado de pago.
 Los prestatarios que pagan tienden a tener un FICO ligeramente superior, con una mediana cercana a los 700 puntos, mientras que quienes no pagan se concentran alrededor de 680–690 puntos.
 Esta diferencia confirma que un mejor historial crediticio se asocia con un mayor cumplimiento en los pagos.
+
+### ingreso por estado de pago
+
+```{r ingresopaga on o paga}
+stats_ingreso <- Base_datos %>%
+  group_by(Estado) %>%
+  summarise(
+    mediana = median(Ingreso, na.rm = TRUE),
+    q1 = quantile(Ingreso, 0.25, na.rm = TRUE),
+    q3 = quantile(Ingreso, 0.75, na.rm = TRUE),
+    iqr = IQR(Ingreso, na.rm = TRUE),
+    n = n()
+  )
+
+# Crear el boxplot de manera más explícita
+p_box_ingreso_corregido <- plot_ly() %>%
+  # Agregar boxplot para "Pagado"
+  add_boxplot(
+    data = Base_datos %>% filter(Estado == "Pagado"),
+    y = ~Ingreso,
+    name = "Pagado",
+    boxpoints = "outliers",  # Solo mostrar outliers
+    marker = list(
+      color = SC["primary_red"],
+      size = 5,
+      opacity = 0.7
+    ),
+    line = list(
+      color = SC["dark_red"],
+      width = 2
+    ),
+    fillcolor = SC["light_red"],
+    width = 0.5
+  ) %>%
+  # Agregar boxplot para "Incumplido"
+  add_boxplot(
+    data = Base_datos %>% filter(Estado == "Incumplido"),
+    y = ~Ingreso,
+    name = "Incumplido",
+    boxpoints = "outliers",
+    marker = list(
+      color = SC["accent_red"],
+      size = 5,
+      opacity = 0.7
+    ),
+    line = list(
+      color = SC["secondary_red"],
+      width = 2
+    ),
+    fillcolor = paste0(SC["accent_red"], "40"),  # Con transparencia
+    width = 0.5
+  ) %>%
+  layout(
+    title = list(
+      text = "<b>Distribución del Ingreso por Estado de Pago</b>",
+      font = list(
+        family = "Playfair Display",
+        size = 22,
+        color = SC["primary_red"]
+      ),
+      x = 0.05
+    ),
+    xaxis = list(
+      title = list(
+        text = "Estado de Pago",
+        font = list(
+          family = "Playfair Display",
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      tickvals = c(0, 1),
+      ticktext = c("Pagado", "Incumplido"),
+      gridcolor = SC["light_red"],
+      tickfont = list(family = "Source Serif Pro", size = 12)
+    ),
+    yaxis = list(
+      title = list(
+        text = "Ingreso Anual (USD)",
+        font = list(
+          family = "Playfair Display", 
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      gridcolor = SC["light_red"],
+      zerolinecolor = SC["light_red"],
+      tickformat = "$,.0f",
+      range = c(0, quantile(Base_datos$Ingreso, 0.95, na.rm = TRUE))  # Usar percentil 95 para evitar outliers extremos
+    ),
+    plot_bgcolor = SC["parchment"],
+    paper_bgcolor = "white",
+    font = list(family = "Source Serif Pro", size = 12),
+    margin = list(l = 80, r = 50, t = 80, b = 100),
+    hoverlabel = list(
+      font = list(family = "Source Serif Pro")
+    ),
+    showlegend = FALSE,
+    boxmode = "group",
+    annotations = list(
+      # Anotación para mediana de Pagado
+      list(
+        x = 0,
+        y = stats_ingreso$mediana[stats_ingreso$Estado == "Pagado"],
+        text = paste("Mediana:", scales::dollar(stats_ingreso$mediana[stats_ingreso$Estado == "Pagado"])),
+        showarrow = FALSE,
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["dark_red"]
+        ),
+        bgcolor = "white",
+        bordercolor = SC["dark_red"],
+        borderpad = 4,
+        borderwidth = 1
+      ),
+      # Anotación para mediana de Incumplido
+      list(
+        x = 1,
+        y = stats_ingreso$mediana[stats_ingreso$Estado == "Incumplido"],
+        text = paste("Mediana:", scales::dollar(stats_ingreso$mediana[stats_ingreso$Estado == "Incumplido"])),
+        showarrow = FALSE,
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["dark_red"]
+        ),
+        bgcolor = "white",
+        bordercolor = SC["dark_red"],
+        borderpad = 4,
+        borderwidth = 1
+      ),
+      # Información de resumen
+      list(
+        x = 1,
+        y = 0,
+        text = paste(
+          "Total: N =", scales::comma(nrow(Base_datos)), "<br>",
+          "Pagado: N =", scales::comma(stats_ingreso$n[stats_ingreso$Estado == "Pagado"]), "<br>",
+          "Incumplido: N =", scales::comma(stats_ingreso$n[stats_ingreso$Estado == "Incumplido"])
+        ),
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "y",
+        xanchor = "right",
+        align = "right",
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["secondary_red"]
+        ),
+        bgcolor = "rgba(255,255,255,0.8)",
+        bordercolor = SC["light_red"],
+        borderwidth = 1,
+        borderpad = 4
+      ),
+      # Fuente
+      list(
+        x = 1,
+        y = -0.25,
+        text = "Fuente: Dataset Lending Club",
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "right",
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["secondary_red"]
+        )
+      )
+    )
+  ) %>%
+  config(
+    displayModeBar = TRUE,
+    modeBarButtonsToRemove = c("pan2d", "lasso2d", "select2d"),
+    displaylogo = FALSE
+  )
+
+p_box_ingreso_corregido
+```
+
+La comparación del ingreso por estado de pago revela que los prestatarios que cumplen con sus obligaciones presentan una mediana de ingreso ligeramente más alta que los morosos.
+Aunque la dispersión en ambos grupos es amplia, se observa una mayor presencia de valores atípicos elevados en el grupo “Paga”, lo cual sugiere que los ingresos más altos se asocian con una mayor probabilidad de cumplimiento.
+
+### Comparación de variables numéricas según estado de pago
+
+Conjuntamente, los boxplots sugieren un patrón coherente: mayor ingreso y mayor puntaje FICO actúan como factores protectores frente al incumplimiento, mientras que una mayor relación deuda/ingreso incrementa el riesgo.
+El monto del préstamo por sí solo no explica totalmente el comportamiento (medianas similares), pero su mayor dispersión entre los morosos indica que créditos elevados en prestatarios vulnerables pueden agravar la probabilidad de default.
+Para la gestión del riesgo crediticio estas observaciones implican: priorizar la evaluación de DTI y FICO en la toma de decisiones, contemplar límites o condiciones más estrictas para solicitudes con alta DTI, y considerar estrategias de segmentación donde el tamaño del préstamo se ajuste a la capacidad de pago observada.
+
+```{r}
+datos_largos <- Base_datos %>%
+  pivot_longer(
+    cols = c(Ingreso, Relacion_deuda_ingreso, Monto_prestado, FICO),
+    names_to = "variable", 
+    values_to = "valor"
+  )
+
+# Convertir nombres de variables a español para los títulos
+nombres_variables <- c(
+  "Ingreso" = "Ingreso Anual",
+  "Relacion_deuda_ingreso" = "Relación Deuda/Ingreso", 
+  "Monto_prestado" = "Monto del Préstamo",
+  "FICO" = "Puntaje FICO"
+)
+
+# Función para crear cada subplot
+crear_boxplot_variable <- function(var) {
+  
+  datos_filtrados <- datos_largos %>% filter(variable == var)
+  
+  # Determinar formato del eje Y según la variable
+  if (var == "Ingreso" | var == "Monto_prestado") {
+    tickformat <- "$,.0f"
+    hoverformat <- "$,.0f"
+  } else if (var == "Relacion_deuda_ingreso") {
+    tickformat <- ".1%"
+    hoverformat <- ".1%"
+    # Convertir a porcentaje para display si es necesario
+    datos_filtrados$valor <- datos_filtrados$valor * 100
+  } else {
+    tickformat <- ",.0f"
+    hoverformat <- ",.0f"
+  }
+  
+  plot_ly(
+    datos_filtrados,
+    x = ~Estado,
+    y = ~valor,
+    color = ~Estado,
+    colors = c(SC["primary_red"], SC["accent_red"]),
+    type = "box",
+    boxpoints = "outliers",
+    marker = list(
+      size = 4,
+      opacity = 0.6
+    ),
+    line = list(width = 1.5),
+    fillcolor = "rgba(255,255,255,0.5)",
+    showlegend = FALSE,
+    hoverinfo = "y+x"
+  ) %>%
+    layout(
+      title = list(
+        text = nombres_variables[var],
+        font = list(
+          family = "Playfair Display",
+          size = 14,
+          color = SC["primary_red"]
+        )
+      ),
+      xaxis = list(
+        title = "",
+        tickfont = list(family = "Source Serif Pro", size = 10)
+      ),
+      yaxis = list(
+        title = "",
+        tickformat = tickformat,
+        gridcolor = SC["light_red"]
+      ),
+      margin = list(l = 60, r = 30, t = 50, b = 50),
+      plot_bgcolor = SC["parchment"],
+      paper_bgcolor = "white"
+    )
+}
+
+# Crear los 4 subplots
+plot_ingreso <- crear_boxplot_variable("Ingreso")
+plot_dti <- crear_boxplot_variable("Relacion_deuda_ingreso")
+plot_monto <- crear_boxplot_variable("Monto_prestado")
+plot_fico <- crear_boxplot_variable("FICO")
+
+# Combinar en subplots
+p_comparativo_interactivo <- subplot(
+  plot_ingreso, plot_dti, plot_monto, plot_fico,
+  nrows = 2,
+  shareX = TRUE,
+  titleY = TRUE,
+  margin = 0.05
+) %>%
+  layout(
+    title = list(
+      text = "<b>Comparación de Variables por Estado de Pago</b>",
+      font = list(
+        family = "Playfair Display",
+        size = 24,
+        color = SC["primary_red"]
+      ),
+      x = 0.5
+    ),
+    font = list(family = "Source Serif Pro"),
+    annotations = list(
+      list(
+        x = 0.5,
+        y = -0.1,
+        text = "Estado de Pago",
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "center",
+        font = list(
+          family = "Playfair Display",
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      list(
+        x = -0.05,
+        y = 0.5,
+        text = "Valor",
+        textangle = -90,
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "center",
+        font = list(
+          family = "Playfair Display",
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      list(
+        x = 1,
+        y = -0.15,
+        text = "Fuente: Dataset Lending Club",
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "right",
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["secondary_red"]
+        )
+      )
+    )
+  ) %>%
+  config(
+    displayModeBar = TRUE,
+    modeBarButtonsToRemove = c("pan2d", "lasso2d", "select2d"),
+    displaylogo = FALSE
+  )
+
+p_comparativo_interactivo
+```
+
+
+# Modelos de clasificación
+
+La clasificación es un enfoque fundamental dentro del aprendizaje supervisado cuyo objetivo es asignar observaciones a categorías predefinidas basándose en un conjunto conocido de características.
+
+Este tipo de modelos aprenden a partir de datos etiquetados, donde cada instancia cuenta con una clase o categoría asociada, para después predecir la clase de nuevas observaciones.
+
+La clasificación se aplica en diversos campos y problemas donde es necesario discriminar entre dos o más opciones.
+
+A continuación, se detalla la división de los datos y la implementación de cada modelo utilizado para evaluar su desempeño en la clasificación.
+
+```{r particion}
+set.seed(0408)
+
+index_muestra <- sample(1:nrow(Base_datos), nrow(Base_datos))
+index_entrena <- index_muestra[1:7500]  
+index_test <- index_muestra[7501:length(index_muestra)]  
+
+train <- Base_datos[index_entrena, ]
+test <- Base_datos[index_test, ]
+
+```
+
+## Modelo KNN
+
+El modelo K-Nearest Neighbors (KNN) es un algoritmo de aprendizaje supervisado no paramétrico, ampliamente utilizado para problemas de clasificación, donde predice la clase de un nuevo punto de datos basándose en la mayoría de clases de sus k vecinos más cercanos en el espacio de características.
+
+Este método opera de manera "perezosa", ya que no construye un modelo explícito durante el entrenamiento, sino que almacena el conjunto de datos y realiza cálculos de distancia solo en el momento de la predicción, lo que lo hace simple e intuitivo para capturar patrones locales en los datos.
+
+### Modelo KNN (class)
+
+El proceso para entrenar y evaluar el modelo K-Nearest Neighbors (KNN) con el paquete class en R se llevó a cabo en varias etapas.
+
+Primero, se dividió el conjunto de datos en variables predictoras (Inputs) y variable respuesta explícitamente (outputs), seleccionando únicamente variables numéricas estandarizadas para calcular las distancias, dado que la función knn() no admite variables cualitativas directamente o factores como entradas.
+
+Por simplicidad y dadas las características del paquete class, en esta fase no se utilizó la variable cualitativa `proposito_agrupado`.
+
+La inclusión de variables categóricas habría requerido transformarlas a variables numéricas y estandarizarlas, lo cual añade complejidad.
+
+Esta decisión permitió enfocar el análisis en las variables cuantitativas.
+
+
+
+Para determinar el valor óptimo de k, se implementó un ciclo for que evaluó la precisión del modelo para diferentes valores de k entre 1 y 100, calculando la proporción de predicciones correctas en el conjunto de prueba. Esta metodología manual permitió identificar el valor de k que maximiza la precisión en el rango.
+
+Se generó un gráfico que muestra la precisión del modelo en función del valor de k, facilitando la identificación visual del punto óptimo. Con este valor seleccionado, el modelo final se evaluó utilizando métricas como la matriz de confusión y la precisión general, lo que permitió medir su capacidad para clasificar correctamente la variable objetivo.
+
+
+
+
+
+A continuación, se reportan la matriz de confusión y la tabla de indicadores principales de evaluación para documentar el rendimiento del modelo KNN con este valor de k.
+
+
+
 
 ::: academic-card
 ### Interpretación de Resultados
