@@ -18,8 +18,10 @@ output:
     self_contained: true
     css: Sebastian-styles.css
     code_folding: none
+editor_options: 
+  markdown: 
+    wrap: sentence
 ---
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -52,9 +54,9 @@ library(broom)
 library(DT)
 library(dplyr)
 library(scales)
+library(htmltools)
 
 ```
-
 
 ```{r Tema, include=FALSE}
 Sebastian_css <- "
@@ -593,30 +595,48 @@ pre.sourceCode::-webkit-scrollbar-thumb:hover {
 
 writeLines(Sebastian_css, "Sebastian-styles.css")
 ```
+
 # Introducción {.page-header}
 
-<div class="academic-card">
-Una correcta evaluación del riesgo crediticio termina siendo un pilar fundamental en la gestión financiera moderna. Es por esto que en contextos de otorgamiento masivo de préstamos la capacidad para diferenciar con precisión entre solicitantes de bajo y alto riesgo de incumplimiento determina, en gran medida, la sostenibilidad de la cartera y la rentabilidad de la entidad. Los procesos de crédito han evolucionado hacia procedimientos fundamentados en modelos estadísticos y algoritmos de aprendizaje automático, permitiendo decisiones más objetivas, replicables y escalables.
+::: academic-card
+Una correcta evaluación del riesgo crediticio termina siendo un pilar fundamental en la gestión financiera moderna.
+Es por esto que en contextos de otorgamiento masivo de préstamos la capacidad para diferenciar con precisión entre solicitantes de bajo y alto riesgo de incumplimiento determina, en gran medida, la sostenibilidad de la cartera y la rentabilidad de la entidad.
+Los procesos de crédito han evolucionado hacia procedimientos fundamentados en modelos estadísticos y algoritmos de aprendizaje automático, permitiendo decisiones más objetivas, replicables y escalables.
 
-Lending Club es una plataforma de crédito en línea que funciona como un mercado (peer-to-peer) para el otorgamiento de préstamos personales, conectando directamente a solicitantes con inversionistas. Mediante procesos digitales estándar, la plataforma recopila información proporcionada por el solicitante (como lo pueden ser ingresos, propósito del préstamo, puntajes crediticios, entre otros) y emplea reglas y modelos de evaluación de riesgo para decidir la aprobación y las condiciones del préstamo. La disponibilidad pública de historiales de préstamos originados en esta plataforma ha convertido a sus bases de datos en una fuente de referencia para la investigación en scoring crediticio y modelado del incumplimiento, permitiendo analizar patrones de morosidad y evaluar algoritmos de clasificación aplicables a procesos operativos de riesgo.
+Lending Club es una plataforma de crédito en línea que funciona como un mercado (peer-to-peer) para el otorgamiento de préstamos personales, conectando directamente a solicitantes con inversionistas.
+Mediante procesos digitales estándar, la plataforma recopila información proporcionada por el solicitante (como lo pueden ser ingresos, propósito del préstamo, puntajes crediticios, entre otros) y emplea reglas y modelos de evaluación de riesgo para decidir la aprobación y las condiciones del préstamo.
+La disponibilidad pública de historiales de préstamos originados en esta plataforma ha convertido a sus bases de datos en una fuente de referencia para la investigación en scoring crediticio y modelado del incumplimiento, permitiendo analizar patrones de morosidad y evaluar algoritmos de clasificación aplicables a procesos operativos de riesgo.
 
-En este trabajo se emplea esta base de datos pública (Lending Club) como insumo para un ejercicio de clasificación supervisada, cuyo propósito es estimar la probabilidad de incumplimiento de préstamos personales. El análisis toma como referencia solicitudes reales registradas en la plataforma y se centra en información disponible al momento de la decisión crediticia, con el fin de reproducir condiciones operativas reales de otorgamiento. Este enfoque permite estudiar la capacidad predictiva de modelos estadísticos clásicos (regresión logística) frente a algoritmos basados en dinstancias (KNN), así como evaluar su aplicabilidad práctica en escenarios de scoring crediticio.
+En este trabajo se emplea esta base de datos pública (Lending Club) como insumo para un ejercicio de clasificación supervisada, cuyo propósito es estimar la probabilidad de incumplimiento de préstamos personales.
+El análisis toma como referencia solicitudes reales registradas en la plataforma y se centra en información disponible al momento de la decisión crediticia, con el fin de reproducir condiciones operativas reales de otorgamiento.
+Este enfoque permite estudiar la capacidad predictiva de modelos estadísticos clásicos (regresión logística) frente a algoritmos basados en dinstancias (KNN), así como evaluar su aplicabilidad práctica en escenarios de scoring crediticio.
 
-La importancia de clasificar de manera adecuada el riesgo de incumplimiento es múltiple. En primer lugar, reduce la exposición a pérdidas por préstamos morosos y optimiza el balance entre aceptación y rechazo de solicitudes, mejorando la rentabilidad ajustada por riesgo. En segundo lugar, una clasificación robusta contribuye a la inclusión financiera responsable; ya que, al identificar correctamente perfiles de riesgo, las entidades pueden diseñar productos y precios diferenciados que incentiven el acceso al crédito sin comprometer la sostenibilidad. Por último, la transparencia e interpretabilidad de los modelos (especialmente relevante en entornos regulatorios) facilita la auditoría de decisiones y la incorporación de salvaguardas frente a sesgos sistémicos. 
+La importancia de clasificar de manera adecuada el riesgo de incumplimiento es múltiple.
+En primer lugar, reduce la exposición a pérdidas por préstamos morosos y optimiza el balance entre aceptación y rechazo de solicitudes, mejorando la rentabilidad ajustada por riesgo.
+En segundo lugar, una clasificación robusta contribuye a la inclusión financiera responsable; ya que, al identificar correctamente perfiles de riesgo, las entidades pueden diseñar productos y precios diferenciados que incentiven el acceso al crédito sin comprometer la sostenibilidad.
+Por último, la transparencia e interpretabilidad de los modelos (especialmente relevante en entornos regulatorios) facilita la auditoría de decisiones y la incorporación de salvaguardas frente a sesgos sistémicos.
 
-El presente estudio tuvo como propósito desarrollar y comparar modelos de clasificación supervisada que permitieran predecir el riesgo de incumplimiento en préstamos personales, con el fin de aportar evidencia técnica para la toma de decisiones de crédito basadas en datos.  Desde un punto de vista metodológico general, el estudio adopta el paradigma del aprendizaje supervisado: se ajustan modelos sobre un subconjunto de observaciones con estado conocido (pagado / incumplido) y se evalúa su desempeño en datos independientes. La comparación entre regresión logística y KNN se orienta a contrastar dos aproximaciones distintas: una paramétrica y fácilmente interpretable (logit) frente a una no paramétrica basada en proximidad en el espacio de características (KNN). La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos. Los resultados serán interpretados en términos estadísticos.
-
-</div>
+El presente estudio tuvo como propósito desarrollar y comparar modelos de clasificación supervisada que permitieran predecir el riesgo de incumplimiento en préstamos personales, con el fin de aportar evidencia técnica para la toma de decisiones de crédito basadas en datos.
+Desde un punto de vista metodológico general, el estudio adopta el paradigma del aprendizaje supervisado: se ajustan modelos sobre un subconjunto de observaciones con estado conocido (pagado / incumplido) y se evalúa su desempeño en datos independientes.
+La comparación entre regresión logística y KNN se orienta a contrastar dos aproximaciones distintas: una paramétrica y fácilmente interpretable (logit) frente a una no paramétrica basada en proximidad en el espacio de características (KNN).
+La evaluación se realiza mediante métricas de clasificación estándares (exactitud, sensibilidad, especificidad) y métricas de discriminación (AUC de la curva ROC), y se complementa con validación cruzada y búsqueda de hiperparámetros para garantizar robustez en la selección de modelos.
+Los resultados serán interpretados en términos estadísticos.
+:::
 
 # Metodología
 
-<div class="academic-card">
-El presente estudio siguió un enfoque de aprendizaje supervisado orientado a la clasificación binaria (pagado / incumplido). El procedimiento general consistió en aplicar dos familias de clasificadores (Logit y KNN) sobre datos previamente preparados, y evaluar su desempeño mediante métricas complementarias y procedimientos de validación.
+::: academic-card
+El presente estudio siguió un enfoque de aprendizaje supervisado orientado a la clasificación binaria (pagado / incumplido).
+El procedimiento general consistió en aplicar dos familias de clasificadores (Logit y KNN) sobre datos previamente preparados, y evaluar su desempeño mediante métricas complementarias y procedimientos de validación.
 
-La implementación se realizó en R empleando flujos estandarizados de preprocesamiento y modelado. Para reducir la influencia de escalas dispares y valores extremos, se aplicaron filtros sobre outliers relevantes y se normalizaron las variables numéricas (centrado y escala) cuando correspondió; dicho escalado fue especialmente crítico para KNN, dada su dependencia de distancias euclidianas. La muestra final fue construida de forma estratificada para asegurar balance entre las clases objetivo, y todas las operaciones aleatorias (muestreo y particionado); además, se fijó la semilla (set.seed(28)) para garantizar reproducibilidad.
+La implementación se realizó en R empleando flujos estandarizados de preprocesamiento y modelado.
+Para reducir la influencia de escalas dispares y valores extremos, se aplicaron filtros sobre outliers relevantes y se normalizaron las variables numéricas (centrado y escala) cuando correspondió; dicho escalado fue especialmente crítico para KNN, dada su dependencia de distancias euclidianas.
+La muestra final fue construida de forma estratificada para asegurar balance entre las clases objetivo, y todas las operaciones aleatorias (muestreo y particionado); además, se fijó la semilla (set.seed(28)) para garantizar reproducibilidad.
 
-En cuanto al ajuste de modelos, la regresión logística se estimó mediante glm(..., family = binomial()), obteniendo probabilidades predictivas que permitieron tanto el análisis de coeficientes como la construcción de curvas ROC y la determinación de umbrales operativos (índice de Youden). El KNN se abordó de dos maneras; una implementación básica con class::knn, evaluando k en un rango (k = 1:100) y seleccionando el k que maximizó la exactitud fuera de muestra; y una versión integrada en caret::train() que incorporó validación cruzada estratificada (5 folds), búsqueda automática de hiperparámetros (tuneLength) y optimización según el AUC (métrica ROC), lo que permitió una selección de modelo más robusta frente a la variabilidad de los datos.
-</div>
+En cuanto al ajuste de modelos, la regresión logística se estimó mediante glm(..., family = binomial()), obteniendo probabilidades predictivas que permitieron tanto el análisis de coeficientes como la construcción de curvas ROC y la determinación de umbrales operativos (índice de Youden).
+El KNN se abordó de dos maneras; una implementación básica con class::knn, evaluando k en un rango (k = 1:100) y seleccionando el k que maximizó la exactitud fuera de muestra; y una versión integrada en caret::train() que incorporó validación cruzada estratificada (5 folds), búsqueda automática de hiperparámetros (tuneLength) y optimización según el AUC (métrica ROC), lo que permitió una selección de modelo más robusta frente a la variabilidad de los datos.
+:::
+
 ## Definición de las variables
 
 Las variables utilizadas en el estudio se organizan en dos grupos: dependientes e independientes.
@@ -741,31 +761,47 @@ lending_base <- lending_raw %>%
     ),
     estado_pago = fct_recode(as.factor(estado_pago), "Pagado" = "0", "Incumplido" = "1")
   ) %>%
-  select(-proposito) %>% 
+  select(-proposito, -issue_d, -fecha_emision) %>% 
   filter(ingreso <= 250000, relacion_deuda_ingreso <= 50) %>%
   drop_na()
 
 set.seed(0408)
 
-paga <- lending_base %>% filter(estado_pago == "Pagado") %>% sample_n(5000)
-nopaga <- lending_base %>% filter(estado_pago == "Incumplido") %>% sample_n(5000)
 
-Base_datos= bind_rows(paga, nopaga) %>% 
-  select(Año,ingreso,relacion_deuda_ingreso,monto_prestamo,puntaje_fico,proposito_agrupado,estado_pago) %>% 
-  rename(Ingreso=2,"Relacion_deuda_ingreso"=3,"Monto_prestado"=4,
-         FICO=5,Proposito=6,Estado=7)
+count_pagado <- sum(lending_base$estado_pago == "Pagado")
+count_incumplido <- sum(lending_base$estado_pago == "Incumplido")
+
+sample_size <- min(5000, count_pagado, count_incumplido)
+
+paga <- lending_base %>% 
+  filter(estado_pago == "Pagado") %>% 
+  sample_n(sample_size)
+
+nopaga <- lending_base %>% 
+  filter(estado_pago == "Incumplido") %>% 
+  sample_n(sample_size)
+
+Base_datos <- bind_rows(paga, nopaga) %>% 
+  select(Año, ingreso, relacion_deuda_ingreso, monto_prestamo, puntaje_fico, proposito_agrupado, estado_pago) %>%
+  rename(
+    Ingreso = ingreso,
+    Relacion_deuda_ingreso = relacion_deuda_ingreso,
+    Monto_prestado = monto_prestamo,
+    FICO = puntaje_fico,
+    Proposito = proposito_agrupado,
+    Estado = estado_pago
+  )
 
 Base_datos <- Base_datos[sample(nrow(Base_datos)), ]
 
 
 Base_datos_formateada <- Base_datos %>%
   mutate(
-    Ingreso = scales::dollar(Ingreso, accuracy = 1),
-    Monto_prestado = scales::dollar(Monto_prestado, accuracy = 1),
-    Relacion_deuda_ingreso = scales::percent(Relacion_deuda_ingreso/100, accuracy = 0.1),
-    FICO = as.integer(FICO)
+    Ingreso_formateado = scales::dollar(Ingreso, accuracy = 1),
+    Monto_prestado_formateado = scales::dollar(Monto_prestado, accuracy = 1),
+    Relacion_deuda_ingreso_formateado = scales::percent(Relacion_deuda_ingreso/100, accuracy = 0.1),
+    FICO_formateado = as.integer(FICO)
   )
-
 
 tabla_interactiva <- Base_datos %>%
   datatable(
@@ -800,28 +836,134 @@ tabla_interactiva <- Base_datos %>%
     width = '100%'
   ) %>%
   formatCurrency(
-    columns = c('Ingreso', 'Monto prestado'),
+    columns = c('Ingreso', 'Monto_prestado'),
     currency = '$', digits = 0, before = TRUE
   ) %>%
   formatPercentage(
-    columns = 'Relacion deuda/ingreso',  # Usar nombre SIN espacios
+    columns = 'Relacion_deuda_ingreso',
     digits = 1
   ) %>%
   formatRound(
     columns = 'FICO',
     digits = 0
+  ) %>%
+  formatStyle(
+    'Estado',
+    target = 'row',
+    backgroundColor = styleEqual('Incumplido', '#FFE6E6')
+  ) %>%
+  formatStyle(
+    'Estado',
+    backgroundColor = styleEqual('Incumplido', '#FF6B6B'),
+    color = styleEqual('Incumplido', 'white'),
+    fontWeight = styleEqual('Incumplido', 'bold')
+  ) %>%
+  formatStyle(
+    'Relacion_deuda_ingreso',
+    backgroundColor = styleInterval(
+      cuts = c(30, 40), 
+      values = c('white', '#FFF0F0', '#FFB8B8')
+    )
+  ) %>%
+  formatStyle(
+    'FICO',
+    backgroundColor = styleInterval(
+      cuts = c(600, 700),
+      values = c('#FF6B6B', '#FFD8D8', 'white')
+    )
+  )
+
+# VERSIÓN CORREGIDA - usar htmltools::HTML explícitamente
+tabla_interactiva <- tabla_interactiva %>%
+  htmlwidgets::prependContent(
+    htmltools::tags$style(
+      htmltools::HTML("
+        table.dataTable thead th {
+          background-color: #FF0000 !important;
+          color: white !important;
+          font-weight: bold !important;
+        }
+      ")
+    )
   )
 
 tabla_interactiva
 ```
 
-
-
 # Analisis descriptivo
 
+El conjunto de datos analizado corresponde a registros de préstamos otorgados por la plataforma Lending Club, e incluye información relevante sobre las características financieras de los solicitantes y el comportamiento de pago asociado a cada crédito.
+
+Con el fin de comprender de manera preliminar la composición y variabilidad de las observaciones, se presenta a continuación un resumen de las principales estadísticas descriptivas y la distribución de frecuencias por estado de pago.
+
+```{r resumen_general, warning = FALSE, message = FALSE}
+
+resumen_general <- Base_datos %>%
+  select(Ingreso, Relacion_deuda_ingreso, Monto_prestado, FICO) %>%
+  summarise_all(list(
+    n = ~sum(!is.na(.)),
+    media = ~mean(., na.rm = TRUE),
+    mediana = ~median(., na.rm = TRUE),
+    sd = ~sd(., na.rm = TRUE),
+    minimo = ~min(., na.rm = TRUE),
+    maximo = ~max(., na.rm = TRUE)
+  )) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c("variable", ".value"),
+    names_pattern = "^(.*)_(n|media|mediana|sd|minimo|maximo)$"
+  )
+```
+
+## Estadísticas descriptivas de las variables principales
+
+La Tabla 1 resume las medidas de tendencia central y dispersión de las variables cuantitativas incluidas en el estudio.
+
+```{r tabla_resumen }
+
+tabla_resumen = resumen_general %>%
+  select(-n) %>%  
+  kable(
+    format = "html",
+    col.names = c("Variable", "Media", "Mediana", "Desv. Estándar", "Mínimo", "Máximo"),
+    align = c('l', 'r', 'r', 'r', 'r', 'r'),
+    caption = "Tabla 1: Estadísticas Descriptivas de las Variables Principales del Dataset de Préstamos"
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  column_spec(2, width = "2cm") %>%
+  column_spec(3, width = "2cm") %>%
+  column_spec(4, width = "2.5cm") %>%
+  column_spec(5, width = "2cm") %>%
+  column_spec(6, width = "2cm") %>%
+  footnote(
+    general = "Fuente: Elaboración propia con base en datos de Lending Club",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+tabla_resumen
+```
+
+En promedio, los solicitantes reportan un ingreso anual de USD 73,988, con una mediana de USD 65,000, lo que sugiere una ligera asimetría positiva en la distribución, reflejando la presencia de algunos ingresos excepcionalmente altos que elevan el promedio.
+
+La relación deuda/ingreso presenta una media de 18.4%, indicando que, en promedio, los deudores destinan cerca de una quinta parte de sus ingresos al pago de obligaciones financieras.
+No obstante, el rango entre 0% y 50% evidencia una amplia heterogeneidad en los niveles de endeudamiento entre los solicitantes.
+
+El monto promedio de los préstamos asciende a USD 14,360, con una desviación estándar de aproximadamente USD 8,645, lo que denota variabilidad significativa en los montos solicitados, posiblemente asociada a diferencias en capacidad de pago o propósito del crédito.
+
+Por su parte, el puntaje FICO, que refleja el historial crediticio de los solicitantes, presenta una media de 697 puntos, situándose dentro de la categoría de “buen crédito”.
+Su baja desviación estándar (31.7) indica una distribución relativamente concentrada, lo que sugiere que la mayoría de los clientes poseen un perfil crediticio estable.
+
+En conjunto, estas estadísticas evidencian una población de solicitantes con ingresos moderados a altos, niveles de endeudamiento diversos y un comportamiento crediticio predominantemente positivo.
+
 ## Diseño del Estudio
-
-
 
 # Resultados y Discusión
 
@@ -860,36 +1002,34 @@ plot_ly(
   )
 ```
 
-<div class="academic-card">
+::: academic-card
 ### Interpretación de Resultados
 
-Los coeficientes de correlación evidencian relaciones significativas entre las variables analizadas. Particularmente, se observa una correlación negativa pronunciada entre el peso del vehículo y su eficiencia energética (r = `r round(cor(mtcars$wt, mtcars$mpg), 3)`), consistente con hallazgos reportados en la literatura especializada.
-</div>
+Los coeficientes de correlación evidencian relaciones significativas entre las variables analizadas.
+Particularmente, se observa una correlación negativa pronunciada entre el peso del vehículo y su eficiencia energética (r = `r round(cor(mtcars$wt, mtcars$mpg), 3)`), consistente con hallazgos reportados en la literatura especializada.
+:::
 
 # Conclusiones
 
-<div class="academic-card">
+::: academic-card
 ## Hallazgos Principales
 
-1. **Relación inversa significativa** entre masa vehicular y eficiencia de combustible
-2. **Patrón consistente** en la distribución de características técnicas
-3. **Validación empírica** de los postulados teóricos establecidos
+1.  **Relación inversa significativa** entre masa vehicular y eficiencia de combustible
+2.  **Patrón consistente** en la distribución de características técnicas
+3.  **Validación empírica** de los postulados teóricos establecidos
 
 ## Implicaciones Prácticas
 
 Los resultados obtenidos proporcionan evidencia cuantitativa para el desarrollo de políticas de eficiencia energética y diseño vehicular optimizado.
-</div>
+:::
 
----
+------------------------------------------------------------------------
 
-<div class="academic-footer">
-**Universidad del Valle** | 
-*Facultad de ingenieria* | 
-Gestion de datos
-</div>
+::: academic-footer
+**Universidad del Valle** \| *Facultad de ingenieria* \| Gestion de datos
+:::
 
-
-
+```{=html}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   // Smooth scroll para navegación académica
@@ -929,10 +1069,9 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+```
 
-
-
-
+```{=html}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   // Crear botón global
@@ -1106,6 +1245,8 @@ document.addEventListener("DOMContentLoaded", function() {
   };
 });
 </script>
+```
 
-
+```{=html}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+```
