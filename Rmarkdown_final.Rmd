@@ -835,7 +835,8 @@ tabla_resumen %>%
     footnote_as_chunk = TRUE
   )
 
-tabla_resumen
+tabla_resumen 
+
 ```
 
 La Tabla 1 resume las medidas de tendencia central y dispersión de las variables cuantitativas incluidas en el estudio.
