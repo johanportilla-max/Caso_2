@@ -23,7 +23,8 @@ editor_options:
     wrap: sentence
 ---
 
-```{r setup, include=FALSE}
+# inicio
+```{r Librerias, include=FALSE}
 knitr::opts_chunk$set(
   echo = TRUE,          
   warning = FALSE,
@@ -55,8 +56,162 @@ library(DT)
 library(dplyr)
 library(scales)
 library(htmltools)
+library(plotly)
+library(gganimate)
+```
+
+```{r tema grafias, include=FALSE}
+TS <- function() {
+  theme_minimal(base_size = 12) +
+    theme(
+      text = element_text(
+        color = "#2c2c2c"
+      ),
+      plot.title = element_text(
+        family = "Playfair Display",
+        face = "bold",
+        color = "#FF0000",
+        size = rel(1.4),
+        hjust = 0.5,
+        margin = margin(b = 15)
+      ),
+      plot.subtitle = element_text(
+        family = "Source Serif Pro",
+        color = "#CC0000",
+        size = rel(1.0),
+        hjust = 0.5,
+        margin = margin(b = 20)
+      ),
+      plot.caption = element_text(
+        family = "Source Serif Pro",
+        color = "#666666",
+        size = rel(0.8),
+        hjust = 1,
+        face = "italic"
+      ),
+      axis.title = element_text(
+        family = "Playfair Display",
+        color = "#990000",
+        size = rel(1.0),
+        face = "bold"
+      ),
+      axis.text = element_text(
+        color = "#333333",
+        size = rel(0.9)
+      ),
+      legend.title = element_text(
+        family = "Playfair Display",
+        color = "#990000",
+        face = "bold",
+        size = rel(0.9)
+      ),
+      legend.text = element_text(
+        color = "#333333",
+        size = rel(0.8)
+      ),
+      panel.background = element_rect(fill = "#FFFDF5", color = NA),
+      plot.background = element_rect(fill = "white", color = NA),
+      panel.grid.major = element_line(
+        color = "#FFE5E5",
+        linewidth = 0.3,
+        linetype = "solid"
+      ),
+      panel.grid.minor = element_line(
+        color = "#FFE5E5",
+        linewidth = 0.1,
+        linetype = "solid"
+      ),
+      panel.border = element_rect(
+        fill = NA,
+        color = "#FFE5E5",
+        linewidth = 0.5
+      ),
+      axis.line = element_line(
+        color = "#FF3333",
+        linewidth = 0.5
+      ),
+      axis.ticks = element_line(
+        color = "#FF3333",
+        linewidth = 0.5
+      ),
+      legend.background = element_rect(
+        fill = "#FFFDF5",
+        color = "#FFE5E5"
+      ),
+      legend.key = element_rect(
+        fill = "#FFFDF5",
+        color = NA
+      ),
+      legend.position = "top",
+      legend.justification = "center",
+      plot.margin = margin(20, 20, 20, 20),
+      panel.spacing = unit(1, "lines"),
+      strip.background = element_rect(
+        fill = "#FF0000",
+        color = "#CC0000"
+      ),
+      strip.text = element_text(
+        family = "Playfair Display",
+        color = "white",
+        face = "bold",
+        size = rel(0.9)
+      )
+    )
+}
+
+scale_fill_sebastian <- function(palette = "main", ...) {
+  scale_fill_manual(
+    values = c(
+      sebastian_colors["primary_red"],
+      sebastian_colors["secondary_red"], 
+      sebastian_colors["accent_red"],
+      sebastian_colors["gold"],
+      sebastian_colors["dark_red"]
+    ),
+    ...
+  )
+}
+
+
+
+SC <- c(
+  primary_red = "#FF0000",
+  secondary_red = "#CC0000", 
+  accent_red = "#FF3333",
+  light_red = "#FFE5E5",
+  dark_red = "#990000",
+  gold = "#FFD100",
+  parchment = "#FFFDF5",
+  white = "#FFFFFF",
+  gray_text = "#333333"
+)
+
+set_sebastian_theme <- function() {
+  theme_set(TS())
+  update_geom_defaults("bar", list(fill = sebastian_colors["primary_red"]))
+  update_geom_defaults("col", list(fill = sebastian_colors["primary_red"]))
+  update_geom_defaults("point", list(color = sebastian_colors["primary_red"]))
+  update_geom_defaults("line", list(color = sebastian_colors["primary_red"]))
+  update_geom_defaults("boxplot", list(fill = sebastian_colors["light_red"]))
+  update_geom_defaults("violin", list(fill = sebastian_colors["light_red"]))
+  update_geom_defaults("density", list(fill = sebastian_colors["light_red"]))
+}
+  
+scale_color_sebastian <- function(palette = "main", ...) {
+  scale_color_manual(
+    values = c(
+      sebastian_colors["primary_red"],
+      sebastian_colors["secondary_red"],
+      sebastian_colors["accent_red"],
+      sebastian_colors["gold"],
+      sebastian_colors["dark_red"]
+    ),
+    ...
+  )
+}
 
 ```
+
 
 ```{r Tema, include=FALSE}
 Sebastian_css <- "
@@ -792,14 +947,15 @@ Base_datos <- bind_rows(paga, nopaga) %>%
     Estado = estado_pago
   )
 
-Base_datos <- Base_datos[sample(nrow(Base_datos)), ]
+Base_datos <- Base_datos[sample(nrow(Base_datos)), ] %>% 
+  mutate(Relacion_deuda_ingreso=Relacion_deuda_ingreso/100)
 
 
 Base_datos_formateada <- Base_datos %>%
   mutate(
     Ingreso_formateado = scales::dollar(Ingreso, accuracy = 1),
     Monto_prestado_formateado = scales::dollar(Monto_prestado, accuracy = 1),
-    Relacion_deuda_ingreso_formateado = scales::percent(Relacion_deuda_ingreso/100, accuracy = 0.1),
+    Relacion_deuda_ingreso_formateado = scales::percent(Relacion_deuda_ingreso, accuracy = 0.1),
     FICO_formateado = as.integer(FICO)
   )
 
@@ -896,6 +1052,7 @@ Con el fin de comprender de manera preliminar la composición y variabilidad de 
 
 resumen_general <- Base_datos %>%
   select(Ingreso, Relacion_deuda_ingreso, Monto_prestado, FICO) %>%
+  mutate(Relacion_deuda_ingreso=Relacion_deuda_ingreso*100) %>% 
   rename("Relacion deuda/ingreso"=2,"Monto prestado"=3) %>% 
   summarise_all(list(
     n = ~sum(!is.na(.)),
@@ -910,9 +1067,10 @@ resumen_general <- Base_datos %>%
     names_to = c("variable", ".value"),
     names_pattern = "^(.*)_(n|Media|Mediana|sd|Minimo|Maximo)$"
   ) %>% 
-  mutate(Media=round(Media,0),
+  mutate(Media=round(Media,2),
          Mediana=round(Mediana,0),
-         sd=round(sd,0))
+         sd=round(sd,0),
+         Maximo=round(Maximo,0))
 ```
 
 ## Estadísticas descriptivas de las variables principales
@@ -951,56 +1109,558 @@ tabla_resumen = resumen_general %>%
 tabla_resumen
 ```
 
-En promedio, los solicitantes reportan un ingreso anual de USD 73,988, con una mediana de USD 65,000, lo que sugiere una ligera asimetría positiva en la distribución, reflejando la presencia de algunos ingresos excepcionalmente altos que elevan el promedio.
+En promedio, los solicitantes reportan un ingreso anual de USD 72,543, con una mediana de USD 64,000, lo que sugiere una ligera asimetría positiva en la distribución, reflejando la presencia de algunos ingresos excepcionalmente altos que elevan el promedio.
 
-La relación deuda/ingreso presenta una media de 18.4%, indicando que, en promedio, los deudores destinan cerca de una quinta parte de sus ingresos al pago de obligaciones financieras.
+La relación deuda/ingreso presenta una media de 19%, indicando que, en promedio, los deudores destinan cerca de una quinta parte de sus ingresos al pago de obligaciones financieras.
 No obstante, el rango entre 0% y 50% evidencia una amplia heterogeneidad en los niveles de endeudamiento entre los solicitantes.
 
-El monto promedio de los préstamos asciende a USD 14,360, con una desviación estándar de aproximadamente USD 8,645, lo que denota variabilidad significativa en los montos solicitados, posiblemente asociada a diferencias en capacidad de pago o propósito del crédito.
+El monto promedio de los préstamos asciende a USD 14,850, con una desviación estándar de aproximadamente USD 8,645, lo que denota variabilidad significativa en los montos solicitados, posiblemente asociada a diferencias en capacidad de pago o propósito del crédito.
 
 Por su parte, el puntaje FICO, que refleja el historial crediticio de los solicitantes, presenta una media de 697 puntos, situándose dentro de la categoría de “buen crédito”.
 Su baja desviación estándar (31.7) indica una distribución relativamente concentrada, lo que sugiere que la mayoría de los clientes poseen un perfil crediticio estable.
 
 En conjunto, estas estadísticas evidencian una población de solicitantes con ingresos moderados a altos, niveles de endeudamiento diversos y un comportamiento crediticio predominantemente positivo.
 
-## Diseño del Estudio
+## Distribución individual de variables numéricas
 
-# Resultados y Discusión
+### Histograma del ingreso
 
-## Análisis de Correlaciones
+La Figura 1 presenta la distribución de la variable ingreso anual de los solicitantes de préstamo.
+El histograma evidencia una asimetría positiva, donde la mayoría de los individuos reportan ingresos entre USD 40,000 y USD 80,000, mientras que un grupo reducido alcanza valores considerablemente más altos, superiores a los USD 150,000.
 
-```{r academic-correlation}
-# Matriz de correlación mejorada
-library(plotly)
 
-cor_data <- round(cor(mtcars), 3)
+```{r Grafica 1,  fig.width=10, fig.height=6, out.width="100%"}
+library(gifski)
+library(magick)
 
-plot_ly(
-  x = colnames(cor_data),
-  y = colnames(cor_data),
-  z = cor_data,
-  type = "heatmap",
-  colorscale = list(
-    c(0, "#f8f0ef"),
-    c(0.5, "#b74a4a"),
-    c(1, "#7a1c1c")
-  ),
-  hoverinfo = "x+y+z",
-  colorbar = list(
-    title = "Coeficiente",
-    titleside = "right"
-  )
-) %>% 
+crear_frame <- function(percentil) {
+  datos_filtrados <- Base_datos %>% 
+    filter(Ingreso <= quantile(Base_datos$Ingreso, percentil, na.rm = TRUE))
+  
+  ggplot(datos_filtrados, aes(x = Ingreso)) +
+    geom_histogram(
+      binwidth = 5000,
+      fill = SC["primary_red"],
+      color = "white",
+      alpha = 0.9
+    ) +
+    geom_vline(
+      xintercept = median(Base_datos$Ingreso, na.rm = TRUE),
+      color = SC["gold"],
+      linetype = "dashed", 
+      linewidth = 1.2
+    ) +
+    geom_vline(
+      xintercept = mean(Base_datos$Ingreso, na.rm = TRUE),
+      color = SC["dark_red"],
+      linetype = "solid",
+      linewidth = 0.8
+    ) +
+    scale_x_continuous(
+      labels = scales::dollar_format(prefix = "$", big.mark = ","),
+      limits = c(0, max(Base_datos$Ingreso, na.rm = TRUE))
+    ) +
+    scale_y_continuous(labels = scales::comma_format()) +
+    labs(
+      title = paste("Figura 1, Distribución del Ingreso -", round(percentil * 100), "% de datos"),
+      x = "Ingreso Anual (USD)",
+      y = "Frecuencia"
+    ) +
+    TS()
+}
+
+
+percentiles <- seq(0.1, 1, by = 0.1)
+frames <- map(percentiles, crear_frame)
+
+
+temp_files <- map_chr(seq_along(frames), function(i) {
+  archivo <- tempfile(fileext = ".png")
+  ggsave(archivo, frames[[i]], width = 10, height = 6, dpi = 100)
+  archivo
+})
+
+
+animacion <- image_read(temp_files) %>%
+  image_animate(fps = 2) %>%
+  image_write("animacion_ingreso.gif")
+
+
+knitr::include_graphics("animacion_ingreso.gif")
+
+```
+
+La línea roja punteada indica la mediana, ubicada alrededor de USD 65,000, lo cual coincide con la tendencia central observada en la tabla descriptiva.
+Esta concentración en niveles intermedios de ingreso sugiere que la base de datos está compuesta principalmente por personas con capacidad de pago media, probablemente pertenecientes a segmentos laborales formales o con ingresos estables.
+
+Los valores más altos de ingreso, aunque minoritarios, representan a solicitantes con mayor capacidad financiera, lo que puede influir positivamente en su probabilidad de aprobación y cumplimiento del crédito.
+En conjunto, la distribución muestra una población heterogénea, pero con predominio de ingresos medios dentro del conjunto analizado.
+
+### Distribución de la relación deuda/ingreso
+
+La Figura 2 ilustra la densidad de la variable relación deuda/ingreso (%), la cual mide el nivel de endeudamiento de los solicitantes respecto a su capacidad económica.
+
+La distribución presenta una forma ligeramente asimétrica hacia la derecha, con un claro punto de concentración entre los 10% y 25%, y una mediana cercana al 18% (línea roja punteada).
+
+```{r Grafica 2, message=FALSE,warning=FALSE}
+mediana_dti <- median(Base_datos$Relacion_deuda_ingreso, na.rm = TRUE) * 100
+media_dti <- mean(Base_datos$Relacion_deuda_ingreso, na.rm = TRUE) * 100
+
+# Crear variable temporal para el plotting (multiplicada por 100)
+Base_datos$dti_porcentaje <- Base_datos$Relacion_deuda_ingreso * 100
+
+# Calcular densidad con los valores en porcentaje
+densidad_dti <- density(Base_datos$dti_porcentaje, na.rm = TRUE)
+max_densidad <- max(densidad_dti$y) * nrow(Base_datos) * 2
+
+p_dti_interactivo <- plot_ly(Base_datos, x = ~dti_porcentaje) %>%
+  add_histogram(
+    name = "Frecuencia",
+    nbinsx = 30,
+    marker = list(
+      color = SC["primary_red"],
+      line = list(color = "white", width = 1)
+    ),
+    opacity = 0.7,
+    hovertemplate = "DTI: %{x:.1f}%<br>Frecuencia: %{y}<extra></extra>"
+  ) %>%
+  add_lines(
+    x = densidad_dti$x,
+    y = densidad_dti$y * nrow(Base_datos) * 2,
+    name = "Densidad",
+    line = list(
+      color = SC["secondary_red"],
+      width = 2
+    ),
+    fill = 'tozeroy',
+    fillcolor = paste0(SC["accent_red"], '40'),
+    hovertemplate = "DTI: %{x:.1f}%<br>Densidad: %{y:.3f}<extra></extra>"
+  ) %>%
   layout(
     title = list(
-      text = "<b>Matriz de Correlación - Análisis Multivariable</b>",
-      font = list(family = "Playfair Display", size = 16, color = "#7a1c1c")
+      text = "<b>Distribución de la Relación Deuda/Ingreso (DTI)</b>",
+      font = list(
+        family = "Playfair Display",
+        size = 22,
+        color = SC["primary_red"]
+      ),
+      x = 0.05
     ),
-    xaxis = list(tickangle = -45, tickfont = list(family = "Source Serif Pro")),
-    yaxis = list(tickfont = list(family = "Source Serif Pro")),
-    margin = list(l = 100, r = 50, b = 100, t = 80)
+    xaxis = list(
+      title = list(
+        text = "Relación Deuda/Ingreso (%)",
+        font = list(
+          family = "Playfair Display",
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      tickformat = ".1f",  # Mostrar como números decimales
+      ticksuffix = "%",    # Agregar símbolo % después del número
+      gridcolor = SC["light_red"],
+      zerolinecolor = SC["light_red"],
+      range = c(0, max(Base_datos$dti_porcentaje, na.rm = TRUE) * 1.05)
+    ),
+    yaxis = list(
+      title = list(
+        text = "Frecuencia / Densidad",
+        font = list(
+          family = "Playfair Display", 
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      gridcolor = SC["light_red"],
+      zerolinecolor = SC["light_red"]
+    ),
+    shapes = list(
+      # Línea de mediana
+      list(
+        type = "line",
+        x0 = mediana_dti,
+        x1 = mediana_dti,
+        y0 = 0,
+        y1 = max_densidad * 0.95,
+        line = list(
+          color = SC["gold"],
+          dash = "dash",
+          width = 2
+        )
+      ),
+      # Línea de media
+      list(
+        type = "line",
+        x0 = media_dti,
+        x1 = media_dti,
+        y0 = 0,
+        y1 = max_densidad * 0.95,
+        line = list(
+          color = SC["dark_red"],
+          width = 2
+        )
+      )
+    ),
+    plot_bgcolor = SC["parchment"],
+    paper_bgcolor = "white",
+    font = list(family = "Source Serif Pro", size = 12),
+    margin = list(l = 80, r = 50, t = 80, b = 100),  # Aumenté bottom margin para las anotaciones
+    hoverlabel = list(
+      font = list(family = "Source Serif Pro")
+    ),
+    legend = list(
+      orientation = "h",
+      x = 0.5,
+      y = -0.2,  # Ajusté para dar más espacio
+      xanchor = "center",
+      font = list(family = "Source Serif Pro")
+    ),
+    annotations = list(
+      # Anotación para mediana
+      list(
+        x = mediana_dti,
+        y = max_densidad,
+        text = paste("Mediana:", round(mediana_dti, 1), "%"),
+        showarrow = FALSE,
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["gold"]
+        ),
+        bgcolor = "white",
+        bordercolor = SC["gold"],
+        borderpad = 4,
+        borderwidth = 1
+      ),
+      # Anotación para media
+      list(
+        x = media_dti,
+        y = max_densidad * 0.85,
+        text = paste("Media:", round(media_dti, 1), "%"),
+        showarrow = FALSE,
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["dark_red"]
+        ),
+        bgcolor = "white",
+        bordercolor = SC["dark_red"],
+        borderpad = 4,
+        borderwidth = 1
+      ),
+      # Fuente en la parte inferior
+      list(
+        x = 1,
+        y = -0.3,
+        text = paste(
+          "Fuente: Dataset Lending Club |",
+          "N =", scales::comma(nrow(Base_datos)), "observaciones"
+        ),
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "right",
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["secondary_red"]
+        )
+      )
+    )
+  ) %>%
+  config(
+    displayModeBar = TRUE,
+    modeBarButtonsToRemove = c("pan2d", "lasso2d", "select2d"),
+    displaylogo = FALSE
   )
+
+p_dti_interactivo
 ```
+
+
+Esto indica que, en promedio, los solicitantes destinan menos de una quinta parte de sus ingresos al pago de deudas, lo que refleja niveles de endeudamiento controlados en la mayoría de los casos.
+Sin embargo, se observan algunos valores altos por encima del 40% que corresponden a individuos con una carga financiera elevada, lo que puede representar un mayor riesgo de incumplimiento.
+
+La forma suavizada del gráfico evidencia una distribución continua y bien concentrada, lo que sugiere que el comportamiento de esta variable sigue una tendencia general homogénea dentro de la población crediticia.
+
+### Distribución del puntaje FICO
+
+```{r FICO,fig.width=10, fig.height=6, out.width="100%"}
+library(purrr)
+mediana_fico <- median(Base_datos$FICO, na.rm = TRUE)
+media_fico <- mean(Base_datos$FICO, na.rm = TRUE)
+
+# Función para crear frames de animación
+crear_frame_fico <- function(porcentaje) {
+  # Filtrar datos progresivamente
+  datos_anim <- Base_datos %>%
+    arrange(FICO) %>%
+    slice(1:round(n() * porcentaje))
+  
+  p <- ggplot(datos_anim, aes(x = FICO)) +
+    geom_density(
+      bw = 15,
+      fill = SC["primary_red"],
+      color = SC["dark_red"],
+      alpha = 0.8,
+      linewidth = 1.1
+    ) +
+    geom_vline(
+      xintercept = mediana_fico,
+      color = SC["gold"],
+      linetype = "dashed", 
+      linewidth = 1.2
+    ) +
+    geom_vline(
+      xintercept = media_fico,
+      color = SC["accent_red"],
+      linetype = "solid",
+      linewidth = 1
+    ) +
+    scale_x_continuous(
+      breaks = seq(600, 850, 25),
+      limits = c(600, 850)
+    ) +
+    scale_y_continuous(
+      expand = expansion(mult = c(0, 0.05)),
+      labels = scales::comma_format()
+    ) +
+    labs(
+      title = paste("Distribución del Puntaje FICO -", round(porcentaje * 100), "% de datos"),
+      x = "Puntaje FICO",
+      y = "Densidad",
+      caption = paste(
+        "Mediana:", round(mediana_fico), "|",
+        "Media:", round(media_fico), "|",
+        "N:", scales::comma(round(nrow(Base_datos) * porcentaje)), "observaciones"
+      )
+    )
+  
+  # Aplicar el tema correctamente
+  p + TS() +
+    theme(
+      plot.title = element_text(
+        family = "Playfair Display",
+        face = "bold",
+        color = SC["primary_red"],
+        size = 16,
+        hjust = 0.5
+      ),
+      plot.caption = element_text(
+        family = "Source Serif Pro",
+        color = SC["secondary_red"],
+        size = 10
+      )
+    )
+}
+
+# Crear secuencia de frames
+porcentajes <- seq(0.1, 1, by = 0.1)
+frames <- map(porcentajes, crear_frame_fico)
+
+# Guardar frames temporales
+temp_files <- map_chr(seq_along(frames), function(i) {
+  archivo <- tempfile(fileext = ".png")
+  ggsave(archivo, frames[[i]], width = 10, height = 6, dpi = 100, bg = "white")
+  archivo
+})
+
+# Crear animación con magick
+animacion_fico <- image_read(temp_files) %>%
+  image_animate(fps = 2, optimize = TRUE) %>%
+  image_write("animacion_fico.gif")
+
+# Mostrar la animación
+knitr::include_graphics("animacion_fico.gif")
+
+```
+
+La distribución del puntaje FICO evidencia una clara concentración de valores entre 660 y 720 puntos, con una mediana cercana a 690 (línea roja).
+
+Esto indica que la mayoría de los solicitantes poseen un historial crediticio considerado “bueno”, aunque no necesariamente “excelente”.
+
+La distribución es ligeramente asimétrica hacia la derecha, lo cual refleja que existen prestatarios con puntajes altos (mayores a 750), pero en menor proporción.
+
+Este comportamiento es esperable, dado que los puntajes más altos suelen corresponder a individuos con un historial crediticio más largo y estable.
+
+### Distribución del monto del préstamo
+
+```{r p_monto}
+mediana_monto <- median(Base_datos$Monto_prestado, na.rm = TRUE)
+media_monto <- mean(Base_datos$Monto_prestado, na.rm = TRUE)
+
+p_monto_interactivo <- plot_ly(Base_datos, x = ~Monto_prestado) %>%
+  add_histogram(
+    name = "Frecuencia",
+    nbinsx = 30,
+    marker = list(
+      color = SC["primary_red"],
+      line = list(color = "white", width = 1)
+    ),
+    opacity = 0.9,
+    hovertemplate = "Monto: %{x:$,.0f}<br>Frecuencia: %{y}<extra></extra>"
+  ) %>%
+  layout(
+    title = list(
+      text = "<b>Distribución del Monto de Préstamos</b>",
+      font = list(
+        family = "Playfair Display",
+        size = 22,
+        color = SC["primary_red"]
+      ),
+      x = 0.05
+    ),
+    xaxis = list(
+      title = list(
+        text = "Monto del Préstamo (USD)",
+        font = list(
+          family = "Playfair Display",
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      tickformat = "$,.0f",
+      gridcolor = SC["light_red"],
+      zerolinecolor = SC["light_red"],
+      range = c(0, max(Base_datos$Monto_prestado, na.rm = TRUE) * 1.05)
+    ),
+    yaxis = list(
+      title = list(
+        text = "Frecuencia",
+        font = list(
+          family = "Playfair Display", 
+          size = 14,
+          color = SC["dark_red"]
+        )
+      ),
+      gridcolor = SC["light_red"],
+      zerolinecolor = SC["light_red"]
+    ),
+    shapes = list(
+      # Línea de mediana
+      list(
+        type = "line",
+        x0 = mediana_monto,
+        x1 = mediana_monto,
+        y0 = 0,
+        y1 = 1,
+        yref = "paper",
+        line = list(
+          color = SC["gold"],
+          dash = "dash",
+          width = 2
+        )
+      ),
+      # Línea de media
+      list(
+        type = "line",
+        x0 = media_monto,
+        x1 = media_monto,
+        y0 = 0,
+        y1 = 1,
+        yref = "paper",
+        line = list(
+          color = SC["dark_red"],
+          width = 2
+        )
+      )
+    ),
+    plot_bgcolor = SC["parchment"],
+    paper_bgcolor = "white",
+    font = list(family = "Source Serif Pro", size = 12),
+    margin = list(l = 80, r = 50, t = 80, b = 100),
+    hoverlabel = list(
+      font = list(family = "Source Serif Pro")
+    ),
+    annotations = list(
+      # Anotación para mediana
+      list(
+        x = mediana_monto,
+        y = 1,
+        yref = "paper",
+        text = paste("Mediana:", scales::dollar(mediana_monto)),
+        showarrow = FALSE,
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["gold"]
+        ),
+        bgcolor = "white",
+        bordercolor = SC["gold"],
+        borderpad = 4,
+        borderwidth = 1
+      ),
+      # Anotación para media
+      list(
+        x = media_monto,
+        y = 0.9,
+        yref = "paper",
+        text = paste("Media:", scales::dollar(media_monto)),
+        showarrow = FALSE,
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["dark_red"]
+        ),
+        bgcolor = "white",
+        bordercolor = SC["dark_red"],
+        borderpad = 4,
+        borderwidth = 1
+      ),
+      # Fuente en la parte inferior
+      list(
+        x = 1,
+        y = -0.15,
+        text = paste(
+          "Fuente: Dataset Lending Club |",
+          "N =", scales::comma(nrow(Base_datos)), "observaciones"
+        ),
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "right",
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = SC["secondary_red"]
+        )
+      )
+    )
+  ) %>%
+  config(
+    displayModeBar = TRUE,
+    modeBarButtonsToRemove = c("pan2d", "lasso2d", "select2d"),
+    displaylogo = FALSE
+  )
+
+p_monto_interactivo
+
+```
+
+El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000.
+
+Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
+
+Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
+
+## Variable por estado de pago
+### Puntaje FICO por estado de pago
+
+
+```{r ficopagaono}
+p_fico_box <- ggplot(lending_base, aes(x = estado_pago, y = puntaje_fico, fill = estado_pago)) +
+geom_boxplot() +
+labs(
+x = "Estado de pago",
+y = "Puntaje FICO"
+) 
+print(p_fico_box)
+
+
+```
+
+El boxplot evidencia una diferencia notable en el puntaje FICO según el estado de pago.
+Los prestatarios que pagan tienden a tener un FICO ligeramente superior, con una mediana cercana a los 700 puntos, mientras que quienes no pagan se concentran alrededor de 680–690 puntos.
+Esta diferencia confirma que un mejor historial crediticio se asocia con un mayor cumplimiento en los pagos.
 
 ::: academic-card
 ### Interpretación de Resultados
