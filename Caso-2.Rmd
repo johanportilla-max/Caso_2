@@ -839,10 +839,6 @@ tabla_interactiva <- Base_datos %>%
     columns = c('Ingreso', 'Monto_prestado'),
     currency = '$', digits = 0, before = TRUE
   ) %>%
-  formatPercentage(
-    columns = 'Relacion_deuda_ingreso',
-    digits = 1
-  ) %>%
   formatRound(
     columns = 'FICO',
     digits = 0
@@ -873,7 +869,7 @@ tabla_interactiva <- Base_datos %>%
     )
   )
 
-# VERSIÓN CORREGIDA - usar htmltools::HTML explícitamente
+
 tabla_interactiva <- tabla_interactiva %>%
   htmlwidgets::prependContent(
     htmltools::tags$style(
@@ -900,19 +896,23 @@ Con el fin de comprender de manera preliminar la composición y variabilidad de 
 
 resumen_general <- Base_datos %>%
   select(Ingreso, Relacion_deuda_ingreso, Monto_prestado, FICO) %>%
+  rename("Relacion deuda/ingreso"=2,"Monto prestado"=3) %>% 
   summarise_all(list(
     n = ~sum(!is.na(.)),
-    media = ~mean(., na.rm = TRUE),
-    mediana = ~median(., na.rm = TRUE),
+    Media = ~mean(., na.rm = TRUE),
+    Mediana = ~median(., na.rm = TRUE),
     sd = ~sd(., na.rm = TRUE),
-    minimo = ~min(., na.rm = TRUE),
-    maximo = ~max(., na.rm = TRUE)
+    Minimo = ~min(., na.rm = TRUE),
+    Maximo = ~max(., na.rm = TRUE)
   )) %>%
   pivot_longer(
     cols = everything(),
     names_to = c("variable", ".value"),
-    names_pattern = "^(.*)_(n|media|mediana|sd|minimo|maximo)$"
-  )
+    names_pattern = "^(.*)_(n|Media|Mediana|sd|Minimo|Maximo)$"
+  ) %>% 
+  mutate(Media=round(Media,0),
+         Mediana=round(Mediana,0),
+         sd=round(sd,0))
 ```
 
 ## Estadísticas descriptivas de las variables principales
@@ -935,7 +935,7 @@ tabla_resumen = resumen_general %>%
     font_size = 14,
     position = "center"
   ) %>%
-  row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
+  row_spec(0, background = "#990000", color = "white", bold = TRUE) %>%
   column_spec(1, bold = TRUE, width = "3cm") %>%
   column_spec(2, width = "2cm") %>%
   column_spec(3, width = "2cm") %>%
