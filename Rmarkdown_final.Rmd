@@ -482,6 +482,8 @@ library(gridExtra)
 library(grid)
 library(ggplotify)
 library(broom)
+library(scales)
+
 
 ```
 
@@ -733,7 +735,6 @@ Tratamiento de valores faltantes: Una vez aplicados los filtros, se eliminaron t
 Esta decisión se fundamentó en la necesidad de trabajar con registros completos para garantizar comparabilidad entre modelos y evitar imputaciones que pudieran introducir sesgos.
 Dado el tamaño original de la base, la eliminación de casos incompletos no comprometió la disponibilidad de datos para el modelado.
 
-## Distribución de frecuencias por estado de pago
 
 ```{r tabla_frecuencias}
 tabla_estado <- as.data.frame(table(lending_raw$Default))
@@ -796,30 +797,32 @@ resumen_general <- lending_base %>%
 ## Estadísticas descriptivas de las variables principales
 
 ```{r tabla_resumen }
+
+
 tabla_resumen <- resumen_general %>%
   select(-n) %>%
   mutate(
     Variable = recode(
       variable,
       ingreso = "Ingreso",
-      relacion_deuda_ingreso = "Relación deuda-ingreso",
-      monto_prestamo = "Monto del préstamo",
+      relacion_deuda_ingreso = "Relacion deuda–ingreso",
+      monto_prestamo = "Monto del prestamo",
       puntaje_fico = "Puntaje FICO"
     ),
-    Media = comma(Media, accuracy = 0.01),
-    Mediana = comma(Mediana, accuracy = 0.01),
-    `Desv. Estándar` = comma(Desv_Estandar, accuracy = 0.01),
-    Mínimo = comma(Mínimo, accuracy = 0.01),
-    Máximo = comma(Máximo, accuracy = 0.01)
+    Media = comma(media, accuracy = 0.01),
+    Mediana = comma(mediana, accuracy = 0.01),
+    `Desv. Estandar` = comma(sd, accuracy = 0.01),
+    Minimo = comma(minimo, accuracy = 0.01),
+    Maximo = comma(maximo, accuracy = 0.01)
   ) %>%
-  select(Variable, Media, Mediana, `Desv. Estándar`, Mínimo, Máximo)
+  select(Variable, Media, Mediana, `Desv. Estandar`, Minimo, Maximo)
 
 tabla_resumen %>%
   kable(
     format = "html",
-    col.names = c("Variable", "Media", "Mediana", "Desv. Estándar", "Mínimo", "Máximo"),
+    col.names = c("Variable", "Media", "Mediana", "Desv. Estandar", "Minimo", "Maximo"),
     align = c('l', 'r', 'r', 'r', 'r', 'r'),
-    caption = "Tabla 1: Estadísticas Descriptivas de las Variables Principales del Dataset de Préstamos"
+    caption = "Estadisticas descriptivas de las variables principales del dataset de prestamos."
   ) %>%
   kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
@@ -830,12 +833,12 @@ tabla_resumen %>%
   row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE) %>%
   column_spec(1, bold = TRUE, width = "3.5cm") %>%
   footnote(
-    general = "Fuente: Elaboración propia con base en datos de Lending Club",
+    general = "Fuente: Elaboracion propia con base en datos de Lending Club.",
     general_title = "Nota:",
     footnote_as_chunk = TRUE
   )
 
-tabla_resumen 
+
 
 ```
 
@@ -854,8 +857,6 @@ En conjunto, estas estadísticas evidencian una población de solicitantes con i
 
 ## Distribución individual de variables numéricas
 
-### Histograma del ingreso
-
 ```{r p1}
 library(plotly)
 
@@ -863,7 +864,7 @@ p1 <- ggplot(lending_base, aes(x = ingreso)) +
   geom_histogram(binwidth = 5000,
                  fill = "#2b6cb0",
                  color = "white",
-                 alpha = 0.8) +
+                 alpha = 0.8, title= "Histograma del ingreso media(rojo)") +
   geom_vline(xintercept = median(lending_base$ingreso, na.rm = TRUE),
              color = "red", linetype = "dashed", size = 0.9) +
   scale_x_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ",")) +
@@ -886,7 +887,7 @@ Esta concentración en niveles intermedios de ingreso sugiere que la base de dat
 Los valores más altos de ingreso, aunque minoritarios, representan a solicitantes con mayor capacidad financiera, lo que puede influir positivamente en su probabilidad de aprobación y cumplimiento del crédito.
 En conjunto, la distribución muestra una población heterogénea, pero con predominio de ingresos medios dentro del conjunto analizado.
 
-### Distribución de la relación deuda/ingreso
+### Distribución de la relación deuda/ingreso media(rojo)
 
 ```{r pdti}
 p_dti <- ggplot(lending_base, aes(x = relacion_deuda_ingreso)) +
@@ -917,7 +918,7 @@ Sin embargo, se observan algunos valores altos por encima del 40% que correspond
 
 La forma suavizada del gráfico evidencia una distribución continua y bien concentrada, lo que sugiere que el comportamiento de esta variable sigue una tendencia general homogénea dentro de la población crediticia.
 
-### Distribución del puntaje FICO
+### Distribución del puntaje FICO media(rojo)
 
 ```{r fico}
 p_fico <- ggplot(lending_base, aes(x = puntaje_fico)) +
@@ -962,7 +963,7 @@ Esto indica que la mayoría de los solicitantes poseen un historial crediticio c
 La distribución es ligeramente asimétrica hacia la derecha, lo cual refleja que existen prestatarios con puntajes altos (mayores a 750), pero en menor proporción.
 Este comportamiento es esperable, dado que los puntajes más altos suelen corresponder a individuos con un historial crediticio más largo y estable.
 
-### Distribución del monto del préstamo
+### Distribución del monto del préstamo media(rojo)
 
 ```{r p_monto}
 p_monto_hist <- ggplot(lending_base, aes(x = monto_prestamo)) +
@@ -987,6 +988,7 @@ El histograma del monto solicitado en préstamo presenta una distribución dispe
 Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
 Se observa también la presencia de montos más altos, aunque con menor frecuencia, lo cual es coherente con una política crediticia que limita el riesgo mediante montos moderados para la mayoría de los solicitantes.
 
+## Variable por estado de pago
 ## Puntaje FICO por estado de pago
 
 ```{r ficopagaono}
@@ -1201,7 +1203,7 @@ y = "Tasa de default (No_paga)"
 ) +
 tema +
 theme(legend.position = "none")
-lending_tasa
+p_tasa
 ```
 
 La gráfica evidencia una relación negativa clara entre el nivel de ingreso y la tasa de default (probabilidad de no pago).
@@ -1246,7 +1248,7 @@ font_size = 14,
 position = "center"
 ) %>%
 row_spec(0, background = "#2b6cb0", color = "white", bold = TRUE)
-tasa_por_proposito
+
 ```
 
 La tabla muestra la tasa de default (no pago) y los indicadores de ingreso y puntaje FICO medianos según el propósito del préstamo.
