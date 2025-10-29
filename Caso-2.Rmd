@@ -23,7 +23,6 @@ editor_options:
     wrap: sentence
 ---
 
-# inicio
 ```{r Librerias, include=FALSE}
 knitr::opts_chunk$set(
   echo = TRUE,          
@@ -851,7 +850,7 @@ variables_modelo <- data.frame(
     "Monto del préstamo en USD.",
     "Rango típico: 300 – 850.",
     "Ej: 'Consolidación', 'Negocio', 'Otros'.",
-    "0 = Paga, 1 = No paga."
+    "0 = Pagado, 1 = Incumplido."
   )
 )
 
@@ -1042,9 +1041,8 @@ tabla_interactiva <- tabla_interactiva %>%
 tabla_interactiva
 ```
 
-# Analisis descriptivo
+# Análisis descriptivo
 
-El conjunto de datos analizado corresponde a registros de préstamos otorgados por la plataforma Lending Club, e incluye información relevante sobre las características financieras de los solicitantes y el comportamiento de pago asociado a cada crédito.
 
 Con el fin de comprender de manera preliminar la composición y variabilidad de las observaciones, se presenta a continuación un resumen de las principales estadísticas descriptivas y la distribución de frecuencias por estado de pago.
 
@@ -1085,7 +1083,7 @@ tabla_resumen = resumen_general %>%
     format = "html",
     col.names = c("Variable", "Media", "Mediana", "Desv. Estándar", "Mínimo", "Máximo"),
     align = c('l', 'r', 'r', 'r', 'r', 'r'),
-    caption = "Tabla 1: Estadísticas Descriptivas de las Variables Principales del Dataset de Préstamos"
+    caption = "Tabla 3: Estadísticas Descriptivas de las Variables Principales del Dataset de Préstamos"
   ) %>%
   kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
@@ -1109,15 +1107,15 @@ tabla_resumen = resumen_general %>%
 tabla_resumen
 ```
 
-En promedio, los solicitantes reportan un ingreso anual de USD 72,543, con una mediana de USD 64,000, lo que sugiere una ligera asimetría positiva en la distribución, reflejando la presencia de algunos ingresos excepcionalmente altos que elevan el promedio.
+En promedio, los solicitantes reportan un ingreso anual de USD 72.543 , con una mediana de USD 64,000, lo que sugiere una ligera asimetría positiva en la distribución, reflejando la presencia de algunos ingresos excepcionalmente altos que elevan el promedio.
 
 La relación deuda/ingreso presenta una media de 19%, indicando que, en promedio, los deudores destinan cerca de una quinta parte de sus ingresos al pago de obligaciones financieras.
-No obstante, el rango entre 0% y 50% evidencia una amplia heterogeneidad en los niveles de endeudamiento entre los solicitantes.
+No obstante, el rango entre 0% y 49% evidencia una amplia heterogeneidad en los niveles de endeudamiento entre los solicitantes.
 
-El monto promedio de los préstamos asciende a USD 14,850, con una desviación estándar de aproximadamente USD 8,645, lo que denota variabilidad significativa en los montos solicitados, posiblemente asociada a diferencias en capacidad de pago o propósito del crédito.
+El monto promedio de los préstamos asciende a USD 14,850, con una desviación estándar de aproximadamente USD 8,650, lo que denota variabilidad significativa en los montos solicitados, posiblemente asociada a diferencias en capacidad de pago o propósito del crédito.
 
-Por su parte, el puntaje FICO, que refleja el historial crediticio de los solicitantes, presenta una media de 697 puntos, situándose dentro de la categoría de “buen crédito”.
-Su baja desviación estándar (31.7) indica una distribución relativamente concentrada, lo que sugiere que la mayoría de los clientes poseen un perfil crediticio estable.
+Por su parte, el puntaje FICO, que refleja el historial crediticio de los solicitantes, presenta una media de 694 puntos, situándose dentro de la categoría de “buen crédito”.
+Su baja desviación estándar (30) indica una distribución relativamente concentrada, lo que sugiere que la mayoría de los clientes poseen un perfil crediticio estable.
 
 En conjunto, estas estadísticas evidencian una población de solicitantes con ingresos moderados a altos, niveles de endeudamiento diversos y un comportamiento crediticio predominantemente positivo.
 
@@ -1190,7 +1188,8 @@ knitr::include_graphics("animacion_ingreso.gif")
 
 ```
 
-La línea roja punteada indica la mediana, ubicada alrededor de USD 65,000, lo cual coincide con la tendencia central observada en la tabla descriptiva.
+La línea roja punteada indica la mediana, ubicada alrededor de USD 65,000, lo cual coincide con la tendencia central observada en la tabla descriptiva. y la linea amarilla respresenta la media de la distribucion.
+
 Esta concentración en niveles intermedios de ingreso sugiere que la base de datos está compuesta principalmente por personas con capacidad de pago media, probablemente pertenecientes a segmentos laborales formales o con ingresos estables.
 
 Los valores más altos de ingreso, aunque minoritarios, representan a solicitantes con mayor capacidad financiera, lo que puede influir positivamente en su probabilidad de aprobación y cumplimiento del crédito.
@@ -1200,16 +1199,14 @@ En conjunto, la distribución muestra una población heterogénea, pero con pred
 
 La Figura 2 ilustra la densidad de la variable relación deuda/ingreso (%), la cual mide el nivel de endeudamiento de los solicitantes respecto a su capacidad económica.
 
-La distribución presenta una forma ligeramente asimétrica hacia la derecha, con un claro punto de concentración entre los 10% y 25%, y una mediana cercana al 18% (línea roja punteada).
+La distribución presenta una forma ligeramente asimétrica hacia la derecha, con un claro punto de concentración entre los 10% y 25%, y una mediana cercana al 18.8% (línea amarilla punteada).
 
 ```{r Grafica 2, message=FALSE,warning=FALSE}
 mediana_dti <- median(Base_datos$Relacion_deuda_ingreso, na.rm = TRUE) * 100
 media_dti <- mean(Base_datos$Relacion_deuda_ingreso, na.rm = TRUE) * 100
 
-# Crear variable temporal para el plotting (multiplicada por 100)
 Base_datos$dti_porcentaje <- Base_datos$Relacion_deuda_ingreso * 100
 
-# Calcular densidad con los valores en porcentaje
 densidad_dti <- density(Base_datos$dti_porcentaje, na.rm = TRUE)
 max_densidad <- max(densidad_dti$y) * nrow(Base_datos) * 2
 
@@ -1255,8 +1252,8 @@ p_dti_interactivo <- plot_ly(Base_datos, x = ~dti_porcentaje) %>%
           color = SC["dark_red"]
         )
       ),
-      tickformat = ".1f",  # Mostrar como números decimales
-      ticksuffix = "%",    # Agregar símbolo % después del número
+      tickformat = ".1f", 
+      ticksuffix = "%",  
       gridcolor = SC["light_red"],
       zerolinecolor = SC["light_red"],
       range = c(0, max(Base_datos$dti_porcentaje, na.rm = TRUE) * 1.05)
@@ -1274,7 +1271,6 @@ p_dti_interactivo <- plot_ly(Base_datos, x = ~dti_porcentaje) %>%
       zerolinecolor = SC["light_red"]
     ),
     shapes = list(
-      # Línea de mediana
       list(
         type = "line",
         x0 = mediana_dti,
@@ -1287,7 +1283,6 @@ p_dti_interactivo <- plot_ly(Base_datos, x = ~dti_porcentaje) %>%
           width = 2
         )
       ),
-      # Línea de media
       list(
         type = "line",
         x0 = media_dti,
@@ -1303,19 +1298,18 @@ p_dti_interactivo <- plot_ly(Base_datos, x = ~dti_porcentaje) %>%
     plot_bgcolor = SC["parchment"],
     paper_bgcolor = "white",
     font = list(family = "Source Serif Pro", size = 12),
-    margin = list(l = 80, r = 50, t = 80, b = 100),  # Aumenté bottom margin para las anotaciones
+    margin = list(l = 80, r = 50, t = 80, b = 100),  
     hoverlabel = list(
       font = list(family = "Source Serif Pro")
     ),
     legend = list(
       orientation = "h",
       x = 0.5,
-      y = -0.2,  # Ajusté para dar más espacio
+      y = -0.2,  
       xanchor = "center",
       font = list(family = "Source Serif Pro")
     ),
     annotations = list(
-      # Anotación para mediana
       list(
         x = mediana_dti,
         y = max_densidad,
@@ -1331,7 +1325,6 @@ p_dti_interactivo <- plot_ly(Base_datos, x = ~dti_porcentaje) %>%
         borderpad = 4,
         borderwidth = 1
       ),
-      # Anotación para media
       list(
         x = media_dti,
         y = max_densidad * 0.85,
@@ -1347,7 +1340,6 @@ p_dti_interactivo <- plot_ly(Base_datos, x = ~dti_porcentaje) %>%
         borderpad = 4,
         borderwidth = 1
       ),
-      # Fuente en la parte inferior
       list(
         x = 1,
         y = -0.3,
@@ -1378,11 +1370,14 @@ p_dti_interactivo
 
 
 Esto indica que, en promedio, los solicitantes destinan menos de una quinta parte de sus ingresos al pago de deudas, lo que refleja niveles de endeudamiento controlados en la mayoría de los casos.
+
 Sin embargo, se observan algunos valores altos por encima del 40% que corresponden a individuos con una carga financiera elevada, lo que puede representar un mayor riesgo de incumplimiento.
 
 La forma suavizada del gráfico evidencia una distribución continua y bien concentrada, lo que sugiere que el comportamiento de esta variable sigue una tendencia general homogénea dentro de la población crediticia.
 
 ### Distribución del puntaje FICO
+
+La Figura 3 ilustra la densidad de la variable puntaje FICO.
 
 ```{r FICO figura 3,fig.width=10, fig.height=6, out.width="100%"}
 library(purrr)
@@ -1467,7 +1462,7 @@ knitr::include_graphics("animacion_fico.gif")
 
 ```
 
-La distribución del puntaje FICO evidencia una clara concentración de valores entre 660 y 720 puntos, con una mediana cercana a 690 (línea roja).
+La distribución del puntaje FICO evidencia una clara concentración de valores entre 660 y 720 puntos, con una mediana cercana a 667 (línea roja).
 
 Esto indica que la mayoría de los solicitantes poseen un historial crediticio considerado “bueno”, aunque no necesariamente “excelente”.
 
@@ -1476,6 +1471,7 @@ La distribución es ligeramente asimétrica hacia la derecha, lo cual refleja qu
 Este comportamiento es esperable, dado que los puntajes más altos suelen corresponder a individuos con un historial crediticio más largo y estable.
 
 ### Distribución del monto del préstamo
+La Figura 4 ilustra la distribución de la variable Monto prestado.
 
 ```{r p_monto figura 4}
 mediana_monto <- median(Base_datos$Monto_prestado, na.rm = TRUE)
@@ -1529,7 +1525,6 @@ p_monto_interactivo <- plot_ly(Base_datos, x = ~Monto_prestado) %>%
       zerolinecolor = SC["light_red"]
     ),
     shapes = list(
-      # Línea de mediana
       list(
         type = "line",
         x0 = mediana_monto,
@@ -1543,7 +1538,6 @@ p_monto_interactivo <- plot_ly(Base_datos, x = ~Monto_prestado) %>%
           width = 2
         )
       ),
-      # Línea de media
       list(
         type = "line",
         x0 = media_monto,
@@ -1565,7 +1559,6 @@ p_monto_interactivo <- plot_ly(Base_datos, x = ~Monto_prestado) %>%
       font = list(family = "Source Serif Pro")
     ),
     annotations = list(
-      # Anotación para mediana
       list(
         x = mediana_monto,
         y = 1,
@@ -1582,7 +1575,6 @@ p_monto_interactivo <- plot_ly(Base_datos, x = ~Monto_prestado) %>%
         borderpad = 4,
         borderwidth = 1
       ),
-      # Anotación para media
       list(
         x = media_monto,
         y = 0.9,
@@ -1599,7 +1591,6 @@ p_monto_interactivo <- plot_ly(Base_datos, x = ~Monto_prestado) %>%
         borderpad = 4,
         borderwidth = 1
       ),
-      # Fuente en la parte inferior
       list(
         x = 1,
         y = -0.15,
@@ -1629,7 +1620,7 @@ p_monto_interactivo
 
 ```
 
-El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 12,000.
+El histograma del monto solicitado en préstamo presenta una distribución dispersa, con una fuerte concentración de valores entre 5,000 y 15,000, y una mediana cercana a los 13,000.
 
 Esto sugiere que la mayoría de los créditos aprobados corresponden a montos pequeños o medianos, probablemente asociados a consumo o consolidación de deudas.
 
@@ -1637,6 +1628,8 @@ Se observa también la presencia de montos más altos, aunque con menor frecuenc
 
 ## Variable por estado de pago
 ### Puntaje FICO por estado de pago
+La Figura 5 ilustra la distribucion de la variable puntaje FICO respecto a Estado del prestamo.
+
 
 
 ```{r ficopagaono figura 5}
@@ -1720,7 +1713,7 @@ p_fico_box_corregido <- plot_ly() %>%
       ),
       gridcolor = SC["light_red"],
       zerolinecolor = SC["light_red"],
-      range = c(600, 850)  # Rango típico de FICO
+      range = c(600, 850)  
     ),
     plot_bgcolor = SC["parchment"],
     paper_bgcolor = "white",
@@ -1785,7 +1778,6 @@ p_fico_box_corregido <- plot_ly() %>%
         borderwidth = 1,
         borderpad = 4
       ),
-      # Fuente
       list(
         x = 1,
         y = -0.2,
@@ -1819,6 +1811,8 @@ Esta diferencia confirma que un mejor historial crediticio se asocia con un mayo
 
 ### ingreso por estado de pago
 
+La Figura 6 ilustra la distribucion de la variable ingreso respecto a Estado del prestamo.
+
 ```{r ingresopaga on o paga figura 6}
 stats_ingreso <- Base_datos %>%
   group_by(Estado) %>%
@@ -1835,7 +1829,7 @@ p_box_ingreso_corregido <- plot_ly() %>%
     data = Base_datos %>% filter(Estado == "Pagado"),
     y = ~Ingreso,
     name = "Pagado",
-    boxpoints = "outliers",  # Solo mostrar outliers
+    boxpoints = "outliers",  
     marker = list(
       color = SC["primary_red"],
       size = 5,
@@ -1848,7 +1842,6 @@ p_box_ingreso_corregido <- plot_ly() %>%
     fillcolor = SC["light_red"],
     width = 0.5
   ) %>%
-  # Agregar boxplot para "Incumplido"
   add_boxplot(
     data = Base_datos %>% filter(Estado == "Incumplido"),
     y = ~Ingreso,
@@ -1863,7 +1856,7 @@ p_box_ingreso_corregido <- plot_ly() %>%
       color = SC["secondary_red"],
       width = 2
     ),
-    fillcolor = paste0(SC["accent_red"], "40"),  # Con transparencia
+    fillcolor = paste0(SC["accent_red"], "40"),  
     width = 0.5
   ) %>%
   layout(
@@ -1902,7 +1895,7 @@ p_box_ingreso_corregido <- plot_ly() %>%
       gridcolor = SC["light_red"],
       zerolinecolor = SC["light_red"],
       tickformat = "$,.0f",
-      range = c(0, quantile(Base_datos$Ingreso, 0.95, na.rm = TRUE))  # Usar percentil 95 para evitar outliers extremos
+      range = c(0, quantile(Base_datos$Ingreso, 0.95, na.rm = TRUE))  
     ),
     plot_bgcolor = SC["parchment"],
     paper_bgcolor = "white",
@@ -1914,7 +1907,6 @@ p_box_ingreso_corregido <- plot_ly() %>%
     showlegend = FALSE,
     boxmode = "group",
     annotations = list(
-      # Anotación para mediana de Pagado
       list(
         x = 0,
         y = stats_ingreso$mediana[stats_ingreso$Estado == "Pagado"],
@@ -1930,7 +1922,6 @@ p_box_ingreso_corregido <- plot_ly() %>%
         borderpad = 4,
         borderwidth = 1
       ),
-      # Anotación para mediana de Incumplido
       list(
         x = 1,
         y = stats_ingreso$mediana[stats_ingreso$Estado == "Incumplido"],
@@ -1946,7 +1937,6 @@ p_box_ingreso_corregido <- plot_ly() %>%
         borderpad = 4,
         borderwidth = 1
       ),
-      # Información de resumen
       list(
         x = 1,
         y = 0,
@@ -1970,7 +1960,6 @@ p_box_ingreso_corregido <- plot_ly() %>%
         borderwidth = 1,
         borderpad = 4
       ),
-      # Fuente
       list(
         x = 1,
         y = -0.25,
@@ -2015,12 +2004,11 @@ datos_largos <- Base_datos %>%
     )
   )
 
-# Función corregida para crear boxplots estáticos
+
 crear_boxplot_estatico <- function(var_nombre, titulo_display) {
   
   datos_var <- datos_largos %>% filter(variable == var_nombre)
   
-  # Determinar formato
   if (var_nombre == "Ingreso Anual" | var_nombre == "Monto del Préstamo") {
     tickformat <- "$,.0f"
   } else if (var_nombre == "Relación Deuda/Ingreso") {
@@ -2028,8 +2016,7 @@ crear_boxplot_estatico <- function(var_nombre, titulo_display) {
   } else {
     tickformat <- ",.0f"
   }
-  
-  # Calcular estadísticas para anotaciones
+
   stats <- datos_var %>%
     group_by(Estado) %>%
     summarise(
@@ -2037,9 +2024,7 @@ crear_boxplot_estatico <- function(var_nombre, titulo_display) {
       n = n()
     )
   
-  # Crear el boxplot con datos separados por estado
   p <- plot_ly() %>%
-    # Boxplot para Pagado
     add_boxplot(
       data = datos_var %>% filter(Estado == "Pagado"),
       x = "Pagado",
@@ -2051,7 +2036,6 @@ crear_boxplot_estatico <- function(var_nombre, titulo_display) {
       marker = list(color = SC["primary_red"]),
       width = 0.5
     ) %>%
-    # Boxplot para Incumplido
     add_boxplot(
       data = datos_var %>% filter(Estado == "Incumplido"),
       x = "Incumplido",
@@ -2065,7 +2049,7 @@ crear_boxplot_estatico <- function(var_nombre, titulo_display) {
     ) %>%
     layout(
       title = list(
-        text = titulo_display,  # TÍTULO INDIVIDUAL PARA CADA GRÁFICA
+        text = titulo_display,  
         font = list(
           family = "Playfair Display",
           size = 16,
@@ -2084,9 +2068,8 @@ crear_boxplot_estatico <- function(var_nombre, titulo_display) {
       ),
       plot_bgcolor = SC["parchment"],
       paper_bgcolor = "white",
-      margin = list(l = 70, r = 30, t = 80, b = 60),  # Aumenté top margin para el título
+      margin = list(l = 70, r = 30, t = 80, b = 60),  
       showlegend = FALSE,
-      # Anotaciones para medianas
       annotations = list(
         list(
           x = "Pagado",
@@ -2122,19 +2105,17 @@ crear_boxplot_estatico <- function(var_nombre, titulo_display) {
   return(p)
 }
 
-# Crear cada subplot individualmente con títulos específicos
 plot_ingreso <- crear_boxplot_estatico("Ingreso Anual", "Distribución del Ingreso Anual")
 plot_dti <- crear_boxplot_estatico("Relación Deuda/Ingreso", "Distribución de la Relación Deuda/Ingreso") 
 plot_monto <- crear_boxplot_estatico("Monto del Préstamo", "Distribución del Monto del Préstamo")
 plot_fico <- crear_boxplot_estatico("Puntaje FICO", "Distribución del Puntaje FICO")
 
-# Combinar en subplots
 p_comparativo_final <- subplot(
   plot_ingreso, plot_dti, plot_monto, plot_fico,
   nrows = 2,
   shareX = TRUE,
   titleY = TRUE,
-  margin = 0.08  # Aumenté el margen para acomodar los títulos
+  margin = 0.08 
 ) %>%
   layout(
     title = list(
@@ -2145,11 +2126,10 @@ p_comparativo_final <- subplot(
         color = SC["primary_red"]
       ),
       x = 0.5,
-      y = 0.98  # Posicionar el título principal más arriba
+      y = 0.98  
     ),
     font = list(family = "Source Serif Pro", size = 12),
     annotations = list(
-      # Eje X compartido
       list(
         x = 0.5,
         y = -0.1,
@@ -2164,7 +2144,6 @@ p_comparativo_final <- subplot(
           color = SC["dark_red"]
         )
       ),
-      # Eje Y compartido
       list(
         x = -0.08,
         y = 0.5,
@@ -2180,7 +2159,6 @@ p_comparativo_final <- subplot(
           color = SC["dark_red"]
         )
       ),
-      # Fuente
       list(
         x = 1,
         y = -0.15,
@@ -2198,8 +2176,8 @@ p_comparativo_final <- subplot(
     )
   ) %>%
   config(
-    displayModeBar = FALSE,  # DESACTIVAR LA BARRA DE HERRAMIENTAS (estático)
-    staticPlot = TRUE        # HACER EL PLOT COMPLETAMENTE ESTÁTICO
+    displayModeBar = FALSE,  
+    staticPlot = TRUE        
   )
 
 p_comparativo_final
@@ -2224,7 +2202,7 @@ A continuación, se detalla la división de los datos y la implementación de ca
 
 ## División de los datos
 
-Para el desarrollo de los modelos de clasificación, se utilizó la base balanceada obtenida en la etapa de preparación y limpieza, conformada por 10.000 observaciones distribuidas equitativamente entre las clases “Paga” y “No_paga”.
+Para el desarrollo de los modelos de clasificación, se utilizó la base balanceada obtenida en la etapa de preparación y limpieza, conformada por 10.000 observaciones distribuidas equitativamente entre las clases “Paga” y “Incumplido”.
 A partir de esta muestra se realizó una partición aleatoria estratificada para garantizar que ambas clases conservaran su proporción en los subconjuntos de entrenamiento y prueba.
 
 Con una semilla fija (set.seed(28)) para asegurar la reproducibilidad de resultados, el 75% de las observaciones (7.500 registros) se destinó al conjunto de entrenamiento, utilizado para ajustar los modelos predictivos, mientras que el 25% restante (2.500 registros) se reservó como conjunto de prueba, empleado para evaluar el desempeño fuera de muestra.
@@ -2277,7 +2255,7 @@ test_input_scaled  <- predict(scaler, test_input)
 
 
 k_vals <- 1:200
-resultado <- data.frame(k = k_vals, precision = NA_real_)  # Inicializar con NA
+resultado <- data.frame(k = k_vals, precision = NA_real_)  
 
 for (n in k_vals) {
   pred_temp <- knn(
@@ -2330,7 +2308,6 @@ Grafico_precision_interactivo <- plot_ly(resultado, x = ~k) %>%
     hoverinfo = "y+x",
     hovertemplate = "k = %{x}<br>Precisión = %{y:.3f}<extra></extra>"
   ) %>%
-  # Puntos de precisión
   add_markers(
     y = ~precision,
     marker = list(
@@ -2362,7 +2339,6 @@ Grafico_precision_interactivo <- plot_ly(resultado, x = ~k) %>%
     ),
     showlegend = FALSE
   ) %>%
-  # Línea vertical para k óptimo
   add_segments(
     x = k_optimo, xend = k_optimo,
     y = 0, yend = max(resultado$precision),
@@ -2422,7 +2398,6 @@ Grafico_precision_interactivo <- plot_ly(resultado, x = ~k) %>%
       bordercolor = SC["dark_red"]
     ),
     annotations = list(
-      # Anotación para k óptimo
       list(
         x = k_optimo,
         y = max(resultado$precision) - 0.015,
@@ -2439,7 +2414,6 @@ Grafico_precision_interactivo <- plot_ly(resultado, x = ~k) %>%
         borderpad = 8,
         opacity = 0.9
       ),
-      # Información adicional
       list(
         x = 0.02,
         y = 0.98,
@@ -2462,7 +2436,6 @@ Grafico_precision_interactivo <- plot_ly(resultado, x = ~k) %>%
         borderwidth = 1,
         borderpad = 8
       ),
-      # Subtítulo
       list(
         x = 0.5,
         y = 0.95,
@@ -2476,7 +2449,6 @@ Grafico_precision_interactivo <- plot_ly(resultado, x = ~k) %>%
           color = SC["secondary_red"]
         )
       ),
-      # Fuente
       list(
         x = 1,
         y = -0.15,
@@ -2534,7 +2506,7 @@ matriz_tabla_mejorada <- matrix(
 
 tabla_matriz_simple <- as.table(matriz_tabla_mejorada) %>%
   kbl(
-    caption = "Matriz de Confusión - Modelo KNN",
+    caption = "Tabla 4. Matriz de Confusión - Modelo KNN",
     align = c("c", "c", "c"),
     col.names = c("Pagado", "Incumplido")
   ) %>%
@@ -2616,7 +2588,7 @@ metricas_knn_mejoradas <- data.frame(
 
 tabla_metricas_mejorada <- metricas_knn_mejoradas %>%
   kbl(
-    caption = "Métricas de Evaluación del Modelo KNN",
+    caption = "Tabla 5. Métricas de Evaluación del Modelo KNN Class",
     align = c("l", "l", "c"),
     col.names = c("Métrica", "Descripción", "Valor")
   ) %>%
@@ -2649,7 +2621,7 @@ El estadístico Kappa (0.11) es bajo, señalando que el acuerdo entre las predic
 Asimismo, tanto la sensibilidad (57.7%) como la especificidad (53.7%) evidencian una capacidad desigual pero baja del modelo para identificar correctamente los incumplimientos y los pagos.
 Ninguna de las dos clases es clasificada con gran efectividad, lo que refleja limitaciones importantes cuando se busca un sistema confiable para apoyar decisiones en la concesión de pretamos.
 
-Al observar los valores predictivos (positivo: 54.4% para "No_paga", negativo: 56.9% para "Paga"), se observa que el modelo tiende a equivocarse en una proporción relevante de casos, ya que casi la mitad de las observaciones podrían estar erróneamente clasificadas bajo cada etiqueta.
+Al observar los valores predictivos (positivo: 54.4% para "Incumplido", negativo: 56.9% para "Paga"), se observa que el modelo tiende a equivocarse en una proporción relevante de casos, ya que casi la mitad de las observaciones podrían estar erróneamente clasificadas bajo cada etiqueta.
 Además, el valor de la exactitud balanceada (55.7%) confirma el carácter modesto y poco robusto del enfoque actual, incluso en un contexto donde las clases han sido equilibradas a propósito.
 
 En concreto, aunque el modelo muestra una ligera capacidad para mejorar la predicción respecto al azar, su potencial real es muy limitado bajo las condiciones y supuestos aplicados.
@@ -2685,8 +2657,1078 @@ modelo_knn <- train(
   metric = "ROC"
 )
 
+pred_clase_knn <- predict(modelo_knn, newdata = test)
+pred_prob_knn  <- predict(modelo_knn, newdata = test, type = "prob")
+
 
 ```
+
+A continuación, se presenta el gráfico del desempeño (AUC) del modelo para diferentes valores de k, donde se destaca el valor óptimo que maximiza la capacidad discriminativa en validación cruzada.
+
+```{r figura 8}
+Grafico_ROC_interactivo <- plot_ly(modelo_knn$results, x = ~k) %>%
+  add_lines(
+    y = ~ROC,
+    line = list(
+      color = "#FF0000",  
+      width = 3,
+      shape = "spline"
+    ),
+    name = "AUC (ROC)",
+    hoverinfo = "y+x",
+    hovertemplate = "k = %{x}<br>AUC = %{y:.3f}<extra></extra>"
+  ) %>%
+  add_markers(
+    y = ~ROC,
+    marker = list(
+      size = 8,
+      color = ~ROC,
+      colorscale = list(
+        c(0, 1),
+        c("#FFE5E5", "#FF0000") 
+      ),
+      line = list(
+        color = "white",
+        width = 1.5
+      ),
+      opacity = 0.9,
+      showscale = TRUE,
+      colorbar = list(
+        title = "AUC (ROC)",
+        tickformat = ".3f",
+        len = 0.5,
+        y = 0.5,
+        yanchor = "middle"
+      )
+    ),
+    hoverinfo = "text",
+    text = ~paste(
+      "<b>k =", k, "</b><br>",
+      "AUC: ", round(ROC, 4), "<br>",
+      "Valor exacto: ", round(ROC, 4)
+    ),
+    showlegend = FALSE
+  ) %>%
+  add_segments(
+    x = modelo_knn$bestTune$k, xend = modelo_knn$bestTune$k,
+    y = 0, yend = max(modelo_knn$results$ROC),
+    line = list(
+      color = "#990000",  
+      width = 2.5,
+      dash = "dash"
+    ),
+    name = paste("k óptimo =", modelo_knn$bestTune$k),
+    hoverinfo = "none"
+  ) %>%
+  layout(
+    title = list(
+      text = "<b>Figura 8. Acurracy del modelo KNN según número de vecinos (k)</b>",
+      font = list(
+        family = "Playfair Display",  
+        size = 20,
+        color = "#FF0000"  
+      ),
+      x = 0.05
+    ),
+    xaxis = list(
+      title = list(
+        text = "Número de vecinos (k)",
+        font = list(
+          family = "Source Serif Pro", 
+          size = 14,
+          color = "#FF0000"  
+        )
+      ),
+      gridcolor = "#FFE5E5",  
+      tickfont = list(family = "Source Serif Pro", size = 11, color = "#333333"),
+      dtick = ifelse(max(modelo_knn$results$k) - min(modelo_knn$results$k) > 20, 5, 1),
+      range = c(min(modelo_knn$results$k) - 0.5, max(modelo_knn$results$k) + 0.5)
+    ),
+    yaxis = list(
+      title = list(
+        text = "Área bajo la curva (ROC)",
+        font = list(
+          family = "Source Serif Pro", 
+          size = 14,
+          color = "#FF0000" 
+        )
+      ),
+      gridcolor = "#FFE5E5", 
+      zerolinecolor = "#CC0000",  
+      range = c(min(modelo_knn$results$ROC) - 0.02, max(modelo_knn$results$ROC) + 0.02),
+      tickfont = list(family = "Source Serif Pro", color = "#333333")
+    ),
+    plot_bgcolor = "#FFFDF5", 
+    paper_bgcolor = "white",
+    font = list(family = "Source Serif Pro", size = 12, color = "#333333"),
+    margin = list(l = 80, r = 80, t = 100, b = 100),
+    hoverlabel = list(
+      font = list(family = "Source Serif Pro"),
+      bgcolor = "white",
+      bordercolor = "#FF0000"  
+    ),
+    annotations = list(
+      list(
+        x = modelo_knn$bestTune$k,
+        y = max(modelo_knn$results$ROC) - 0.015,
+        text = paste("<b>k óptimo =", modelo_knn$bestTune$k, "</b>"),
+        showarrow = FALSE,
+        font = list(
+          family = "Playfair Display",
+          size = 14,
+          color = "white"
+        ),
+        bgcolor = "#990000", 
+        bordercolor = "#CC0000", 
+        borderwidth = 2,
+        borderpad = 8,
+        opacity = 0.9
+      ),
+      list(
+        x = 0.02,
+        y = 0.98,
+        xref = "paper",
+        yref = "paper",
+        text = paste(
+          "<b>Máximo AUC:</b>", round(max(modelo_knn$results$ROC), 4), "<br>",
+          "<b>Mejor k:</b>", modelo_knn$bestTune$k, "<br>",
+          "<b>Rango evaluado:</b>", min(modelo_knn$results$k), "-", max(modelo_knn$results$k)
+        ),
+        showarrow = FALSE,
+        align = "left",
+        font = list(
+          family = "Source Serif Pro",
+          size = 11,
+          color = "#333333"
+        ),
+        bgcolor = "rgba(255,255,255,0.8)",
+        bordercolor = "#FFE5E5",  
+        borderwidth = 1,
+        borderpad = 8
+      ),
+      list(
+        x = 0.5,
+        y = 0.95,
+        xref = "paper",
+        yref = "paper",
+        text = "El valor óptimo de k maximiza el área bajo la curva ROC en validación cruzada (5-fold)",
+        showarrow = FALSE,
+        font = list(
+          family = "Playfair Display",
+          size = 13,
+          color = "#FF0000"  
+        )
+      ),
+      list(
+        x = 1,
+        y = -0.15,
+        text = "Fuente: Elaboración propia con base en el dataset Lending Club (2007-2018)",
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "right",
+        font = list(
+          family = "Source Serif Pro",
+          size = 10,
+          color = "#CC0000" 
+        )
+      )
+    )
+  ) %>%
+  config(
+    displayModeBar = TRUE,
+    modeBarButtonsToRemove = c("pan2d", "lasso2d", "select2d"),
+    displaylogo = FALSE,
+    toImageButtonOptions = list(
+      format = "png",
+      filename = "auc_knn_interactivo",
+      width = 1000,
+      height = 600
+    )
+  )
+
+Grafico_ROC_interactivo
+```
+
+
+El valor óptimo encontrado fue k= `r modelo_knn$bestTune$k`, con un AUC promedio en validación cruzada de `r round(max(modelo_knn$results$ROC),3)`, indicando cierta mejora respecto al modelo con class.
+
+Seguidamente, se obtienen las predicciones y probabilidades para el conjunto de prueba, con lo que se construyen la matriz de confusión y las métricas clave que se listan para una interpretación integral del desempeño.
+
+```{r confusion caret}
+cm_caret <- confusionMatrix(pred_clase_knn, test$Estado, positive = "Incumplido")
+
+acc <- round(cm_caret$overall["Accuracy"], 4)
+acc_ci <- paste0("(", round(cm_caret$overall[["AccuracyLower"]], 4), ", ",
+                 round(cm_caret$overall[["AccuracyUpper"]], 4), ")")
+
+no_info_rate <- round(as.numeric(cm_caret$overall[[3]]), 4)
+p_value_acc <- "<2.2e-16"
+kappa <- round(cm_caret$overall["Kappa"], 4)
+mcnemar <- formatC(as.numeric(cm_caret$overall["McnemarPValue"]), format = "e", digits = 2)
+
+metricas_tabla <- data.frame(
+  Métrica = c(
+    "Accuracy (Exactitud)",
+    "95% CI (Intervalo de Confianza)",
+    "No Information Rate",
+    "P-Value [Acc > NIR]",
+    "Kappa",
+    "Mcnemar's Test P-Value",
+    "Sensitivity",
+    "Specificity",
+    "Pos Pred Value",
+    "Neg Pred Value",
+    "Prevalence",
+    "Detection Rate",
+    "Detection Prevalence",
+    "Balanced Accuracy"
+  ),
+  Valor = c(
+    acc,
+    acc_ci,
+    no_info_rate,
+    p_value_acc,
+    kappa,
+    mcnemar,
+    round(cm_caret$byClass["Sensitivity"], 4),
+    round(cm_caret$byClass["Specificity"], 4),
+    round(cm_caret$byClass["Pos Pred Value"], 4),
+    round(cm_caret$byClass["Neg Pred Value"], 4),
+    round(cm_caret$byClass["Prevalence"], 4),
+    round(cm_caret$byClass["Detection Rate"], 4),
+    round(cm_caret$byClass["Detection Prevalence"], 4),
+    round(cm_caret$byClass["Balanced Accuracy"], 4)
+  ),
+  Interpretación = c(
+    "El modelo clasifica correctamente el 59.3% de los préstamos, mostrando una mejora moderada frente al azar.",
+    "El verdadero desempeño del modelo se ubica entre 57.4% y 61.2%, con un nivel de confianza del 95%.",
+    "Un modelo trivial (que siempre predice la clase más frecuente) tendría un acierto del 57.4%.",
+    "El valor p < 0.001 confirma que la precisión del modelo es significativamente mejor que el azar.",
+    "El valor de Kappa (0.185) indica un acuerdo leve entre predicciones y observaciones reales.",
+    "El resultado significativo del test de McNemar evidencia diferencias en la clasificación entre clases.",
+    "El modelo identifica correctamente el 63.1% de los casos de incumplimiento (Incumplido).",
+    "Detecta correctamente el 55.37% de los casos de pago (Pagado).",
+    "Cuando predice 'No_paga', acierta en el 57.7% de los casos.",
+    "Cuando predice 'Paga', acierta en el 60.12% de los casos.",
+    "El 51.6 de los datos corresponde a la clase 'Incumplido'.",
+    "El modelo detecta correctamente el 32.56% de los casos reales de incumplimiento.",
+    "Predice la clase 'Incumplido' en el 55.9% de los casos totales.",
+    "Promedia adecuadamente sensibilidad y especificidad, alcanzando un desempeño balanceado del 59.24%."
+  )
+)
+
+highlight_values <- function(x) {
+  case_when(
+    x > 0.7 ~ "color: #27ae60; font-weight: bold;",  
+    x > 0.6 ~ "color: #2e86c1; font-weight: bold;",  
+    x > 0.5 ~ "color: #f39c12;",                     
+    TRUE ~ "color: #c0392b;"                         
+  )
+}
+
+metricas_tabla %>%
+  kbl(
+    caption = "Tabla 6. Métricas de Evaluación - Modelo KNN (caret)",
+    align = c("l", "c", "l"),
+    col.names = c("Métrica", "Valor", "Interpretación"),
+    escape = FALSE
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#ff0000", color = "white", bold = TRUE) %>%
+  row_spec(1:14, background = "#fdfefe") %>%
+  row_spec(c(1, 7, 8, 14), background = "#f9ebea") %>%  
+  column_spec(1, bold = TRUE, width = "3.5cm", background = "#fafafa") %>%
+  column_spec(2, width = "2.5cm") %>%
+  column_spec(3, width = "10cm") %>%
+  column_spec(2, 
+              background = ifelse(
+                metricas_tabla$Métrica %in% c("Accuracy (Exactitud)", "Sensitivity", "Specificity", "Balanced Accuracy"),
+                "#fef9e7",  
+                "white"
+              )
+  ) %>%
+  footnote(
+    general = "Elaboración propia con base en el dataset Lending Club (2007–2018). Los colores indican: 🟢 Alto (>0.7) 🔵 Medio-Alto (>0.6) 🟠 Moderado (>0.5) 🔴 Bajo (≤0.5)",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+```
+
+El modelo KNN implementado con el paquete caret mostró un desempeño moderado, evidenciando una mejora apreciable frente al modelo básico con class.
+La inclusión de variables categóricas como proposito_agrupado, junto con la optimización automática de hiperparámetros mediante validación cruzada de 5 pliegues, permitió alcanzar una exactitud cercana al 60%, superando al modelo previo en algunos puntos porcentuales.
+
+La capacidad discriminativa del modelo, medida por un AUC de aproximadamente 0.645, indica que el clasificador logra ordenar correctamente casos en una proporción aceptable, aunque todavía lejos de niveles óptimos para aplicaciones muy exigentes.
+Se observa una mejoría relevante en la sensibilidad, con un 66.2% de identificación adecuada de incumplimientos, mientras que la especificidad fue algo menor, reflejando la dificultad para evitar falsos positivos.
+
+
+## Modelo Logit
+
+La regresión logística (modelo Logit) es un método de clasificación paramétrico que estima la probabilidad de que una observación pertenezca a una de dos categorías, en función de variables explicativas. A diferencia del KNN, el Logit construye un modelo matemático explícito: el logaritmo del odds (razón de probabilidades) se modela linealmente respecto a los predictores.
+
+El valor resultante se transforma usando la función logística para obtener una probabilidad entre 0 y 1, ajustando así la salida del modelo al contexto de clasificación binaria.
+Esta característica lo convierte en una opción estándar para predecir la presencia o ausencia de un evento, facilitando la interpretación de los efectos individuales de las variables sobre la probabilidad estimada.
+
+Al igual que en los modelos previos, se emplea un conjunto de entrenamiento para ajustar los parámetros de la regresión y un conjunto de prueba independiente para validar su desempeño, manteniendo las mismas variables consideradas en el modelo KNN.
+Posteriormente, las probabilidades generadas por el modelo se convierten en predicciones de clase mediante un umbral óptimo, que puede ser definido por criterios de negocio o maximización de la discriminación, como el índice de Youden extraído de la curva ROC.
+
+El modelo de regresión logística se entrenó utilizando la función glm() en R con familia binomial para modelar la probabilidad de incumplimiento ("Incumplido") en función de las variables predictoras financieras y categóricas seleccionadas.
+
+```{r Logit}
+library(caret)
+library(glmnet)
+library(pROC)
+
+train_logit <- train %>% 
+  mutate(default_num = as.numeric(Estado == "Incumplido"))
+
+test_logit <- test %>% 
+  mutate(default_num = as.numeric(Estado == "Incumplido"))
+
+train_logit <- train_logit[complete.cases(train_logit$default_num), ]
+test_logit <- test_logit[complete.cases(test_logit$default_num), ]
+
+predictores <- setdiff(names(train_logit), c("default_num", "Estado"))
+
+nearZero <- nearZeroVar(train_logit[, predictores], saveMetrics = TRUE)
+variables_a_eliminar <- rownames(nearZero)[nearZero$nzv]
+
+if(length(variables_a_eliminar) > 0) {
+  train_logit <- train_logit[, !names(train_logit) %in% variables_a_eliminar]
+  test_logit <- test_logit[, !names(test_logit) %in% variables_a_eliminar]
+  message("Variables eliminadas por near-zero variance: ", paste(variables_a_eliminar, collapse = ", "))
+}
+
+variables_modelo <- setdiff(names(train_logit), "Estado")
+
+
+
+fit_logit <- glm(default_num ~ ., 
+                 data = train_logit[, variables_modelo], 
+                 family = binomial())
+
+p_hat <- predict(fit_logit, newdata = test_logit, type = "response")
+
+roc_logit <- roc(response = test_logit$Estado, predictor = p_hat, levels = c("Pagado", "Incumplido"))
+thr <- coords(roc_logit, x = "best", best.method = "youden", ret = "threshold")
+umbral <- as.numeric(thr)
+
+pred_clase_logit <- factor(ifelse(p_hat >= umbral, "Incumplido", "Pagado"),
+                          levels = c("Pagado", "Incumplido"))
+
+```
+La variable respuesta fue codificada binariamente previamente en el conjunto de entrenamiento, y el modelo estimó coeficientes para ingreso, relación deuda-ingreso, monto del préstamo, puntaje FICO y la variable categórica proposito_agrupado.
+
+$$
+P(\text{Estado} = 1 \mid \mathbf{X}) = \frac{1}{1 + e^{-z}}
+$$
+
+donde:
+$$
+z = \beta_0 + \beta_1 \cdot \text{Ingreso} + \beta_2 \cdot \text{Relación Deuda-Ingreso} + \beta_3 \cdot \text{Monto Préstado} + \beta_4 \cdot \text{Puntaje FICO} + \beta_5 \cdot \text{Propósito}
+$$
+
+El ajuste permitió identificar el impacto individual de cada predictor sobre el logaritmo de las probabilidades de incumplimiento.
+Por ejemplo, ingresos y puntaje FICO mostraron una influencia negativa (disminuyen el riesgo), mientras que una mayor relación deuda-ingreso o monto del préstamo aumentaron esa probabilidad.
+Las categorías del propósito del préstamo presentaron efectos variables respecto a la categoría base.
+
+La tabla con el resumen estadístico del modelo, que incluye coeficientes estimados, errores estándar, valores-z y niveles de significancia, se presenta a continuación para una lectura detallada de estos efectos.
+
+
+```{r Tabla_mod}
+
+library(kableExtra)
+
+
+tabla_logit_final <- broom::tidy(fit_logit) %>%
+  mutate(across(where(is.numeric), ~ round(., 6))) %>%
+  rename(
+    Variable = term,
+    Coeficiente = estimate,
+    `Error Estándar` = std.error,
+    `Estadístico z` = statistic,
+    `Valor p` = p.value
+  ) %>%
+  mutate(
+    Significancia = case_when(
+      `Valor p` < 0.001 ~ "***",
+      `Valor p` < 0.01  ~ "**",
+      `Valor p` < 0.05  ~ "*",
+      `Valor p` < 0.1   ~ ".",
+      TRUE ~ ""
+    ),
+    `Valor p` = case_when(
+      is.na(`Valor p`) ~ "1",
+      `Valor p` < 2e-16 ~ "<2e-16",
+      TRUE ~ formatC(`Valor p`, format = "e", digits = 3)
+    ),
+    `OR (e^β)` = round(exp(Coeficiente), 3)
+  )
+
+tabla_logit_final %>%
+  kbl(
+    caption = "Tabla 7. Resultados del modelo de regresión logística (Logit)",
+    align = c("l", "r", "r", "r", "r", "c", "r"),
+    col.names = c("Variable", "Coeficiente", "Error Estándar", "Estadístico z", "Valor p", "Signif.", "OR (e^β)")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#ff0000", color = "white", bold = TRUE) %>%
+  row_spec(1:nrow(tabla_logit_final), 
+           background = ifelse(
+             seq_len(nrow(tabla_logit_final)) %% 2 == 0, "#fdfefe", "#f9ebea"
+           )) %>%
+  column_spec(1, bold = TRUE, width = "3cm", background = "#fafafa") %>%
+  column_spec(2:7, width = "2cm") %>%
+  row_spec(
+    which(tabla_logit_final$Significancia %in% c("*", "**", "***")),
+    bold = FALSE, 
+    background = "#f2d7d5"
+  ) %>%
+  footnote(
+    general = "Elaboración propia con base en el modelo Logit aplicado al dataset Lending Club (2007-2018). 
+               Los valores de OR (e^β) indican el cambio multiplicativo en las probabilidades de incumplimiento 
+               por unidad de cambio en cada variable independiente. Significancia: *** p<0.001, ** p<0.01, * p<0.05, . p<0.1",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+```
+
+Los coeficientes obtenidos reflejan cómo un cambio unitario en cada variable impacta sobre el logaritmo de las probabilidades de incumplir con el préstamo, manteniendo constantes las demás variables del modelo.
+En este sentido, los coeficientes negativos para ingreso y puntaje FICO indican que un mayor ingreso o un mejor puntaje de crédito disminuyen la probabilidad de incumplimiento, reforzando su papel como atenuantes del riesgo.
+Por el contrario, la relación deuda-ingreso y el monto del préstamo presentan coeficientes positivos, señalando que valores más elevados en estas variables se asocian a un mayor riesgo de incumplimiento.
+
+Las variables categóricas vinculadas al propósito del préstamo muestran efectos diferenciados frente a la categoría de referencia: algunas categorías, como ‘Consolidación’ y ‘Otros’, presentan efectos marginalmente significativos, lo que sugiere que el tipo de finalidad del préstamo puede influir, aunque con menor robustez estadística, en el perfil de riesgo del prestatario.
+El intercepto positivo representa el log-odds base de incumplimiento para un individuo situado en la categoría de referencia y con valores nulos en los predictores cuantitativos.
+
+Es importante destacar que la columna de OR (e\^β) incluida en la tabla proporciona una interpretación directa del cambio multiplicativo en las probabilidades de incumplimiento ante una variación unitaria en cada predictor, facilitando así una lectura más práctica de los resultados.
+La reducción observada en la deviance residual respecto a la deviance nula, así como el valor de AIC reportado, reflejan que el modelo ajustado presenta un mejor desempeño predictivo que el modelo vacío y un ajuste satisfactorio en función de la información aportada por los datos.
+Estos elementos, en conjunto, permiten valorar tanto la significancia como la magnitud de los efectos estimados, sirviendo de base para las decisiones de segmentación y ajuste del umbral en la identificación de riesgos dentro del portafolio de préstamos.
+
+En la regresión logística, el umbral de corte (también conocido como cutoff) es el valor a partir del cual las probabilidades estimadas por el modelo se convierten en predicciones de clase.
+Aunque el umbral por defecto suele ser 0.5, es importante recalcar que utilizar este valor no siempre resulta óptimo, especialmente cuando las clases están desbalanceadas o se busca un equilibrio específico entre detectar correctamente los incumplimientos (sensibilidad) y evitar clasificar erróneamente préstamos pagados como “Incumplido” (especificidad).
+
+En este caso, para determinar objetivamente el punto de corte se empleó el índice de Youden, que se calcula a partir de la curva ROC y busca maximizar la suma de sensibilidad y especificidad.
+Este método resulta en un umbral que balancea la detección de impagos reales con la minimización de falsos positivos, ajustándose de manera más precisa al objetivo del análisis.
+
+
+```{r ROC LOGIT}
+roc_data_logit <- data.frame(
+  FalsosPositivos = 1 - roc_logit$specificities,   
+  Sensibilidad = roc_logit$sensitivities
+) %>%
+  arrange(FalsosPositivos)
+
+auc_logit <- round(auc(roc_logit), 3)
+
+
+punto_optimo_idx <- which.min(abs(roc_logit$thresholds - umbral))
+punto_optimo_x <- 1 - roc_logit$specificities[punto_optimo_idx]
+punto_optimo_y <- roc_logit$sensitivities[punto_optimo_idx]
+
+
+Curva_ROC_Logit_interactiva <- plot_ly(roc_data_logit, 
+                                       type = 'scatter', 
+                                       mode = 'lines') %>%
+  add_trace(x = ~FalsosPositivos, 
+            y = ~Sensibilidad,
+            fill = 'tozeroy',
+            fillcolor = 'rgba(250,219,216,0.6)',
+            line = list(color = '#c0392b', width = 3),
+            name = 'Curva ROC',
+            hoverinfo = 'text',
+            text = ~paste('1-Especificidad:', round(FalsosPositivos, 3),
+                         '<br>Sensibilidad:', round(Sensibilidad, 3))) %>%
+  
+  add_trace(x = c(0, 1), 
+            y = c(0, 1),
+            type = 'scatter',
+            mode = 'lines',
+            line = list(color = 'grey60', dash = 'dash', width = 1.5),
+            name = 'Línea de referencia',
+            hoverinfo = 'none') %>%
+
+  add_trace(x = punto_optimo_x,
+            y = punto_optimo_y,
+            type = 'scatter',
+            mode = 'markers',
+            marker = list(color = '#922b21', size = 10, line = list(color = 'white', width = 2)),
+            name = 'Umbral óptimo',
+            hoverinfo = 'text',
+            text = paste('Umbral óptimo:', round(umbral, 3),
+                        '<br>1-Especificidad:', round(punto_optimo_x, 3),
+                        '<br>Sensibilidad:', round(punto_optimo_y, 3))) %>%
+  
+  layout(
+    title = list(
+      text = paste("<b>Figura 9. Curva ROC del Modelo Logit</b><br>",
+                   "<sup>Evaluación del desempeño del modelo de regresión logística</sup>"),
+      x = 0.05,
+      font = list(size = 18, color = '#922b21')
+    ),
+    xaxis = list(
+      title = "<b>1 - Especificidad (Tasa de Falsos Positivos)</b>",
+      range = c(0, 1),
+      zeroline = FALSE,
+      gridcolor = '#ecf0f1',
+      tickvals = seq(0, 1, 0.2),
+      ticktext = seq(0, 1, 0.2)
+    ),
+    yaxis = list(
+      title = "<b>Sensibilidad (Tasa de Verdaderos Positivos)</b>",
+      range = c(0, 1),
+      zeroline = FALSE,
+      gridcolor = '#ecf0f1',
+      tickvals = seq(0, 1, 0.2),
+      ticktext = seq(0, 1, 0.2)
+    ),
+    showlegend = TRUE,
+    legend = list(
+      x = 0.65,
+      y = 0.15,
+      bgcolor = 'rgba(255,255,255,0.8)',
+      bordercolor = '#bdc3c7'
+    ),
+    annotations = list(
+      list(
+        x = 0.65,
+        y = 0.25,
+        text = paste("<b>AUC =", auc_logit, "</b>"),
+        showarrow = FALSE,
+        font = list(size = 16, color = '#922b21'),
+        bgcolor = 'rgba(255,255,255,0.8)',
+        bordercolor = '#c0392b',
+        borderwidth = 1,
+        borderpad = 4
+      )
+    ),
+    plot_bgcolor = 'rgba(248,249,250,0.8)',
+    paper_bgcolor = 'white',
+    margin = list(l = 80, r = 50, t = 100, b = 80)
+  ) %>%
+  add_annotations(
+    x = 0.65,
+    y = 0.20,
+    text = paste("<b>Umbral óptimo =", round(umbral, 3), "</b>"),
+    showarrow = FALSE,
+    font = list(size = 14, color = '#922b21'),
+    bgcolor = 'rgba(255,255,255,0.8)',
+    bordercolor = '#c0392b',
+    borderwidth = 1,
+    borderpad = 4
+  )
+
+
+Curva_ROC_Logit_interactiva
+```
+
+El valor óptimo hallado para el umbral fue aproximadamente igual a `r round(umbral, 3)`.
+Esta selección garantiza que las predicciones del modelo logístico sean lo más equilibradas posible en términos de identificación de impagos y minimización de errores.
+
+El valor del área bajo la curva (AUC) que obtenemos de la curva ROC para el modelo logístico es de aproximadamente 0.646, lo cual indica que el modelo tiene una capacidad moderada para distinguir entre los préstamos que serán pagados y los que incumplirán.
+Un AUC de 0.5 representa un modelo sin capacidad discriminativa (aleatorio), mientras que un AUC de 1 indica discriminación perfecta.
+Por tanto, un valor cercano a 0.65 muestra que el modelo tiene un rendimiento mejor que el azar, pero aún bajo para ser concluyente.
+
+La siguiente gráfica muestra la variación de las principales métricas (precisión, sensibilidad, especificidad y exactitud) en función del punto de corte, permitiendo identificar visualmente el umbral óptimo y su impacto sobre el desempeño del clasificador.
+
+```{r bisaje, warning=FALSE,message=FALSE,dev='png', dpi=100, fig.width=10, fig.height=7}
+performa <- function(cutoff, prob, ref, postarget, negtarget) {
+  predict <- factor(ifelse(prob >= cutoff, postarget, negtarget))
+  
+  if (length(unique(predict)) < 2) return(rep(NA, 4))
+  
+  conf <- caret::confusionMatrix(predict, ref, positive = postarget)
+  
+  acc  <- conf$overall["Accuracy"]
+  rec  <- conf$byClass["Sensitivity"]
+  prec <- conf$byClass["Precision"]
+  spec <- conf$byClass["Specificity"]
+  
+  return(c(recall = rec, accuracy = acc, precision = prec, specificity = spec))
+}
+co <- seq(0.01, 0.80, length = 100)
+result <- t(sapply(co, performa,
+                   prob = p_hat,
+                   ref = test_logit$Estado,
+                   postarget = "Incumplido",
+                   negtarget = "Pagado"))
+
+result <- as.data.frame(result)
+colnames(result) <- c("Recall", "Accuracy", "Precision", "Specificity")
+
+result <- result %>%
+  mutate(Cutoff = co) %>%
+  pivot_longer(cols = c(Recall, Accuracy, Precision, Specificity),
+               names_to = "Métrica",
+               values_to = "Valor")
+
+grafico_umbral_animado <- plot_ly() %>%
+  add_trace(
+    data = result,
+    x = ~Cutoff,
+    y = ~Valor,
+    color = ~Métrica,
+    colors = c(
+      "Recall" = "#FF0000",
+      "Accuracy" = "gold", 
+      "Precision" = "#FF3333",
+      "Specificity" = "#990000"
+    ),
+    type = 'scatter',
+    mode = 'lines',
+    line = list(width = 3),
+    hoverinfo = 'text',
+    text = ~paste(
+      'Métrica:', Métrica,
+      '<br>Umbral:', round(Cutoff, 3),
+      '<br>Valor:', round(Valor, 3)
+    )
+  ) %>%
+  add_segments(
+    x = umbral, xend = umbral,
+    y = 0, yend = 1,
+    line = list(color = "#c0392b", dash = "dash", width = 2),
+    name = "Umbral óptimo",
+    showlegend = FALSE
+  ) %>%
+  add_annotations(
+    x = umbral,
+    y = 0.95,
+    text = paste0("Umbral óptimo = ", round(umbral, 3)),
+    showarrow = FALSE,
+    bgcolor = "#c0392b",
+    bordercolor = "#c0392b",
+    font = list(color = "white", size = 12, weight = "bold"),
+    xref = "x",
+    yref = "y"
+  ) %>%
+  layout(
+    title = list(
+      text = "Desempeño del Modelo Logit según el Umbral (Cutoff)",
+      font = list(size = 20, color = "red")
+    ),
+    xaxis = list(
+      title = "Umbral de decisión",
+      range = c(0, 0.8),
+      dtick = 0.1,
+      zeroline = FALSE
+    ),
+    yaxis = list(
+      title = "Valor de la métrica",
+      range = c(0, 1),
+      dtick = 0.1
+    ),
+    hoverlabel = list(
+      bgcolor = "white",
+      font = list(size = 12, color = "black")
+    ),
+    legend = list(
+      orientation = "h",
+      x = 0.5,
+      y = -0.2,
+      xanchor = "center"
+    ),
+    annotations = list(
+      list(
+        x = 0,
+        y = -0.3,
+        text = "Fuente: Elaboración propia con base en el dataset Lending Club (2007-2018)",
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        font = list(size = 10, color = "gray")
+      )
+    ),
+    margin = list(t = 80, b = 120, l = 80, r = 80)
+  )
+
+grafico_umbral_animado
+
+```
+
+
+Posteriormente, se obtienen las predicciones para el conjunto de prueba, con las cuales se construye la matriz de confusión que permite evaluar el desempeño del modelo en términos de clasificaciones correctas e incorrectas.
+Además, se calculan las métricas clave que describen la eficacia del modelo para detectar tanto los incumplimientos (“Incumplido”) como los préstamos pagados (“Pagado”).
+
+```{r tabla resumen}
+cm_logit <- confusionMatrix(pred_clase_logit, test_logit$Estado, positive = "Pagado")
+
+matriz_conf_logit <- matrix(
+  c(cm_logit$table[1], cm_logit$table[2],
+    cm_logit$table[3], cm_logit$table[4]),
+  nrow = 2, byrow = TRUE,
+  dimnames = list(
+    "Predicción" = c("Pagado", "Incumplido"),
+    "Referencia" = c("Pagado", "Incumplido"))
+)
+
+matriz_conf_logit %>%
+  kbl(
+    caption = "Tabla 8. Matriz de Confusión del Modelo Logit (con umbral óptimo)",
+    align = c("c", "c", "c"),
+    col.names = c("Pagado", "Incumplido")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 14,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#922b21", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3cm") %>%
+  add_header_above(c(" " = 1, "Referencia" = 2),
+                   bold = TRUE, background = "#922b21", color = "white") %>%
+  footnote(
+    general = "La matriz presenta las predicciones frente a los valores reales para la clase positiva 'Pagado'.",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+acc <- round(cm_logit$overall["Accuracy"], 4)
+acc_ci <- paste0("(", round(cm_logit$overall[["AccuracyLower"]], 4), ", ",
+                 round(cm_logit$overall[["AccuracyUpper"]], 4), ")")
+
+no_info_rate <- round(as.numeric(cm_logit$overall[[3]]), 4)
+p_value_acc <- "<2.2e-16"
+kappa <- round(cm_logit$overall["Kappa"], 4)
+mcnemar <- formatC(as.numeric(cm_logit$overall["McnemarPValue"]), format = "e", digits = 2)
+
+metricas_logit <- data.frame(
+  Métrica = c(
+    "Accuracy (Exactitud)",
+    "95% CI (Intervalo de Confianza)",
+    "No Information Rate",
+    "P-Value [Acc > NIR]",
+    "Kappa",
+    "Mcnemar's Test P-Value",
+    "Sensitivity",
+    "Specificity",
+    "Pos Pred Value",
+    "Neg Pred Value",
+    "Prevalence",
+    "Detection Rate",
+    "Detection Prevalence",
+    "Balanced Accuracy"
+  ),
+  Valor = c(
+    acc,
+    acc_ci,
+    no_info_rate,
+    p_value_acc,
+    kappa,
+    mcnemar,
+    round(cm_logit$byClass["Sensitivity"], 4),
+    round(cm_logit$byClass["Specificity"], 4),
+    round(cm_logit$byClass["Pos Pred Value"], 4),
+    round(cm_logit$byClass["Neg Pred Value"], 4),
+    round(cm_logit$byClass["Prevalence"], 4),
+    round(cm_logit$byClass["Detection Rate"], 4),
+    round(cm_logit$byClass["Detection Prevalence"], 4),
+    round(cm_logit$byClass["Balanced Accuracy"], 4)
+  ),
+  Interpretación = c(
+    "Proporción total de clasificaciones correctas realizadas por el modelo Logit.",
+    "Margen de incertidumbre del 95% sobre la precisión estimada del modelo.",
+    "Exactitud esperada si el modelo predijera siempre la clase mayoritaria.",
+    "Evalúa si la exactitud del modelo es significativamente mejor que el azar.",
+    "Grado de concordancia entre predicciones y valores reales, ajustado por azar.",
+    "Evalúa si existe sesgo en los errores entre clases 'Paga' y 'Incumplido'.",
+    "Proporción de casos 'Incumplido' correctamente identificados (sensibilidad).",
+    "Proporción de casos 'Paga' correctamente identificados (especificidad).",
+    "Probabilidad de que una predicción 'Incumplido' sea correcta (precisión positiva).",
+    "Probabilidad de que una predicción 'Pagado' sea correcta (precisión negativa).",
+    "Frecuencia real de la clase 'Incumplido' en los datos de prueba.",
+    "Porcentaje de 'Incumplido' correctamente detectados entre todos los casos.",
+    "Frecuencia con la que el modelo predice 'Incumplido' en el total de observaciones.",
+    "Promedio entre sensibilidad y especificidad, mide desempeño global balanceado."
+  )
+)
+metricas_logit %>%
+  kbl(
+    caption = "Tabla 6. Métricas de Evaluación del Modelo Logit (con umbral óptimo)",
+    align = c("l", "c", "l"),
+    col.names = c("Métrica", "Valor", "Interpretación")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#922b21", color = "white", bold = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "3.5cm") %>%
+  column_spec(2, width = "2.5cm") %>%
+  column_spec(3, width = "10cm") %>%
+  footnote(
+    general = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+```
+
+Los resultados de la matriz de confusión muestran un desempeño moderado del modelo.
+Se observa que el modelo predice correctamente 742 casos de préstamos pagados y 788 casos de incumplimiento, lo cual es positivo.
+Sin embargo, también comete errores importantes, clasificando erróneamente 534 préstamos pagados como incumplidos (falsos positivos) y 436 incumplimientos como pagos (falsos negativos).
+
+La exactitud global de 61.2% indica que el modelo acierta en seis de cada diez casos, lo cual mejora respecto a la tasa de información nula (51%) y es estadísticamente significativo (p-valor \< 2.2e-16).
+No obstante, el coeficiente Kappa de 0.225 revela que la concordancia entre las predicciones y las observaciones reales solo es moderadamente mejor que el azar.
+
+La sensibilidad del 64.4% muestra que el modelo identifica correctamente cerca de dos tercios de los incumplimientos reales, mientras que la especificidad del 58.2% indica que detecta un poco más de la mitad de los pagos correctamente.
+Los valores predictivos también son moderados, con un 59.6% para la clase "Incumplido" y un 63.0% para la clase "Paga".
+
+En conjunto, estos indicadores sugieren que aunque el modelo Logit tiene capacidad para identificar el riesgo crediticio mejor que un modelo aleatorio, su desempeño no es óptimo ni robusto para aplicaciones críticas sin ajustes adicionales o modelos complementarios.
+Representa un punto de partida aceptable, pero requiere optimizaciones para mejorar la confiabilidad en la detección de incumplimientos y minimizar las falsas alarmas que podrían afectar decisiones financieras.
+
+# Comparación de modelos
+
+Para comparar los modelos KNN y regresión logística utilizados en este análisis, se opta por evaluar el desempeño del modelo KNN implementado con el paquete caret, que facilita la integración de variables categóricas y numéricas, así como la optimización de sus hiperparámetros mediante validación cruzada.
+
+La comparación se basa en métricas clave como la exactitud, sensibilidad, especificidad y el área bajo la curva ROC (AUC), que ya hemos abordado anteriormente.
+Estas medidas permiten evaluar cuál modelo clasifica mejor, identifica con mayor precisión los incumplimientos y mantiene un buen equilibrio entre detección y falsos positivos.
+
+A continuación, se presenta una tabla resumen con los valores principales de estas métricas para ambos modelos, que permite una comparación rápida y clara de sus rendimientos y limita el juicio a evidencia cuantitativa.
+
+```{r comparacion}
+library(pROC)
+ 
+pred_clase_knn <- predict(modelo_knn, newdata = test)
+pred_prob_knn  <- predict(modelo_knn, newdata = test, type = "prob")
+test$Estado <- factor(test$Estado, levels = c("Pagado", "Incumplido"))
+test_logit$Estado <- factor(test_logit$Estado, levels = c("Pagado", "Incumplido"))
+
+roc_knn <- roc(response = test$Estado, 
+               predictor = as.numeric(pred_prob_knn$Incumplido),
+               levels = c("Pagado", "Incumplido"),
+               direction = "<")
+
+
+cm_caret <- confusionMatrix(pred_clase_knn, test$Estado, positive = "Pagado")
+
+
+cm_logit <- confusionMatrix(pred_clase_logit, test_logit$Estado, positive = "Pagado")
+
+comparacion_integral <- data.frame(
+  Metrica = c(
+    "Accuracy (Exactitud)",
+    "Sensitivity (Sensibilidad)",
+    "Specificity (Especificidad)",
+    "Precision (Valor Predictivo Positivo)",
+    "Balanced Accuracy",
+    "AUC (Area bajo la curva ROC)",
+    "Casos correctamente clasificados - Paga",
+    "Casos correctamente clasificados - No_paga"
+  ),
+  `Modelo KNN` = c(
+    round(cm_caret$overall["Accuracy"], 4),
+    round(cm_caret$byClass["Sensitivity"], 4),
+    round(cm_caret$byClass["Specificity"], 4),
+    round(cm_caret$byClass["Pos Pred Value"], 4),
+    round(cm_caret$byClass["Balanced Accuracy"], 4),
+    round(auc(roc_knn), 4),
+    cm_caret$table[1, 1],
+    cm_caret$table[2, 2]
+  ),
+  `Modelo Logit` = c(
+    round(cm_logit$overall["Accuracy"], 4),
+    round(cm_logit$byClass["Sensitivity"], 4),
+    round(cm_logit$byClass["Specificity"], 4),
+    round(cm_logit$byClass["Pos Pred Value"], 4),
+    round(cm_logit$byClass["Balanced Accuracy"], 4),
+    round(auc(roc_logit), 4),
+    cm_logit$table[1, 1],
+    cm_logit$table[2, 2]
+  )
+)
+
+comparacion_integral %>%
+  kbl(
+    caption = "Tabla 9. Comparacion integral del desempeno entre los modelos KNN y Logit",
+    align = c("l", "c", "c"),
+    col.names = c("Metrica", "KNN", "Logit")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#c0392b", color = "white", bold = TRUE) %>%
+  row_spec(6, extra_css = "border-bottom: 2px solid #2b6cb0;") %>%
+  column_spec(1, bold = TRUE, width = "5cm") %>%
+  column_spec(2:3, width = "3cm") %>%
+  footnote(
+    general = "Elaboracion propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+```
+
+La tabla de comparación integral entre KNN (con caret) y regresión logística (Logit) muestra que ambos modelos presentan desempeños relativamente similares en la mayoría de los indicadores, aunque existen diferencias que pueden resultar más relevantes dependiendo del objetivo analítico.
+
+Logit logra una mayor exactitud y mejor especificidad, lo que se traduce en un menor número de falsos positivos al identificar pagos correctamente.
+KNN, por su parte, exhibe una sensibilidad ligeramente superior y clasifica más casos de “No_paga” de manera correcta, lo que puede ser valioso cuando la prioridad es identificar el mayor número posible de incumplimientos, aun aceptando un número mayor de falsos positivos.
+
+```{r area}
+
+roc_knn_df <- data.frame(
+  FPR = 1 - roc_knn$specificities,
+  TPR = roc_knn$sensitivities,
+  Modelo = "KNN"
+)
+
+roc_logit_df <- data.frame(
+  FPR = 1 - roc_logit$specificities,
+  TPR = roc_logit$sensitivities,
+  Modelo = "Logit"
+)
+
+roc_comparada <- rbind(roc_knn_df, roc_logit_df)
+
+auc_knn <- round(auc(roc_knn), 3)
+auc_logit <- round(auc(roc_logit), 3)
+
+roc_animada <- plot_ly() %>%
+  add_trace(
+    x = c(0, 1), y = c(0, 1),
+    type = 'scatter', mode = 'lines',
+    line = list(dash = 'dash', color = '#b0b0b0', width = 1),
+    name = 'Línea referencia',
+    showlegend = FALSE
+  ) %>%
+  add_trace(
+    data = roc_knn_df,
+    x = ~FPR, y = ~TPR,
+    type = 'scatter', mode = 'lines',
+    line = list(color = '#922b21', width = 3),
+    name = 'KNN',
+    hoverinfo = 'text',
+    text = ~paste('KNN<br>FPR:', round(FPR, 3), '<br>TPR:', round(TPR, 3))
+  ) %>%
+  add_trace(
+    data = roc_logit_df,
+    x = ~FPR, y = ~TPR,
+    type = 'scatter', mode = 'lines',
+    line = list(color = 'gold', width = 3),
+    name = 'Logit',
+    hoverinfo = 'text',
+    text = ~paste('Logit<br>FPR:', round(FPR, 3), '<br>TPR:', round(TPR, 3))
+  ) %>%
+  layout(
+    title = list(
+      text = "Figura 11. Curvas ROC comparadas entre KNN y Logit",
+      font = list(size = 20, color = "red")
+    ),
+    xaxis = list(
+      title = "Tasa de falsos positivos (1 - Especificidad)",
+      range = c(0, 1),
+      zeroline = FALSE
+    ),
+    yaxis = list(
+      title = "Tasa de verdaderos positivos (Sensibilidad)",
+      range = c(0, 1)
+    ),
+    annotations = list(
+      list(
+        x = 0.7, y = 0.2,
+        text = paste("AUC KNN =", auc_knn),
+        showarrow = FALSE,
+        font = list(color = '#922b21', size = 14, weight = 'bold')
+      ),
+      list(
+        x = 0.7, y = 0.1,
+        text = paste("AUC Logit =", auc_logit),
+        showarrow = FALSE,
+        font = list(color = 'gold', size = 14, weight = 'bold')
+      ),
+      list(
+        x = 0, y = -0.15,
+        text = "Fuente: Elaboración propia con base en el dataset Lending Club (2007-2018)",
+        showarrow = FALSE,
+        xref = 'paper', yref = 'paper',
+        font = list(size = 10, color = 'gray')
+      )
+    ),
+    legend = list(
+      orientation = "h",
+      x = 0.5, y = -0.1,
+      xanchor = "center"
+    ),
+    margin = list(t = 80, b = 120, l = 80, r = 80)
+  )
+
+
+roc_animada
+```
+
+Sin embargo, la diferencia en el área bajo la curva (AUC) es mínima, denotando que ambos modelos muestran una capacidad similar para distinguir entre pagos e impagos de manera global.
+
+```{r barras}
+metricas_comparacion <- data.frame(
+  Métrica = rep(c("Accuracy", "Sensibilidad", "Especificidad", "Precisión", "Balanced Accuracy"), each = 2),
+  Modelo = rep(c("KNN", "Logit"), times = 5),
+  Valor = c(
+    cm_caret$overall["Accuracy"],
+    cm_logit$overall["Accuracy"],
+    cm_caret$byClass["Sensitivity"],
+    cm_logit$byClass["Sensitivity"],
+    cm_caret$byClass["Specificity"],
+    cm_logit$byClass["Specificity"],
+    cm_caret$byClass["Pos Pred Value"],
+    cm_logit$byClass["Pos Pred Value"],
+    cm_caret$byClass["Balanced Accuracy"],
+    cm_logit$byClass["Balanced Accuracy"]
+  )
+)
+
+# Gráfica simple y funcional con título rojo y más grande
+grafica_simple <- plot_ly(
+  data = metricas_comparacion,
+  x = ~Métrica,
+  y = ~Valor,
+  color = ~Modelo,
+  colors = c("KNN" = "gold", "Logit" = "#922b21"),
+  type = "bar"
+) %>%
+  layout(
+    title = list(
+      text = "Figura 12. Comparación de métricas entre KNN y Logit",
+      font = list(size = 20, color = "red")  # Título más grande y rojo
+    ),
+    xaxis = list(title = ""),
+    yaxis = list(title = "Valor", range = c(0, 1)),
+    barmode = "group",
+    legend = list(orientation = "h", x = 0.5, y = -0.2, xanchor = "center"),
+    margin = list(t = 80, b = 100),  # Aumentar margen superior para el título
+    annotations = list(
+      list(
+        text = "Fuente: Elaboración propia con base en Lending Club (2007-2018)",
+        x = 0,
+        y = -0.3,
+        xref = "paper",
+        yref = "paper",
+        showarrow = FALSE,
+        font = list(size = 10, color = "gray")
+      )
+    )
+  )
+
+# Mostrar la gráfica
+grafica_simple
+```
+
+Estas métricas reflejan que ninguno de los dos modelos predomina claramente sobre el otro en todos los aspectos; cada uno presenta fortalezas y limitaciones que se deben ponderar según el contexto del problema y la tolerancia al riesgo o error que se adopten en la aplicación real.
+Así, la decisión de adoptar, combinar, o mejorar alguno de estos enfoques requerirá una reflexión adicional sobre el objetivo de negocio y las restricciones prácticas del sistema de decisión.
+
 
 ::: academic-card
 
@@ -2695,15 +3737,73 @@ modelo_knn <- train(
 # Conclusiones
 
 ::: academic-card
-## Hallazgos Principales
 
-1.  **Relación inversa significativa** entre masa vehicular y eficiencia de combustible
-2.  **Patrón consistente** en la distribución de características técnicas
-3.  **Validación empírica** de los postulados teóricos establecidos
+El presente estudio tuvo como objetivo desarrollar y comparar modelos de clasificación supervisada para predecir el riesgo de incumplimiento en préstamos personales, empleando datos públicos de Lending Club y contrastando dos aproximaciones metodológicas: K-Vecinos Más Cercanos (KNN) y regresión logística (Logit).
+Los hallazgos obtenidos permiten extraer conclusiones tanto sobre el desempeño técnico de los modelos como sobre las implicaciones prácticas para la gestión del riesgo crediticio.
 
-## Implicaciones Prácticas
+Ambos modelos demostraron una capacidad moderada para discriminar entre préstamos pagados e incumplimientos, con métricas de exactitud cercanas al 60% y valores de AUC alrededor de 0.63.
+Estos resultados, si bien superan significativamente el desempeño aleatorio (p \< 0.001), revelan limitaciones importantes en la capacidad predictiva cuando se emplean únicamente variables disponibles ex ante en un contexto de scoring crediticio.
+El modelo de regresión logística alcanzó una exactitud del 59.842% y un AUC de 0.623, mostrando ligeras ventajas en términos de especificidad (65.42%) y precisión general.
+Su naturaleza paramétrica facilitó la interpretación de los efectos individuales de cada predictor: el ingreso anual y el puntaje FICO mostraron efectos protectores estadísticamente significativos (coeficientes negativos, p \< 0.001), mientras que la relación deuda/ingreso y el monto del préstamo incrementaron el riesgo de incumplimiento de manera sistemática.
+La determinación del umbral óptimo mediante el índice de Youden (0.49) permitió balancear sensibilidad (53.88%) y especificidad (65.43%), optimizando la capacidad discriminativa del modelo dentro de sus límites estructurales.
 
-Los resultados obtenidos proporcionan evidencia cuantitativa para el desarrollo de políticas de eficiencia energética y diseño vehicular optimizado.
+Por su parte, el modelo KNN implementado con caret evidenció una exactitud del 59.76% y un AUC de 0.616, con una sensibilidad superior (55.28%) que lo hace más efectivo para identificar casos de incumplimiento, aunque a costa de una especificidad menor (63.10%).
+La optimización automática mediante validación cruzada identificó k=153 como el valor óptimo, y la incorporación de la variable categórica proposito_agrupado enriqueció la información disponible respecto a implementaciones más básicas del algoritmo.
+No obstante, la naturaleza no paramétrica de KNN limita la interpretabilidad de las decisiones, lo que puede representar una desventaja en contextos regulatorios o cuando se requiere justificar explícitamente los criterios de aprobación crediticia.
+
+El análisis descriptivo y los coeficientes estimados en el modelo Logit confirmaron patrones esperados desde la teoría del riesgo crediticio.
+El puntaje FICO se consolidó como el predictor más robusto, reflejando su capacidad para sintetizar información histórica sobre comportamiento de pago.
+Los ingresos elevados actuaron como factor protector, aunque con efectos moderados, posiblemente debido a la subdeclaración o variabilidad temporal inherente a esta medida.
+La relación deuda/ingreso demostró ser un indicador crítico de presión financiera, con efectos positivos significativos sobre la probabilidad de default.
+
+El propósito del préstamo, aunque incluido en ambos modelos, mostró efectos marginalmente significativos o no significativos en varias categorías, sugiriendo que su poder discriminativo es limitado cuando se controla por variables financieras cuantitativas.
+Esto indica que las diferencias en el riesgo asociado al destino del crédito pueden estar mediadas principalmente por otras características del solicitante (capacidad de pago, historial) más que por el propósito en sí mismo.
+
+El monto del préstamo presentó un efecto positivo sobre el incumplimiento, coherente con la hipótesis de que obligaciones mayores incrementan la carga mensual y alargan el horizonte de exposición al riesgo, especialmente en ausencia de ajustes proporcionales en las condiciones o capacidad de pago del solicitante.
+
+La construcción de una muestra balanceada mediante undersampling (5,000 casos por clase) permitió entrenar modelos sin sesgos hacia la clase mayoritaria, mejorando la sensibilidad en la detección de incumplimientos.
+Esta decisión metodológica fue apropiada para el contexto de evaluación de algoritmos, aunque debe reconocerse que la prevalencia real en la población original (aproximadamente 20% de incumplimientos) implica que las métricas obtenidas podrían variar en aplicaciones operativas donde se preserve el desbalance natural.
+
+El uso de validación cruzada estratificada y la búsqueda sistemática de hiperparámetros en KNN garantizaron robustez en la selección de modelos, minimizando el riesgo de sobreajuste.
+La estandarización de variables numéricas y el tratamiento adecuado de valores extremos mediante filtros justificados contribuyeron a la calidad de los datos empleados en el modelado.
+
+La fijación de semillas aleatorias (set.seed(28)) en todas las operaciones estocásticas aseguró reproducibilidad, un requisito esencial para la validación científica y la replicabilidad de los resultados.
+
+**¿Logró el estudio responder al objetivo de investigación?**
+
+Los modelos desarrollados demostraron capacidad para identificar patrones de riesgo y clasificar solicitantes con un desempeño parcialmente superior al azar, cumpliendo así con el propósito de comparar dos aproximaciones metodológicas (paramétrica vs. no paramétrica) y evaluar su aplicabilidad en scoring crediticio.
+Sin embargo, los niveles de exactitud y AUC obtenidos (cercanos al 60% y 0.65 respectivamente) son insuficientes para sostener un sistema de decisión crediticia operativo sin complementos adicionales.
+
+En términos técnicos, el estudio evidenció que las variables financieras tradicionales (ingreso, DTI, FICO, monto) contienen señal predictiva real, pero esta señal es limitada.
+La brecha entre el desempeño observado y el desempeño óptimo sugiere que existen factores de riesgo no capturados por las variables disponibles, tales como: características cualitativas del empleo, estabilidad laboral, estructura del hogar, historial de pagos no financieros, comportamiento transaccional, o incluso variables macroeconómicas y temporales que podrían modular el riesgo de incumplimiento.
+
+Desde una perspectiva práctica, ninguno de los dos modelos alcanzó niveles de sensibilidad y especificidad suficientes para ser implementados como herramienta única de decisión crediticia.
+La tasa de falsos negativos (préstamos clasificados como pagados que terminan en incumplimiento) osciló entre 36% y 44%, lo que implicaría aceptar solicitantes de alto riesgo con consecuencias financieras adversas.
+Simultáneamente, las tasas de falsos positivos (préstamos clasificados como incumplimientos que en realidad se pagarían) oscilaron entre 42% y 46%, lo que limitaría el acceso al crédito de solicitantes viables y reduciría la rentabilidad de la cartera.
+
+-   
+
+Con base en los hallazgos, se proponen varias estrategias para mejorar la práctica crediticia.
+La incorporación de variables adicionales, como antigüedad laboral, tipo de contrato o comportamiento transaccional, puede enriquecer la base de datos y potenciar la capacidad predictiva.
+Además, la adopción de modelos ensemble, que combinan múltiples algoritmos para captar relaciones complejas, representa una prometedora vía para superar las limitaciones de modelos individuales.
+
+La segmentación de cartera permite adaptar modelos específicos a grupos homogéneos, optimizando la precisión según características particulares.
+Es recomendable también implementar ajustes dinámicos en los umbrales de decisión para adaptarse al apetito de riesgo y condiciones del mercado.
+En la práctica, un sistema híbrido que integre modelos estadísticos y reglas de negocio, junto con monitoreo continuo y recalibración, garantizará mayor robustez y adaptabilidad frente a cambios.
+
+No obstante, es importante reconocer las limitaciones del análisis realizado.
+El uso de undersampling y la exclusión de valores extremos pueden sesgar las métricas obtenidas, y la base pública carece de información detallada que está disponible en entornos reales de crédito.
+Tampoco se controlaron efectos temporales ni se aplicó validación cruzada extensa, lo que limita la generalización de los resultados.
+
+Finalmente, el estudio confirma la viabilidad del aprendizaje supervisado para la clasificación de riesgo crediticio, pero evidencia que los modelos Logit y KNN por sí solos en estas condiciones podrian no ser suficientes para aplicaciones operativas directas.
+Cada enfoque tiene fortalezas y debilidades complementarias, y la mejora continua mediante inclusive más variables, técnicas avanzadas y controles éticos es clave para su aplicación práctica.
+
+# Bibliografia
+
+-   Paredes, D. (2024). Aprendizaje supervisado. <https://bookdown.org/dparedesi/data-science-con-r/aprendizaje-supervisado.html>\
+-   Ariza-Garzón, M. J., Sanz-Guerrero, M., Javier, A. G., & Club, L. (2024). Lending Club loan dataset for granting models. Zenodo. <https://doi.org/10.5281/zenodo.11295916>
+-   James, G., Witten, D., Hastie, T. & Tibshirani, R. (2021). An Introduction to Statistical Learning with Applications in R (2nd ed.). Springer.\
+-   Aguirre, J., et al. (2024). Modelo de regresión lineal para el análisis del ingreso de los hogares en la región Pacífica (ECV 2024). Publicado en RPubs: <https://rpubs.com/joanaguirre04/1353677>
 :::
 
 ------------------------------------------------------------------------
