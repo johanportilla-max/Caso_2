@@ -780,15 +780,40 @@ Los resultados serán interpretados en términos estadísticos.
 # Metodología
 
 ::: academic-card
-El presente estudio siguió un enfoque de aprendizaje supervisado orientado a la clasificación binaria (pagado / incumplido).
-El procedimiento general consistió en aplicar dos familias de clasificadores (Logit y KNN) sobre datos previamente preparados, y evaluar su desempeño mediante métricas complementarias y procedimientos de validación.
+El presente estudio adoptó un enfoque de aprendizaje supervisado orientado a la clasificación binaria del estado de pago de préstamos (Pagado/Incumplido), implementado mediante dos familias de algoritmos: K-Vecinos Más Cercanos (KNN) y regresión logística (Logit). La metodología se estructuró en cinco etapas fundamentales que garantizaron la reproducibilidad, validez y comparabilidad de los resultados.
 
-La implementación se realizó en R empleando flujos estandarizados de preprocesamiento y modelado.
-Para reducir la influencia de escalas dispares y valores extremos, se aplicaron filtros sobre outliers relevantes y se normalizaron las variables numéricas (centrado y escala) cuando correspondió; dicho escalado fue especialmente crítico para KNN, dada su dependencia de distancias euclidianas.
-La muestra final fue construida de forma estratificada para asegurar balance entre las clases objetivo, y todas las operaciones aleatorias (muestreo y particionado); además, se fijó la semilla (set.seed(28)) para garantizar reproducibilidad.
+## Preparación y construcción de la base de datos
 
-En cuanto al ajuste de modelos, la regresión logística se estimó mediante glm(..., family = binomial()), obteniendo probabilidades predictivas que permitieron tanto el análisis de coeficientes como la construcción de curvas ROC y la determinación de umbrales operativos (índice de Youden).
-El KNN se abordó de dos maneras; una implementación básica con class::knn, evaluando k en un rango (k = 1:100) y seleccionando el k que maximizó la exactitud fuera de muestra; y una versión integrada en caret::train() que incorporó validación cruzada estratificada (5 folds), búsqueda automática de hiperparámetros (tuneLength) y optimización según el AUC (métrica ROC), lo que permitió una selección de modelo más robusta frente a la variabilidad de los datos.
+Se utilizó la base de datos pública de Lending Club (2007-2018), plataforma de préstamos peer-to-peer que conecta solicitantes con inversionistas. El conjunto original fue sometido a un proceso de limpieza que incluyó la selección de variables relevantes (ingreso anual, relación deuda/ingreso, monto del préstamo, puntaje FICO, propósito del préstamo y estado de pago), renombrado de variables para facilitar su interpretación, y aplicación de filtros para eliminar valores extremos (ingresos superiores a USD 250,000 y relaciones deuda/ingreso mayores al 50%).
+
+Para abordar el desbalance entre clases, se implementó una estrategia de muestreo estratificado balanceado mediante undersampling, seleccionando aleatoriamente 5,000 observaciones de cada clase (Pagado/Incumplido), resultando en una muestra final de 10,000 registros equitativamente distribuidos. Esta decisión metodológica evitó sesgos derivados del desbalance natural y facilitó la evaluación equilibrada del desempeño de los modelos.
+
+La variable categórica propósito del préstamo fue reagrupada en categorías más amplias mediante colapso factorial: Consolidación (consolidación de deuda y tarjetas de crédito), Casa/Vehículo (mejoras del hogar, compras mayores, automóvil, vivienda), Negocio/Estudio (pequeños negocios y educación), y Otros (categorías residuales). La variable dependiente Estado se codificó como factor binario con niveles "Pagado" (0) e "Incumplido" (1).
+
+## Partición de datos
+Con una semilla aleatoria fija (set.seed(0408)) para garantizar reproducibilidad, se realizó una partición aleatoria estratificada 75/25: el 75% de las observaciones (7,500 registros) se destinó al conjunto de entrenamiento para ajustar los modelos, mientras que el 25% restante (2,500 registros) se reservó como conjunto de prueba independiente para evaluar el desempeño fuera de muestra. Esta proporción sigue las recomendaciones estándares en aprendizaje supervisado, equilibrando la disponibilidad de datos para el entrenamiento con la necesidad de validación externa robusta.
+
+## Preprocesamiento de variables
+Dada la sensibilidad del algoritmo KNN a las diferencias de escala entre variables, se aplicó normalización mediante centrado y escalado (estandarización z-score) a todas las variables numéricas utilizando la función preProcess() del paquete caret. Este proceso consistió en restar la media y dividir por la desviación estándar de cada variable en el conjunto de entrenamiento, aplicando posteriormente la misma transformación al conjunto de prueba para evitar fugas de información (data leakage).
+
+Para la regresión logística, aunque la normalización no es estrictamente necesaria, se mantuvo el preprocesamiento para garantizar comparabilidad entre modelos y facilitar la interpretación de los coeficientes estimados.
+
+## Modelado y selección de hiperparámetros
+### Modelo K-Vecinos Más Cercanos (KNN)
+Se implementaron dos variantes del algoritmo KNN:
+
+KNN básico (paquete class): Se evaluaron múltiples valores de k (número de vecinos) en el rango 1 a 200 mediante un ciclo iterativo que calculó la precisión del modelo en el conjunto de prueba para cada valor. El valor óptimo de k se seleccionó como aquel que maximizó la exactitud fuera de muestra. Esta implementación utilizó únicamente variables numéricas debido a las limitaciones del paquete class para manejar variables categóricas directamente.
+
+KNN avanzado (paquete caret): Se utilizó la función train() que integró validación cruzada estratificada de 5 pliegues (5-fold cross-validation), permitiendo una estimación más robusta del desempeño del modelo y reduciendo el riesgo de sobreajuste. La búsqueda de hiperparámetros exploró valores de k entre 1 y 150 mediante el argumento tuneLength = 150, optimizando según el área bajo la curva ROC (AUC) como métrica objetivo. Esta variante permitió incorporar tanto variables numéricas como la variable categórica propósito agrupado mediante conversión automática a variables dummy, enriqueciendo la información disponible para el modelo.
+
+El algoritmo KNN opera clasificando nuevas observaciones según la mayoría de clases de sus k vecinos más cercanos en el espacio de características, utilizando distancia euclidiana como medida de proximidad. Su naturaleza no paramétrica le permite capturar patrones locales complejos sin asumir relaciones funcionales específicas entre predictores y respuesta.
+
+### Regresión Logística (Logit)
+El modelo de regresión logística se estimó mediante la función glm() con familia binomial y función de enlace logit. Este enfoque paramétrico modela el logaritmo del odds ratio (razón de probabilidades) como combinación lineal de las variables predictoras
+Las probabilidades predichas se obtienen mediante transformación logística inversa, resultando en valores entre 0 y 1 que representan la probabilidad estimada de incumplimiento.
+
+Para determinar el umbral de clasificación óptimo, se empleó el índice de Youden extraído de la curva ROC, que maximiza la suma de sensibilidad y especificidad: 
+Youden
 :::
 
 ## Definición de las variables
@@ -1988,210 +2013,264 @@ p_box_ingreso_corregido
 La comparación del ingreso por estado de pago revela que los prestatarios que cumplen con sus obligaciones presentan una mediana de ingreso ligeramente más alta que los morosos.
 Aunque la dispersión en ambos grupos es amplia, se observa una mayor presencia de valores atípicos elevados en el grupo “Paga”, lo cual sugiere que los ingresos más altos se asocian con una mayor probabilidad de cumplimiento.
 
-### Comparación de variables numéricas según estado de pago
-```{r todasvariable,message=FALSE,warning=FALSE}
-library(tidyr)
-datos_largos <- Base_datos %>%
-  pivot_longer(
-    cols = c(Ingreso, Relacion_deuda_ingreso, Monto_prestado, FICO),
-    names_to = "variable", 
-    values_to = "valor"
-  ) %>%
-  mutate(
-    variable = factor(variable,
-      levels = c("Ingreso", "Relacion_deuda_ingreso", "Monto_prestado", "FICO"),
-      labels = c("Ingreso Anual", "Relación Deuda/Ingreso", "Monto del Préstamo", "Puntaje FICO")
-    )
-  )
-
-
-crear_boxplot_estatico <- function(var_nombre, titulo_display) {
-  
-  datos_var <- datos_largos %>% filter(variable == var_nombre)
-  
-  if (var_nombre == "Ingreso Anual" | var_nombre == "Monto del Préstamo") {
-    tickformat <- "$,.0f"
-  } else if (var_nombre == "Relación Deuda/Ingreso") {
-    tickformat <- ".1%"
-  } else {
-    tickformat <- ",.0f"
-  }
-
-  stats <- datos_var %>%
-    group_by(Estado) %>%
-    summarise(
-      mediana = median(valor, na.rm = TRUE),
-      n = n()
-    )
-  
-  p <- plot_ly() %>%
-    add_boxplot(
-      data = datos_var %>% filter(Estado == "Pagado"),
-      x = "Pagado",
-      y = ~valor,
-      name = "Pagado",
-      boxpoints = FALSE,
-      line = list(color = SC["dark_red"], width = 2),
-      fillcolor = paste0(SC["primary_red"], "30"),
-      marker = list(color = SC["primary_red"]),
-      width = 0.5
-    ) %>%
-    add_boxplot(
-      data = datos_var %>% filter(Estado == "Incumplido"),
-      x = "Incumplido",
-      y = ~valor,
-      name = "Incumplido",
-      boxpoints = FALSE,
-      line = list(color = SC["secondary_red"], width = 2),
-      fillcolor = paste0(SC["accent_red"], "30"),
-      marker = list(color = SC["accent_red"]),
-      width = 0.5
-    ) %>%
-    layout(
-      title = list(
-        text = titulo_display,  
-        font = list(
-          family = "Playfair Display",
-          size = 16,
-          color = SC["primary_red"]
-        )
-      ),
-      xaxis = list(
-        title = "",
-        tickfont = list(family = "Source Serif Pro", size = 11),
-        gridcolor = SC["light_red"]
-      ),
-      yaxis = list(
-        title = "",
-        tickformat = tickformat,
-        gridcolor = SC["light_red"]
-      ),
-      plot_bgcolor = SC["parchment"],
-      paper_bgcolor = "white",
-      margin = list(l = 70, r = 30, t = 80, b = 60),  
-      showlegend = FALSE,
-      annotations = list(
-        list(
-          x = "Pagado",
-          y = stats$mediana[stats$Estado == "Pagado"],
-          text = paste("Mediana:", 
-                      ifelse(var_nombre == "Relación Deuda/Ingreso", 
-                             scales::percent(stats$mediana[stats$Estado == "Pagado"]),
-                             ifelse(var_nombre %in% c("Ingreso Anual", "Monto del Préstamo"),
-                                    scales::dollar(stats$mediana[stats$Estado == "Pagado"]),
-                                    round(stats$mediana[stats$Estado == "Pagado"])))),
-          showarrow = FALSE,
-          font = list(family = "Source Serif Pro", size = 9, color = SC["dark_red"]),
-          bgcolor = "white",
-          bordercolor = SC["dark_red"]
-        ),
-        list(
-          x = "Incumplido",
-          y = stats$mediana[stats$Estado == "Incumplido"],
-          text = paste("Mediana:", 
-                      ifelse(var_nombre == "Relación Deuda/Ingreso", 
-                             scales::percent(stats$mediana[stats$Estado == "Incumplido"]),
-                             ifelse(var_nombre %in% c("Ingreso Anual", "Monto del Préstamo"),
-                                    scales::dollar(stats$mediana[stats$Estado == "Incumplido"]),
-                                    round(stats$mediana[stats$Estado == "Incumplido"])))),
-          showarrow = FALSE,
-          font = list(family = "Source Serif Pro", size = 9, color = SC["dark_red"]),
-          bgcolor = "white",
-          bordercolor = SC["dark_red"]
-        )
-      )
-    )
-  
-  return(p)
-}
-
-plot_ingreso <- crear_boxplot_estatico("Ingreso Anual", "Distribución del Ingreso Anual")
-plot_dti <- crear_boxplot_estatico("Relación Deuda/Ingreso", "Distribución de la Relación Deuda/Ingreso") 
-plot_monto <- crear_boxplot_estatico("Monto del Préstamo", "Distribución del Monto del Préstamo")
-plot_fico <- crear_boxplot_estatico("Puntaje FICO", "Distribución del Puntaje FICO")
-
-p_comparativo_final <- subplot(
-  plot_ingreso, plot_dti, plot_monto, plot_fico,
-  nrows = 2,
-  shareX = TRUE,
-  titleY = TRUE,
-  margin = 0.08 
-) %>%
-  layout(
-    title = list(
-      text = "<b>Comparación de Variables por Estado de Pago</b>",
-      font = list(
-        family = "Playfair Display",
-        size = 24,
-        color = SC["primary_red"]
-      ),
-      x = 0.5,
-      y = 0.98  
-    ),
-    font = list(family = "Source Serif Pro", size = 12),
-    annotations = list(
-      list(
-        x = 0.5,
-        y = -0.1,
-        text = "Estado de Pago",
-        showarrow = FALSE,
-        xref = "paper",
-        yref = "paper",
-        xanchor = "center",
-        font = list(
-          family = "Playfair Display",
-          size = 14,
-          color = SC["dark_red"]
-        )
-      ),
-      list(
-        x = -0.08,
-        y = 0.5,
-        text = "Valor",
-        textangle = -90,
-        showarrow = FALSE,
-        xref = "paper",
-        yref = "paper",
-        xanchor = "center",
-        font = list(
-          family = "Playfair Display",
-          size = 14,
-          color = SC["dark_red"]
-        )
-      ),
-      list(
-        x = 1,
-        y = -0.15,
-        text = "Fuente: Dataset Lending Club",
-        showarrow = FALSE,
-        xref = "paper",
-        yref = "paper",
-        xanchor = "right",
-        font = list(
-          family = "Source Serif Pro",
-          size = 10,
-          color = SC["secondary_red"]
-        )
-      )
-    )
-  ) %>%
-  config(
-    displayModeBar = FALSE,  
-    staticPlot = TRUE        
-  )
-
-p_comparativo_final
-```
-
-Conjuntamente, los boxplots sugieren un patrón coherente: mayor ingreso y mayor puntaje FICO actúan como factores protectores frente al incumplimiento, mientras que una mayor relación deuda/ingreso incrementa el riesgo.
-
-El monto del préstamo por sí solo no explica totalmente el comportamiento (medianas similares), pero su mayor dispersión entre los morosos indica que créditos elevados en prestatarios vulnerables pueden agravar la probabilidad de default.
-
-Para la gestión del riesgo crediticio estas observaciones implican: priorizar la evaluación de DTI y FICO en la toma de decisiones, contemplar límites o condiciones más estrictas para solicitudes con alta DTI, y considerar estrategias de segmentación donde el tamaño del préstamo se ajuste a la capacidad de pago observada.
 
 ## Relaciónes
 
-### Relación entre puntaje FICO y relación deuda/ingreso
+### Relación entre proposito y Estado
+
+La Figura 7 presenta la distribución del estado de pago (Pagado vs. Incumplido) según el propósito del préstamo, permitiendo identificar patrones clave de riesgo crediticio asociados a diferentes destinos de financiación.
+
+```{r proposito}
+library(plotly)
+library(dplyr)
+
+
+tabla_proposito <- Base_datos %>%
+  count(Proposito, Estado) %>%
+  group_by(Proposito) %>%
+  mutate(
+    Porcentaje = n/sum(n)*100,
+    Estado = factor(Estado, levels = c("Pagado", "Incumplido")) 
+  )
+
+
+colores_estado <- c("Pagado" = "#F8F9FA", "Incumplido" = "#DC143C")
+
+
+plot_ly(tabla_proposito, 
+        x = ~Proposito, 
+        y = ~n, 
+        color = ~Estado,
+        colors = colores_estado,
+        type = "bar",
+        text = ~paste0("", round(Porcentaje, 1), "%"),
+        textposition = "inside",
+        textfont = list(color = "black", size = 12, family = "Arial"),
+        hovertemplate = paste(
+          "<b>Propósito:</b> %{x}<br>",
+          "<b>Estado:</b> %{fullData.name}<br>",
+          "<b>Cantidad:</b> %{y}<br>",
+          "<b>Porcentaje:</b> %{text}<br>",
+          "<extra></extra>"
+        ),
+        marker = list(
+          line = list(
+            color = "rgba(0,0,0,0.3)",
+            width = 1
+          )
+        )
+) %>%
+  layout(
+    barmode = "stack",
+    title = list(
+      text = "<b>Figura 7. Distribución del Estado de Pago según Propósito</b>",
+      x = 0.05,
+      font = list(size = 18, color = "#8B0000", family = "Arial")
+    ),
+    xaxis = list(
+      title = list(text = "<b>Propósito del Préstamo</b>", font = list(size = 14)),
+      tickfont = list(size = 12),
+      categoryorder = "total descending" 
+    ),
+    yaxis = list(
+      title = list(text = "<b>Número de Préstamos</b>", font = list(size = 14)),
+      tickfont = list(size = 12),
+      gridcolor = "rgba(128,128,128,0.2)"
+    ),
+    legend = list(
+      title = list(text = "<b>Estado:</b>"),
+      orientation = "h",
+      x = 0.5,
+      xanchor = "center",
+      y = -0.2,
+      font = list(size = 12)
+    ),
+    margin = list(l = 50, r = 50, t = 80, b = 100),
+    plot_bgcolor = "white",
+    paper_bgcolor = "white",
+    hoverlabel = list(
+      bgcolor = "white",
+      bordercolor = "#DC143C",
+      font = list(color = "black", size = 12)
+    )
+  ) %>%
+  add_annotations(
+    text = "*Los porcentajes muestran la distribución dentro de cada propósito",
+    x = 0,
+    y = -0.25,
+    xref = "paper",
+    yref = "paper",
+    showarrow = FALSE,
+    font = list(size = 10, color = "gray"),
+    xanchor = "left"
+  )
+```
+
+El análisis revela marcadas diferencias en el comportamiento de pago según el propósito del préstamo. La categoría de Consolidación de Deudas presenta un riesgo crediticio elevado, con una distribución casi equilibrada entre préstamos pagados (50.1%) e incumplidos (49.9%), sugiriendo que los clientes que buscan consolidar deudas existentes pueden estar experimentando dificultades financieras previas que afectan su capacidad de pago. Este patrón contrasta notablemente con otros propósitos que muestran desempeños significativamente mejores.
+
+### Relación entre ingreso y monto del préstamo
+
+```{r montovsingresos}
+corr_val <- cor(Base_datos$Ingreso, Base_datos$Monto_prestado, use = "complete.obs")
+
+
+p_monto <- ggplot(Base_datos, aes(x = Ingreso, y = Monto_prestado)) +
+  geom_point(aes(color = Estado),
+             alpha = 0.6, size = 1.8) +
+  geom_smooth(
+    method = "gam",
+    formula = y ~ s(x, bs = "cs"),
+    color = "#8B0000",  
+    fill = "#FFB6C1",   
+    size = 1.2,
+    se = TRUE,
+    alpha = 0.3
+  ) +
+  scale_x_continuous(
+    labels = scales::dollar_format(prefix = "$", big.mark = ","),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  scale_y_continuous(
+    labels = scales::dollar_format(prefix = "$", big.mark = ","),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  scale_color_manual(
+    values = c("Pagado" = "gold", "Incumplido" = "#DC143C"),  
+    name = "Estado del Préstamo"
+  ) +
+  labs(
+    title = "Figura 8. Relación entre Ingreso del Solicitante y Monto del Préstamo",
+    subtitle = paste("Correlación:", round(corr_val, 3)),
+    x = "Ingreso Anual del Solicitante (USD)",
+    y = "Monto del Préstamo (USD)",
+    caption = "Fuente: Datos crediticios de la cartera de préstamos"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", color = "#8B0000", hjust = 0.5),
+    plot.subtitle = element_text(color = "#666666", hjust = 0.5, size = 12),
+    plot.caption = element_text(color = "#999999", size = 10),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_line(color = "grey90", linewidth = 0.3),
+    axis.title = element_text(face = "bold", color = "#333333"),
+    legend.title = element_text(face = "bold"),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.margin = margin(15, 20, 15, 20)
+  )
+
+
+p_monto
+```
+
+El gráfico confirma que el ingreso es un predictor relevante del monto del préstamo —a mayor ingreso, mayor tendencia a recibir montos mayores— pero la relación es moderada y sujeta a límites operativos y a la influencia de otras variables crediticias.
+Por tanto, las decisiones de crédito deben combinar información de ingreso con medidas de riesgo (DTI, FICO) y restricciones de producto para optimizar la asignación y minimizar el riesgo de default.
+
+## Correlacion
+
+### Matriz de correlaciones entre variables numéricas
+
+La figura 9 representa la matriz de correlaciones que muestra las relaciones lineales entre las principales variables numéricas del análisis: ingreso, relación deuda/ingreso, monto del préstamo y puntaje FICO.
+
+```{r correlacion}
+library(plotly)
+numeric_vars <- Base_datos %>%
+  select(Ingreso, Relacion_deuda_ingreso, Monto_prestado, FICO)
+
+cor_mat <- cor(numeric_vars, use = "complete.obs")
+
+
+p_cor <- ggcorrplot(
+  cor_mat,
+  lab = TRUE,
+  lab_size = 4,
+  colors = c("#8B0000", "#FFFFFF", "#FF0000"), 
+  outline.col = "white",
+  type = "full",  
+  ggtheme = theme_minimal(base_size = 13),
+  title = "Figura 9. Matriz de Correlaciones - Variables Numéricas",
+  show.diag = TRUE,  
+  sig.level = 0.05,  
+  insig = "pch",     
+  pch = 4,           
+  pch.col = "grey50",
+  pch.cex = 3,
+  tl.cex = 12,       
+  tl.col = "black",
+  tl.srt = 45       
+) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(
+      size = 12, 
+      angle = 45, 
+      hjust = 1, 
+      vjust = 1,
+      face = "bold"
+    ),
+    axis.text.y = element_text(
+      size = 12,
+      face = "bold"
+    ),
+    plot.title = element_text(
+      size = 18, 
+      face = "bold", 
+      hjust = 0.5,
+      color = "#8B0000",
+      margin = margin(b = 15)
+    ),
+    panel.grid.major = element_line(color = "grey90"),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA)
+  )
+
+
+p_cor_interactivo <- ggplotly(
+  p_cor, 
+  tooltip = c("x", "y", "text"),
+  width = 800,
+  height = 600
+) %>%
+  layout(
+    title = list(
+      text = "Figura 9. Matriz de Correlaciones - Variables Numéricas",
+      font = list(size = 20, color = "#8B0000", family = "Arial")
+    ),
+    margin = list(l = 50, r = 50, t = 80, b = 50),
+    plot_bgcolor = "white",
+    paper_bgcolor = "white",
+    xaxis = list(tickangle = -45),
+    hoverlabel = list(
+      bgcolor = "#8B0000",
+      font = list(color = "white", size = 12)
+    )
+  ) %>%
+  style(
+    hoverinfo = "x+y+z",
+    hovertemplate = paste(
+      "<b>Variable X:</b> %{x}<br>",
+      "<b>Variable Y:</b> %{y}<br>",
+      "<b>Correlación:</b> %{z:.3f}<br>",
+      "<extra></extra>"
+    )
+  )
+
+
+p_cor_interactivo
+```
+
+En general, los coeficientes de correlación son bajos o moderados, lo que indica que no existen relaciones lineales extremadamente fuertes entre las variables, aunque sí se observan patrones lógicos y consistentes con la teoría financiera.
+
+
+El ingreso presenta una correlación positiva moderada (0.49) con el monto del préstamo, lo cual sugiere que los individuos con mayores ingresos tienden a solicitar montos de préstamo más altos, posiblemente debido a su mayor capacidad de pago.
+Por otro lado, el ingreso tiene una correlación negativa (-0.19) con la relación deuda/ingreso, lo que implica que a medida que los ingresos aumentan, la proporción de deuda sobre el ingreso tiende a reducirse, reflejando una posición financiera más saludable.
+
+Respecto al puntaje FICO, las correlaciones son positivas pero débiles con el ingreso (0.12) y con el monto del préstamo (0.1), indicando que los clientes con mayor ingreso o montos de préstamo ligeramente más altos tienden a tener mejores historiales crediticios, aunque la relación no es muy fuerte.
+La correlación negativa entre puntaje FICO y relación deuda/ingreso (-0.1) refuerza la idea de que niveles de endeudamiento más altos se asocian con un menor puntaje crediticio, aunque el efecto no es muy pronunciado.
+
+En conjunto, la matriz refleja una consistencia entre las variables financieras: los prestatarios con ingresos mayores y una menor carga de deuda relativa tienden a mostrar mejores indicadores de riesgo (mayor FICO), mientras que quienes tienen una alta relación deuda/ingreso podrían ser más vulnerables al incumplimiento.
+Sin embargo, la baja magnitud de las correlaciones sugiere que el comportamiento crediticio depende también de otros factores no considerados en esta matriz, como historial de pagos, propósito del préstamo o condiciones económicas externas.
 
 # Modelos de clasificación
 
@@ -2352,7 +2431,7 @@ Grafico_precision_interactivo <- plot_ly(resultado, x = ~k) %>%
   ) %>%
   layout(
     title = list(
-      text = "<b>figura 7. Precisión del Modelo KNN según Número de Vecinos (k)</b>",
+      text = "<b>figura 10. Precisión del Modelo KNN según Número de Vecinos (k)</b>",
       font = list(
         family = "Playfair Display",
         size = 22,
@@ -2722,7 +2801,7 @@ Grafico_ROC_interactivo <- plot_ly(modelo_knn$results, x = ~k) %>%
   ) %>%
   layout(
     title = list(
-      text = "<b>Figura 8. Acurracy del modelo KNN según número de vecinos (k)</b>",
+      text = "<b>Figura 11. Acurracy del modelo KNN según número de vecinos (k)</b>",
       font = list(
         family = "Playfair Display",  
         size = 20,
@@ -2909,11 +2988,11 @@ metricas_tabla <- data.frame(
     "El resultado significativo del test de McNemar evidencia diferencias en la clasificación entre clases.",
     "El modelo identifica correctamente el 63.1% de los casos de incumplimiento (Incumplido).",
     "Detecta correctamente el 55.37% de los casos de pago (Pagado).",
-    "Cuando predice 'No_paga', acierta en el 57.7% de los casos.",
-    "Cuando predice 'Paga', acierta en el 60.12% de los casos.",
+    "Cuando predice 'Incumplido', acierta en el 60.12% de los casos.",
+    "Cuando predice 'Pagado', acierta en el 58.46% de los casos.",
     "El 51.6 de los datos corresponde a la clase 'Incumplido'.",
     "El modelo detecta correctamente el 32.56% de los casos reales de incumplimiento.",
-    "Predice la clase 'Incumplido' en el 55.9% de los casos totales.",
+    "Predice la clase 'Incumplido' en el 54.16% de los casos totales.",
     "Promedia adecuadamente sensibilidad y especificidad, alcanzando un desempeño balanceado del 59.24%."
   )
 )
@@ -3170,7 +3249,7 @@ Curva_ROC_Logit_interactiva <- plot_ly(roc_data_logit,
   
   layout(
     title = list(
-      text = paste("<b>Figura 9. Curva ROC del Modelo Logit</b><br>",
+      text = paste("<b>Figura 12. Curva ROC del Modelo Logit</b><br>",
                    "<sup>Evaluación del desempeño del modelo de regresión logística</sup>"),
       x = 0.05,
       font = list(size = 18, color = '#922b21')
@@ -3313,7 +3392,7 @@ grafico_umbral_animado <- plot_ly() %>%
   ) %>%
   layout(
     title = list(
-      text = "Desempeño del Modelo Logit según el Umbral (Cutoff)",
+      text = "Figura 12. Desempeño del Modelo Logit según el Umbral (Cutoff)",
       font = list(size = 20, color = "red")
     ),
     xaxis = list(
@@ -3625,7 +3704,7 @@ roc_animada <- plot_ly() %>%
   ) %>%
   layout(
     title = list(
-      text = "Figura 11. Curvas ROC comparadas entre KNN y Logit",
+      text = "Figura 13. Curvas ROC comparadas entre KNN y Logit",
       font = list(size = 20, color = "red")
     ),
     xaxis = list(
@@ -3690,7 +3769,6 @@ metricas_comparacion <- data.frame(
   )
 )
 
-# Gráfica simple y funcional con título rojo y más grande
 grafica_simple <- plot_ly(
   data = metricas_comparacion,
   x = ~Métrica,
@@ -3701,14 +3779,14 @@ grafica_simple <- plot_ly(
 ) %>%
   layout(
     title = list(
-      text = "Figura 12. Comparación de métricas entre KNN y Logit",
-      font = list(size = 20, color = "red")  # Título más grande y rojo
+      text = "Figura 14. Comparación de métricas entre KNN y Logit",
+      font = list(size = 20, color = "red")  
     ),
     xaxis = list(title = ""),
     yaxis = list(title = "Valor", range = c(0, 1)),
     barmode = "group",
     legend = list(orientation = "h", x = 0.5, y = -0.2, xanchor = "center"),
-    margin = list(t = 80, b = 100),  # Aumentar margen superior para el título
+    margin = list(t = 80, b = 100), 
     annotations = list(
       list(
         text = "Fuente: Elaboración propia con base en Lending Club (2007-2018)",
@@ -3722,9 +3800,11 @@ grafica_simple <- plot_ly(
     )
   )
 
-# Mostrar la gráfica
 grafica_simple
 ```
+
+
+
 
 Estas métricas reflejan que ninguno de los dos modelos predomina claramente sobre el otro en todos los aspectos; cada uno presenta fortalezas y limitaciones que se deben ponderar según el contexto del problema y la tolerancia al riesgo o error que se adopten en la aplicación real.
 Así, la decisión de adoptar, combinar, o mejorar alguno de estos enfoques requerirá una reflexión adicional sobre el objetivo de negocio y las restricciones prácticas del sistema de decisión.
@@ -3800,10 +3880,36 @@ Cada enfoque tiene fortalezas y debilidades complementarias, y la mejora continu
 
 # Bibliografia
 
+-   Wooldridge, J. M. (2012). Introductory Econometrics: A Modern Approach (5ª ed.). South-Western Cengage Learning.​
+
+-   Montgomery, D. C., Peck, E. A., & Vining, G. G. (2012). Introduction to Linear Regression Analysis (5ª ed.). John Wiley & Sons. ISBN: 978-0-470-54281-1.​
+
+-   Kutner, M. H., Nachtsheim, C. J., Neter, J., & Li, W. (2005). Applied Linear Statistical Models (5ª ed.). McGraw-Hill Irwin. ISBN: 978-0-07-310874-2.​
+
+-   Gujarati, D. N., & Porter, D. C. (2009). Basic Econometrics (5ª ed.). McGraw-Hill Irwin.​
+
+-   Anderson, D. R., Sweeney, D. J., & Williams, T. A. (2011). Statistics for Business and Economics (11ª ed.). South-Western Cengage Learning.​
+
+-   James, G., Witten, D., Hastie, T., & Tibshirani, R. (2013). An Introduction to Statistical Learning: with Applications in R. Springer. ISBN: 978-1-4614-7137-0.​
+
+-   Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical Learning: Data Mining, Inference, and Prediction (2ª ed.). Springer Series in Statistics. ISBN: 978-0-387-84857-0.​
+
+-   Bishop, C. M. (2006). Pattern Recognition and Machine Learning. Springer. ISBN: 978-0-387-31073-2.​
+
+-   Murphy, K. P. (2012). Machine Learning: A Probabilistic Perspective. The MIT Press. ISBN: 978-0-262-01802-9.​
+
+-   Breiman, L. (2001). Random Forests. Machine Learning, 45(1), 5-32.​
+
+-   Friedman, J. H. (2001). Greedy Function Approximation: A Gradient Boosting Machine. The Annals of Statistics, 29(5), 1189-1232.​
+
+-   Fix, E., & Hodges, J. L. (1951). Discriminatory Analysis: Nonparametric Discrimination: Consistency Properties. USAF School of Aviation Medicine, Randolph Field, Texas. Project 21-49-004, Report 4.​
+
+-   Cunningham, P., & Delany, S. J. (2020). k-Nearest Neighbour Classifiers: 2nd Edition (with Python examples). ACM Computing Surveys, 54(6). arXiv:2004.04523.
+
 -   Paredes, D. (2024). Aprendizaje supervisado. <https://bookdown.org/dparedesi/data-science-con-r/aprendizaje-supervisado.html>\
 -   Ariza-Garzón, M. J., Sanz-Guerrero, M., Javier, A. G., & Club, L. (2024). Lending Club loan dataset for granting models. Zenodo. <https://doi.org/10.5281/zenodo.11295916>
 -   James, G., Witten, D., Hastie, T. & Tibshirani, R. (2021). An Introduction to Statistical Learning with Applications in R (2nd ed.). Springer.\
--   Aguirre, J., et al. (2024). Modelo de regresión lineal para el análisis del ingreso de los hogares en la región Pacífica (ECV 2024). Publicado en RPubs: <https://rpubs.com/joanaguirre04/1353677>
+-   Portilla, J., et al. (2025). Modelo de regresión lineal para el análisis del ingreso de los hogares en la región Pacífica (ECV 2024). Publicado en RPubs: <https://rpubs.com/joanaguirre04/1353677>
 :::
 
 ------------------------------------------------------------------------

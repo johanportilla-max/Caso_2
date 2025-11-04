@@ -1680,7 +1680,7 @@ acc <- round(cm_caret$overall["Accuracy"], 4)
 acc_ci <- paste0("(", round(cm_caret$overall[["AccuracyLower"]], 4), ", ",
                  round(cm_caret$overall[["AccuracyUpper"]], 4), ")")
 
-no_info_rate <- round(as.numeric(cm_caret$overall[[3]]), 4)  # Tercera posición de la lista "overall"
+no_info_rate <- round(as.numeric(cm_caret$overall[[3]]), 4)  
 
 p_value_acc <- "<2.2e-16"
 kappa <- round(cm_caret$overall["Kappa"], 4)
@@ -1706,7 +1706,7 @@ metricas_tabla <- data.frame(
   Valor = c(
     acc,
     acc_ci,
-    no_info_rate,  # <-- ya no será NA
+    no_info_rate,  
     p_value_acc,
     kappa,
     mcnemar,
@@ -2405,7 +2405,7 @@ La estandarización de variables numéricas y el tratamiento adecuado de valores
 
 La fijación de semillas aleatorias (set.seed(28)) en todas las operaciones estocásticas aseguró reproducibilidad, un requisito esencial para la validación científica y la replicabilidad de los resultados.
 
-**¿Logró el estudio responder al objetivo de investigación?**
+## ¿Logró el estudio responder al objetivo de investigación?
 
 Los modelos desarrollados demostraron capacidad para identificar patrones de riesgo y clasificar solicitantes con un desempeño parcialmente superior al azar, cumpliendo así con el propósito de comparar dos aproximaciones metodológicas (paramétrica vs. no paramétrica) y evaluar su aplicabilidad en scoring crediticio.
 Sin embargo, los niveles de exactitud y AUC obtenidos (cercanos al 60% y 0.65 respectivamente) son insuficientes para sostener un sistema de decisión crediticia operativo sin complementos adicionales.
