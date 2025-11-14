@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/1361585/cc5aa23bc5ff405fb9b1a15be4e7bcf6
+bundleId: https://api.rpubs.com/api/v1/document/1361585/cc5aa23bc5ff405fb9b1a15be4e7bcf6
+url: http://rpubs.com/joanaguirre04/1361585
+version: 1

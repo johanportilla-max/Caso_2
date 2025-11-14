@@ -1,0 +1,162 @@
+---
+title: "Untitled"
+author: "Joan Aguirre"
+date: "2025-10-29"
+output: html_document
+---
+
+# Comparación de modelos
+
+Para comparar los modelos KNN y regresión logística utilizados en este análisis, se opta por evaluar el desempeño del modelo KNN implementado con el paquete caret, que facilita la integración de variables categóricas y numéricas, así como la optimización de sus hiperparámetros mediante validación cruzada.
+
+La comparación se basa en métricas clave como la exactitud, sensibilidad, especificidad y el área bajo la curva ROC (AUC), que ya hemos abordado anteriormente.
+Estas medidas permiten evaluar cuál modelo clasifica mejor, identifica con mayor precisión los incumplimientos y mantiene un buen equilibrio entre detección y falsos positivos.
+
+A continuación, se presenta una tabla resumen con los valores principales de estas métricas para ambos modelos, que permite una comparación rápida y clara de sus rendimientos y limita el juicio a evidencia cuantitativa.
+
+```{r comparacion}
+cm_caret <- confusionMatrix(pred_clase_knn, test$Estado, positive = "Pagado")
+
+cm_logit <- confusionMatrix(pred_clase_logit, test_logit$Estado, positive = "Pagado")
+
+comparacion_integral <- data.frame(
+  Metrica = c(
+    "Accuracy (Exactitud)",
+    "Sensitivity (Sensibilidad)",
+    "Specificity (Especificidad)",
+    "Precision (Valor Predictivo Positivo)",
+    "Balanced Accuracy",
+    "AUC (Area bajo la curva ROC)",
+    "Casos correctamente clasificados - Paga",
+    "Casos correctamente clasificados - No_paga"
+  ),
+  `Modelo KNN` = c(
+    round(cm_caret$overall["Accuracy"], 4),
+    round(cm_caret$byClass["Sensitivity"], 4),
+    round(cm_caret$byClass["Specificity"], 4),
+    round(cm_caret$byClass["Pos Pred Value"], 4),
+    round(cm_caret$byClass["Balanced Accuracy"], 4),
+    round(auc(roc_knn), 4),
+    cm_caret$table[1, 1],
+    cm_caret$table[2, 2]
+  ),
+  `Modelo Logit` = c(
+    round(cm_logit$overall["Accuracy"], 4),
+    round(cm_logit$byClass["Sensitivity"], 4),
+    round(cm_logit$byClass["Specificity"], 4),
+    round(cm_logit$byClass["Pos Pred Value"], 4),
+    round(cm_logit$byClass["Balanced Accuracy"], 4),
+    round(auc(roc_logit), 4),
+    cm_logit$table[1, 1],
+    cm_logit$table[2, 2]
+  )
+)
+
+comparacion_integral %>%
+  kbl(
+    caption = "Tabla 7. Comparacion integral del desempeno entre los modelos KNN y Logit",
+    align = c("l", "c", "c"),
+    col.names = c("Metrica", "KNN", "Logit")
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    font_size = 13,
+    position = "center"
+  ) %>%
+  row_spec(0, background = "#922b21", color = "white", bold = TRUE) %>%
+  row_spec(6, extra_css = "border-bottom: 2px solid #2b6cb0;") %>%
+  column_spec(1, bold = TRUE, width = "5cm") %>%
+  column_spec(2:3, width = "3cm") %>%
+  footnote(
+    general = "Elaboracion propia con base en el dataset Lending Club (2007–2018).",
+    general_title = "Nota:",
+    footnote_as_chunk = TRUE
+  )
+
+```
+
+La tabla de comparación integral entre KNN (con caret) y regresión logística (Logit) muestra que ambos modelos presentan desempeños relativamente similares en la mayoría de los indicadores, aunque existen diferencias que pueden resultar más relevantes dependiendo del objetivo analítico.
+
+Logit logra una mayor exactitud y mejor especificidad, lo que se traduce en un menor número de falsos positivos al identificar pagos correctamente.
+KNN, por su parte, exhibe una sensibilidad ligeramente superior y clasifica más casos de “No_paga” de manera correcta, lo que puede ser valioso cuando la prioridad es identificar el mayor número posible de incumplimientos, aun aceptando un número mayor de falsos positivos.
+
+```{r area}
+
+roc_knn_df <- data.frame(
+  FPR = 1 - roc_knn$specificities,
+  TPR = roc_knn$sensitivities,
+  Modelo = "KNN"
+)
+
+roc_logit_df <- data.frame(
+  FPR = 1 - roc_logit$specificities,
+  TPR = roc_logit$sensitivities,
+  Modelo = "Logit"
+)
+
+roc_comparada <- rbind(roc_knn_df, roc_logit_df)
+
+auc_knn <- round(auc(roc_knn), 3)
+auc_logit <- round(auc(roc_logit), 3)
+
+ggplot(roc_comparada, aes(x = FPR, y = TPR, color = Modelo)) +
+  geom_line(linewidth = 1.2) +
+  geom_abline(linetype = "dashed", color = "#b0b0b0") +
+  annotate("text", x = 0.65, y = 0.15,
+           label = paste0("AUC KNN = ", auc_knn),
+           color = "#922b21", fontface = "bold", size = 4.2) +
+  annotate("text", x = 0.65, y = 0.07,
+           label = paste0("AUC Logit = ", auc_logit),
+           color = "#922b21", fontface = "bold", size = 4.2) +
+  scale_color_manual(values = c("KNN" = "#922b21", "Logit" = "#922b21")) +
+  labs(
+    title = "Curvas ROC comparadas entre KNN y Logit",
+    subtitle = "Visualización de la capacidad discriminativa de ambos modelos",
+    x = "Tasa de falsos positivos (1 - Especificidad)",
+    y = "Tasa de verdaderos positivos (Sensibilidad)",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)"
+  ) +
+  tema +
+  theme(legend.position = "bottom", legend.title = element_blank())
+
+```
+
+Sin embargo, la diferencia en el área bajo la curva (AUC) es mínima, denotando que ambos modelos muestran una capacidad similar para distinguir entre pagos e impagos de manera global.
+
+```{r barras}
+metricas_comparacion <- data.frame(
+  Métrica = rep(c("Accuracy", "Sensibilidad", "Especificidad", "Precisión", "Balanced Accuracy"), each = 2),
+  Modelo = rep(c("KNN", "Logit"), times = 5),
+  Valor = c(
+    cm_caret$overall["Accuracy"],
+    cm_logit$overall["Accuracy"],
+    cm_caret$byClass["Sensitivity"],
+    cm_logit$byClass["Sensitivity"],
+    cm_caret$byClass["Specificity"],
+    cm_logit$byClass["Specificity"],
+    cm_caret$byClass["Pos Pred Value"],
+    cm_logit$byClass["Pos Pred Value"],
+    cm_caret$byClass["Balanced Accuracy"],
+    cm_logit$byClass["Balanced Accuracy"]
+  )
+)
+
+ggplot(metricas_comparacion, aes(x = Métrica, y = Valor, fill = Modelo)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.75), width = 0.6) +
+  geom_text(aes(label = round(Valor, 3)), 
+            position = position_dodge(0.75), vjust = -0.5, size = 3.5, color = "#323130") +
+  scale_fill_manual(values = c("KNN" = "#1a5276", "Logit" = "#922b21")) +
+  labs(
+    title = "Comparación de métricas clave entre KNN y Logit",
+    subtitle = "Las barras muestran el desempeño relativo de los modelos",
+    x = "",
+    y = "Valor de la métrica",
+    caption = "Fuente: Elaboración propia con base en el dataset Lending Club (2007–2018)"
+  ) +
+  tema +
+  theme(legend.position = "bottom", legend.title = element_blank())
+```
+
+Estas métricas reflejan que ninguno de los dos modelos predomina claramente sobre el otro en todos los aspectos; cada uno presenta fortalezas y limitaciones que se deben ponderar según el contexto del problema y la tolerancia al riesgo o error que se adopten en la aplicación real.
+Así, la decisión de adoptar, combinar, o mejorar alguno de estos enfoques requerirá una reflexión adicional sobre el objetivo de negocio y las restricciones prácticas del sistema de decisión.
