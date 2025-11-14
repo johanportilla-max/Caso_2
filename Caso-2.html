@@ -78269,6 +78269,46 @@ src: url(data:font/ttf;base64,AAEAAAAQAQAABAAAQkFTRVT/bggAAAGYAAAARkdERUZNgkylAA
 
 
 
+
+/* ESTILOS ADICIONALES PARA TOC - HOVER Y ESTADO ACTIVO */
+#TOC a.active {
+  background: var(--light-red) !important;
+  color: var(--primary-red) !important;
+  border-left: 4px solid var(--accent-red);
+  font-weight: 600 !important;
+  padding-left: 0.7rem !important;
+}
+
+#TOC li:has(> a.active) {
+  border-left-color: var(--accent-red) !important;
+  background: linear-gradient(90deg, var(--light-red) 0%, transparent 100%);
+}
+
+/* Mejorar hover para todos los enlaces del TOC */
+#TOC a:hover,
+#TOC a:focus {
+  color: var(--primary-red) !important;
+  background: var(--light-red) !important;
+  transform: translateX(5px);
+  cursor: pointer !important;
+  outline: none;
+}
+
+#TOC li:hover {
+  border-left-color: var(--accent-red) !important;
+  background: var(--light-red);
+}
+
+/* Animaciones suaves */
+#TOC a,
+#TOC li {
+  transition: all 0.3s ease !important;
+}
+
+/* Scroll suave global */
+html {
+  scroll-behavior: smooth;
+}
 </head>
 
 <body>
@@ -83282,37 +83322,57 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
       e.preventDefault();
-      const target = document.querySelector(this.getAttribute('href'));
+      const targetId = this.getAttribute('href');
+      const target = document.querySelector(targetId);
+
       if (target) {
-        target.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
+        // Calcular la posición exacta con offset
+        const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - 80;
+
+        // Scroll suave a la posición exacta
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
         });
+
+        // Actualizar URL sin saltar
+        history.pushState(null, null, targetId);
       }
     });
   });
-  
+
   // Resaltado de sección activa en TOC
-  const sections = document.querySelectorAll('h2, h3');
-  const navLinks = document.querySelectorAll('.tocify-item a');
-  
-  window.addEventListener('scroll', () => {
+  const sections = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id]');
+  const navLinks = document.querySelectorAll('#TOC a');
+
+  // Función para actualizar link activo
+  function updateActiveLink() {
     let current = '';
+    const scrollPosition = window.scrollY;
+
     sections.forEach(section => {
-      const sectionTop = section.offsetTop;
-      const sectionHeight = section.clientHeight;
-      if (scrollY >= (sectionTop - 100)) {
+      const sectionTop = section.offsetTop - 100;
+      const sectionBottom = sectionTop + section.offsetHeight;
+
+      if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
         current = section.getAttribute('id');
       }
     });
-    
+
     navLinks.forEach(link => {
       link.classList.remove('active');
-      if (link.getAttribute('href') === `#${current}`) {
+      const href = link.getAttribute('href');
+      if (href === `#${current}`) {
         link.classList.add('active');
       }
     });
-  });
+  }
+
+  // Listener para scroll
+  window.addEventListener('scroll', updateActiveLink);
+
+  // Ejecutar una vez al cargar
+  updateActiveLink();
 });
 </script>
 <script>
